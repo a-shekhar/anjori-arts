@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function ErrorPage({
   error,
@@ -29,9 +30,12 @@ export default function ErrorPage({
         <Button onClick={() => reset()} size="lg" className="w-full sm:w-auto">
           Try Again
         </Button>
-        <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-          <Link href="/">Return Home</Link>
-        </Button>
+        <Link 
+          href="/" 
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto")}
+        >
+          Return Home
+        </Link>
       </div>
     </div>
   );

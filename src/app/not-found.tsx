@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function NotFound() {
   return (
@@ -12,12 +13,18 @@ export default function NotFound() {
         We couldn&apos;t find the page you were looking for. The artwork might have been moved, or the link might be broken.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-        <Button asChild size="lg" className="w-full sm:w-auto">
-          <Link href="/">Return Home</Link>
-        </Button>
-        <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-          <Link href="/shop">Browse Artworks</Link>
-        </Button>
+        <Link 
+          href="/" 
+          className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}
+        >
+          Return Home
+        </Link>
+        <Link 
+          href="/shop" 
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto")}
+        >
+          Browse Artworks
+        </Link>
       </div>
     </div>
   );
