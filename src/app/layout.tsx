@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar/Navbar";
@@ -86,6 +88,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <Toaster position="top-right" richColors />
         </ThemeProvider>
+        
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
+        <Analytics />
       </body>
     </html>
   );
