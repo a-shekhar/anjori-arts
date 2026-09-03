@@ -6,7 +6,8 @@ import { hasWhatsApp, inquiryHref, siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/shared/ArtworkCard";
-import type { Artwork, Category } from "@/data/dummy";
+import type { Artwork, Category } from "@/types";
+import { getFeaturedArtworks } from "@/actions/shop";
 import { fetchBlogPosts } from "@/actions/blog";
 import { formatDate } from "@/lib/helpers";
 
@@ -41,23 +42,8 @@ export default async function HomePage() {
   // For the homepage, we only want to feature the top 3 to maintain a premium feel.
   const categories = allCategories.slice(0, 3);
 
-  // Fetch Featured Artworks
-  const { data: artworksData } = await supabase
-    .from("artworks")
-    .select("*, category:categories(*)")
-    .eq("is_featured", true)
-    .limit(4);
-    
-  // We need to map the joined category into the format expected by ArtworkCard, 
-  // but ArtworkCard expects `artwork` to have `isAvailable` (camelCase) while DB has `is_available` (snake_case).
-  // Wait, let's look at `ArtworkCard` in `src/components/shared/ArtworkCard.tsx`.
-  // It uses `artwork.isAvailable`, `artwork.images[0]`, `artwork.slug`, `artwork.title`, `artwork.dimensions`, `artwork.surface`, `artwork.price`.
-  // The DB has `is_available`. Let's map it.
-  const featuredArtworks = (artworksData || []).map(art => ({
-    ...art,
-    isAvailable: art.is_available,
-    isFeatured: art.is_featured,
-  }));
+  // Fetch Featured Artworks with full relations and shared mapArtwork utility
+  const featuredArtworks = await getFeaturedArtworks(4);
 
   // Fetch Latest Blog Posts
   const { posts: latestPosts } = await fetchBlogPosts({ page: 1, limit: 3, sort: "newest" });
@@ -234,7 +220,7 @@ export default async function HomePage() {
 
           <div className="mt-12 flex justify-center">
             <Link 
-              href="/shop" 
+              href="/categories" 
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8")}
             >
               Explore all {allCategories.length} art traditions

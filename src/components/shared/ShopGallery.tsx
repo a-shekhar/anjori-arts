@@ -3,9 +3,9 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { ArtworkCard } from "@/components/shared/ArtworkCard";
-import type { Artwork, Category } from "@/data/dummy";
+import type { Artwork, Category } from "@/types";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 /* ── Constants ───────────────────────────────────────── */
 const ITEMS_PER_PAGE = 12;
@@ -27,6 +27,15 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "newest", label: "Newest First" },
 ];
 
+const VALID_SORT_KEYS = new Set<SortKey>([
+  "featured",
+  "name-asc",
+  "name-desc",
+  "price-asc",
+  "price-desc",
+  "newest",
+]);
+
 /* ── Props ───────────────────────────────────────────── */
 interface ShopGalleryProps {
   artworks: Artwork[];
@@ -42,20 +51,115 @@ export function ShopGallery({
   initialCategory = "all",
   hideCategoryFilter = false
 }: ShopGalleryProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("q") || "");
-  
-  const [prevQ, setPrevQ] = useState(searchParams.get("q"));
-  if (searchParams.get("q") !== prevQ) {
-    const newQ = searchParams.get("q");
-    setPrevQ(newQ);
-    if (newQ !== null) setSearch(newQ);
-  }
 
-  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
-  const [sortKey, setSortKey] = useState<SortKey>("featured");
+  // Helper to resolve category param (ID or slug) to ID
+  const resolveCategory = useCallback(
+    (param: string | null) => {
+      if (!param) return null;
+      const matched = categories.find(
+        (c) => c.id === param || c.slug === param
+      );
+      return matched ? matched.id : param;
+    },
+    [categories]
+  );
+
+  // Helper to get slug from category ID
+  const getCategorySlug = useCallback(
+    (id: string) => {
+      if (!id || id === "all") return null;
+      const matched = categories.find((c) => c.id === id);
+      return matched ? matched.slug : id;
+    },
+    [categories]
+  );
+
+  const initialCatResolved = resolveCategory(searchParams.get("category")) || initialCategory;
+  const initialSortParam = searchParams.get("sort") as SortKey | null;
+  const initialSort = initialSortParam && VALID_SORT_KEYS.has(initialSortParam) ? initialSortParam : "featured";
+
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [activeCategory, setActiveCategory] = useState<string>(initialCatResolved);
+  const [sortKey, setSortKey] = useState<SortKey>(initialSort);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Sync state when URL searchParams change externally (e.g. Back/Forward navigation)
+  useEffect(() => {
+    const urlQ = searchParams.get("q") || "";
+    setSearch(urlQ);
+
+    const urlCat = searchParams.get("category");
+    if (urlCat) {
+      setActiveCategory(resolveCategory(urlCat) || urlCat);
+    } else {
+      setActiveCategory(initialCategory || "all");
+    }
+
+    const urlSort = searchParams.get("sort") as SortKey | null;
+    if (urlSort && VALID_SORT_KEYS.has(urlSort)) {
+      setSortKey(urlSort);
+    } else {
+      setSortKey("featured");
+    }
+
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [searchParams, resolveCategory, initialCategory]);
+
+  // Helper to update URL search parameters
+  const updateUrl = useCallback(
+    (updates: { q?: string; category?: string; sort?: string }) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if ("q" in updates) {
+        const val = updates.q?.trim();
+        if (val) {
+          params.set("q", val);
+        } else {
+          params.delete("q");
+        }
+      }
+
+      if ("category" in updates && !hideCategoryFilter) {
+        const catId = updates.category;
+        if (catId && catId !== "all") {
+          const slug = getCategorySlug(catId);
+          if (slug) params.set("category", slug);
+        } else {
+          params.delete("category");
+        }
+      }
+
+      if ("sort" in updates) {
+        const s = updates.sort;
+        if (s && s !== "featured" && VALID_SORT_KEYS.has(s as SortKey)) {
+          params.set("sort", s);
+        } else {
+          params.delete("sort");
+        }
+      }
+
+      const queryString = params.toString();
+      const target = queryString ? `${pathname}?${queryString}` : pathname;
+      router.replace(target, { scroll: false });
+    },
+    [searchParams, hideCategoryFilter, getCategorySlug, pathname, router]
+  );
+
+  // Debounce search query sync to URL (350ms)
+  useEffect(() => {
+    const currentParam = searchParams.get("q") || "";
+    if (search.trim() === currentParam) return;
+
+    const timer = setTimeout(() => {
+      updateUrl({ q: search });
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [search, searchParams, updateUrl]);
 
   /* ── Derived / filtered artworks ───────────────────── */
   const filtered = useMemo(() => {
@@ -114,10 +218,14 @@ export function ShopGallery({
     setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
   }, []);
 
-  const handleCategoryChange = useCallback((catId: string) => {
-    setActiveCategory(catId);
-    setVisibleCount(ITEMS_PER_PAGE); // reset pagination on filter change
-  }, []);
+  const handleCategoryChange = useCallback(
+    (catId: string) => {
+      setActiveCategory(catId);
+      setVisibleCount(ITEMS_PER_PAGE); // reset pagination on filter change
+      updateUrl({ category: catId });
+    },
+    [updateUrl]
+  );
 
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,7 +238,25 @@ export function ShopGallery({
   const clearSearch = useCallback(() => {
     setSearch("");
     setVisibleCount(ITEMS_PER_PAGE);
-  }, []);
+    updateUrl({ q: "" });
+  }, [updateUrl]);
+
+  const handleSortChange = useCallback(
+    (newSort: SortKey) => {
+      setSortKey(newSort);
+      setVisibleCount(ITEMS_PER_PAGE);
+      updateUrl({ sort: newSort });
+    },
+    [updateUrl]
+  );
+
+  const handleResetAll = useCallback(() => {
+    setSearch("");
+    setActiveCategory("all");
+    setSortKey("featured");
+    setVisibleCount(ITEMS_PER_PAGE);
+    updateUrl({ q: "", category: "all", sort: "featured" });
+  }, [updateUrl]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: artworks.length };
@@ -193,10 +319,7 @@ export function ShopGallery({
               <select
                 id="sort-select"
                 value={sortKey}
-                onChange={(e) => {
-                  setSortKey(e.target.value as SortKey);
-                  setVisibleCount(ITEMS_PER_PAGE);
-                }}
+                onChange={(e) => handleSortChange(e.target.value as SortKey)}
                 className="h-10 rounded-xl border border-border bg-card px-3 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {SORT_OPTIONS.map((opt) => (
@@ -284,12 +407,7 @@ export function ShopGallery({
           </p>
           <button
             type="button"
-            onClick={() => {
-              setSearch("");
-              setActiveCategory("all");
-              setSortKey("featured");
-              setVisibleCount(ITEMS_PER_PAGE);
-            }}
+            onClick={handleResetAll}
             className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             View All Artworks

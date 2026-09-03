@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="border-b border-border bg-muted/30 px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
@@ -122,6 +122,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -110,7 +110,7 @@ export default function FAQPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Schema.org FAQ Rich Results */}
       <script
         type="application/ld+json"
@@ -180,6 +180,6 @@ export default function FAQPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

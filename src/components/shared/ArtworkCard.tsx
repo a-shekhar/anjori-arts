@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/helpers";
-import type { Artwork, Category } from "@/data/dummy";
+import type { Artwork, Category } from "@/types";
 
 interface ArtworkCardProps {
   artwork: Artwork;
@@ -45,9 +45,11 @@ export function ArtworkCard({ artwork, category }: ArtworkCardProps) {
             <h3 className="font-serif text-sm font-semibold leading-snug text-foreground line-clamp-2 group-hover:text-primary transition-colors sm:text-base">
               {artwork.title}
             </h3>
-            <p className="mt-1.5 text-[11px] text-muted-foreground line-clamp-1 sm:text-xs">
-              {artwork.dimensions} · {artwork.surface}
-            </p>
+            {([artwork.dimensions, artwork.surface].some(Boolean)) && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground line-clamp-1 sm:text-xs">
+                {[artwork.dimensions, artwork.surface].filter(Boolean).join(" · ")}
+              </p>
+            )}
           </div>
 
           <div className="mt-3 flex items-end justify-between border-t border-border/50 pt-3">

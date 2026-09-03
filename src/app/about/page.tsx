@@ -41,7 +41,7 @@ const VALUES = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="aa-hero-grid border-b border-border/80 px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
@@ -134,6 +134,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -53,7 +53,7 @@ export default function ShippingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Schema.org Injection */}
       <script
         type="application/ld+json"
@@ -267,6 +267,6 @@ export default function ShippingPage() {
 
         </div>
       </section>
-    </main>
+    </div>
   );
 }

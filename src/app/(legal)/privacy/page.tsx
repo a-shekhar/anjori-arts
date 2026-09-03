@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header Banner */}
       <section className="aa-hero-grid border-b border-border/80 px-5 py-14 sm:px-8 sm:py-20 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
@@ -108,6 +108,6 @@ export default function PrivacyPage() {
         </div>
 
       </section>
-    </main>
+    </div>
   );
 }

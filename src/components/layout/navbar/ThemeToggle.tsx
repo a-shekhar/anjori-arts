@@ -19,7 +19,7 @@ export function ThemeToggle() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 rounded-full transition-colors hover:bg-muted/80 text-foreground"
+        className="size-11 min-h-[44px] min-w-[44px] rounded-full transition-colors hover:bg-muted/80 text-foreground"
       >
         <span className="h-4 w-4" />
       </Button>
@@ -33,7 +33,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="h-9 w-9 rounded-full transition-colors hover:bg-muted/80 text-foreground"
+      className="size-11 min-h-[44px] min-w-[44px] rounded-full transition-colors hover:bg-muted/80 text-foreground"
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >

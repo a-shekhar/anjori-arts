@@ -1,21 +1,21 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { ShoppingBag, MessageCircle, AlertCircle, Check, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import { inquiryHref } from "@/config/site";
 import { PriceDisplay } from "@/components/shared/PriceDisplay";
-import { type Artwork, CATEGORIES, FRAMING_PRICES } from "@/data/dummy";
+import { type Artwork, type Category } from "@/types";
 
 interface ArtworkActionsProps {
   artwork: Artwork;
+  category?: Category | null;
 }
 
-export function ArtworkActions({ artwork }: ArtworkActionsProps) {
-  const router = useRouter();
+export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   const addItem = useCartStore((state) => state.addItem);
   
   // Default to first variant if variants exist, otherwise we just handle a single product state.
@@ -56,9 +56,8 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
   const isMadeToOrder = selectedVariant.stockQuantity === -1;
   const isOutOfStock = selectedVariant.stockQuantity === 0;
 
-  const category = CATEGORIES.find(c => c.id === artwork.categoryId);
-  const framingPrice = FRAMING_PRICES[artwork.categoryId] || 0;
-  const canBeFramed = framingPrice > 0;
+  const canBeFramed = selectedVariant.canBeFramed;
+  const framingPrice = selectedVariant.framingPrice || 0;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -76,16 +75,22 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
       sellingPrice: selectedVariant.sellingPrice,
       mrp: selectedVariant.mrp
     });
+
+    toast.success(`"${artwork.title}" added to cart!`, {
+      description: "Direct checkout is coming soon. Use 'Buy Now' to order immediately via WhatsApp.",
+    });
   };
 
-  const handleBuyNow = () => {
-    // MVP 1: Redirect to WhatsApp instead of cart
-    window.open(whatsappUrl, "_blank");
-  };
-
-  // Pre-fill WhatsApp message
+  // Pre-fill WhatsApp general inquiry message
   const whatsappUrl = `${inquiryHref}?text=${encodeURIComponent(
     `Hi! I'm interested in "${artwork.title}" (${selectedVariant.label}). Could you share more details?`
+  )}`;
+
+  // Pre-fill WhatsApp Buy Now / Order message
+  const totalAmountPaise = selectedVariant.sellingPrice + (isFramed ? framingPrice : 0);
+  const formattedPrice = `₹${(totalAmountPaise / 100).toLocaleString("en-IN")}`;
+  const buyNowWhatsappUrl = `${inquiryHref}?text=${encodeURIComponent(
+    `Hi! I want to order "${artwork.title}" (${selectedVariant.label}${isFramed ? ", with Premium Framing" : ""}) priced at ${formattedPrice}. Could you please guide me on payment and delivery?`
   )}`;
 
   return (
@@ -97,6 +102,11 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
           sellingPrice={selectedVariant.sellingPrice + (isFramed ? framingPrice : 0)} 
           showTaxNote 
         />
+        {selectedVariant.sku && (
+          <p className="mt-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            SKU: {selectedVariant.sku}
+          </p>
+        )}
       </div>
 
       {/* Size Selector */}
@@ -105,7 +115,7 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-foreground">Select Size Category</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary/20">
                 {selectedVariant.widthInches} × {selectedVariant.heightInches} in
               </span>
             </div>
@@ -138,7 +148,7 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
                     key={variant.id}
                     onClick={() => setSelectedVariantId(variant.id)}
                     className={cn(
-                      "rounded-xl border px-4 py-2 text-sm font-medium transition-all",
+                      "rounded-xl border px-4 py-2.5 text-sm font-medium transition-all",
                       selectedVariantId === variant.id
                         ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
                         : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
@@ -153,41 +163,39 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
         </div>
       )}
 
-      {/* Framing Option */}
+      {/* Framing Toggle */}
       {canBeFramed && (
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground">Framing Option</span>
-          </div>
-          <button
-            onClick={() => setIsFramed(!isFramed)}
-            className={cn(
-              "flex w-full items-center justify-between rounded-xl border p-4 text-left transition-all",
-              isFramed
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                : "border-border bg-card hover:border-primary/50"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "flex size-5 items-center justify-center rounded-full border",
-                isFramed ? "border-primary bg-primary" : "border-muted-foreground"
-              )}>
-                {isFramed && <Check className="size-3 text-primary-foreground" />}
-              </div>
-              <div>
-                <p className={cn("text-sm font-medium", isFramed ? "text-primary" : "text-foreground")}>
-                  Premium Framing
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Hand-crafted wooden frame with protective glass
-                </p>
-              </div>
-            </div>
-            <span className={cn("text-sm font-semibold", isFramed ? "text-primary" : "text-muted-foreground")}>
-              +₹{framingPrice.toLocaleString('en-IN')}
+            <span className="text-xs text-muted-foreground">
+              {isFramed ? `+ ₹${(framingPrice / 100).toLocaleString()}` : 'Unframed'}
             </span>
-          </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setIsFramed(false)}
+              className={cn(
+                "rounded-xl border px-4 py-2.5 text-sm font-medium transition-all flex-1",
+                !isFramed
+                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              Unframed
+            </button>
+            <button
+              onClick={() => setIsFramed(true)}
+              className={cn(
+                "rounded-xl border px-4 py-2.5 text-sm font-medium transition-all flex-1",
+                isFramed
+                  ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              Premium Frame
+            </button>
+          </div>
         </div>
       )}
 
@@ -229,23 +237,30 @@ export function ArtworkActions({ artwork }: ArtworkActionsProps) {
 
       {/* Primary Actions */}
       <div className="flex flex-col gap-3 sm:flex-row">
-        {/* MVP 1: Hide Add to Cart */}
-        {/* <button
+        <button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary bg-transparent font-semibold text-primary transition-colors hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
         >
           <ShoppingBag className="size-4" />
           Add to Cart
-        </button> */}
-        <button
-          onClick={handleBuyNow}
-          disabled={isOutOfStock}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-primary/10"
-        >
-          Buy via WhatsApp
-          <ArrowRight className="size-4" />
         </button>
+        <a
+          href={isOutOfStock ? undefined : buyNowWhatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            if (isOutOfStock) e.preventDefault();
+          }}
+          aria-disabled={isOutOfStock}
+          className={cn(
+            "flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-md shadow-primary/10",
+            isOutOfStock && "pointer-events-none opacity-50"
+          )}
+        >
+          Buy Now
+          <ArrowRight className="size-4" />
+        </a>
       </div>
 
       {/* WhatsApp Inquiry */}

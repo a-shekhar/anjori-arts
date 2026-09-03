@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { Artwork, Category } from "@/data/dummy";
+import { Artwork, Category } from "@/types";
 
 function mapArtwork(art: any): Artwork {
   const mediums = art.artwork_mediums
@@ -35,7 +35,19 @@ function mapArtwork(art: any): Artwork {
     isFeatured: art.is_featured,
     tags: art.tags || [],
     images: images,
-    variants: art.variants || [],
+    variants: (art.variants || []).map((v: any) => ({
+      id: v.id,
+      label: v.label,
+      widthInches: v.width_inches,
+      heightInches: v.height_inches,
+      mrp: v.mrp,
+      sellingPrice: v.selling_price,
+      stockQuantity: v.stock_quantity,
+      isActive: v.is_active,
+      canBeFramed: v.can_be_framed,
+      framingPrice: v.framing_price,
+      sku: v.sku,
+    })),
     shortDescription: art.short_description || "",
     artistNote: art.artist_note || "",
   } as Artwork;
@@ -49,42 +61,75 @@ function getAnonClient() {
   );
 }
 
-export async function getShopData(): Promise<{ artworks: Artwork[]; categories: Category[] }> {
+export async function getAllCategories(): Promise<Category[]> {
   const supabase = getAnonClient();
-
-  // Fetch categories
-  const { data: categoriesData, error: catError } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .select("*")
     .order("name");
 
-  if (catError) {
-    console.error("Error fetching categories:", catError);
-    throw new Error("Failed to fetch categories");
+  if (error || !data) {
+    console.error("Error fetching categories:", error);
+    return [];
   }
 
-  // Fetch artworks with relations
-  const { data: artworksData, error: artError } = await supabase
+  return data as Category[];
+}
+
+export async function getShopData(): Promise<{ artworks: Artwork[]; categories: Category[] }> {
+  const supabase = getAnonClient();
+
+  const [categories, artworksResult] = await Promise.all([
+    getAllCategories(),
+    supabase
+      .from("artworks")
+      .select(`
+        *,
+        surface:surfaces(*),
+        artwork_mediums(medium:mediums(*)),
+        variants:artwork_variants(*)
+      `)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (artworksResult.error) {
+    console.error("Error fetching artworks:", artworksResult.error);
+    throw new Error("Failed to fetch artworks");
+  }
+
+  const artworks = (artworksResult.data || []).map(mapArtwork);
+
+  return {
+    artworks,
+    categories,
+  };
+}
+
+export async function getFeaturedArtworks(limit = 4): Promise<(Artwork & { category?: Category })[]> {
+  const supabase = getAnonClient();
+
+  const { data, error } = await supabase
     .from("artworks")
     .select(`
       *,
       surface:surfaces(*),
+      category:categories(*),
       artwork_mediums(medium:mediums(*)),
       variants:artwork_variants(*)
     `)
-    .order("created_at", { ascending: false });
+    .eq("is_featured", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
-  if (artError) {
-    console.error("Error fetching artworks:", artError);
-    throw new Error("Failed to fetch artworks");
+  if (error || !data) {
+    console.error("Error fetching featured artworks:", error);
+    return [];
   }
 
-  const artworks = artworksData.map(mapArtwork);
-
-  return {
-    artworks,
-    categories: categoriesData as Category[],
-  };
+  return data.map((art: any) => ({
+    ...mapArtwork(art),
+    category: art.category as Category | undefined,
+  }));
 }
 
 export async function getArtworkBySlug(slug: string): Promise<Artwork | null> {
@@ -118,6 +163,43 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 
   if (error || !data) return null;
   return data as Category;
+}
+
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  const supabase = getAnonClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+
+  if (error || !data) return null;
+  return data as Category;
+}
+
+export async function getAllCategorySlugs(): Promise<{ slug: string }[]> {
+  const supabase = getAnonClient();
+  const { data, error } = await supabase.from("categories").select("slug");
+  
+  if (error || !data) return [];
+  return data as { slug: string }[];
+}
+
+export async function getArtworksByCategory(categoryId: string): Promise<Artwork[]> {
+  const supabase = getAnonClient();
+  const { data: artworksData, error } = await supabase
+    .from("artworks")
+    .select(`
+      *,
+      surface:surfaces(*),
+      artwork_mediums(medium:mediums(*)),
+      variants:artwork_variants(*)
+    `)
+    .eq("category_id", categoryId)
+    .order("created_at", { ascending: false });
+
+  if (error || !artworksData) return [];
+  return artworksData.map(mapArtwork);
 }
 
 export async function getRelatedArtworks(categoryId: string, excludeId: string): Promise<Artwork[]> {

@@ -67,7 +67,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
       <Link 
         href="/blog" 
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
@@ -124,6 +124,6 @@ export default async function BlogPostPage({ params }: PageProps) {
           </ReactMarkdown>
         </div>
       </article>
-    </main>
+    </div>
   );
 }

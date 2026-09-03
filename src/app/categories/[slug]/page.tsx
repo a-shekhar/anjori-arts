@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ARTWORKS, CATEGORIES } from "@/data/dummy";
+import { getCategoryBySlug, getArtworksByCategory, getAllCategorySlugs, getShopData } from "@/actions/shop";
 import { siteConfig } from "@/config/site";
 import { ShopGallery } from "@/components/shared/ShopGallery";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
@@ -12,14 +12,13 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  return CATEGORIES.map((category) => ({
-    slug: category.slug,
-  }));
+  const slugs = await getAllCategorySlugs();
+  return slugs;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const category = CATEGORIES.find((c) => c.slug === resolvedParams.slug);
+  const category = await getCategoryBySlug(resolvedParams.slug);
 
   if (!category) {
     return { title: "Category Not Found" };
@@ -45,39 +44,47 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CategoryPage({ params }: PageProps) {
   const resolvedParams = await params;
-  const category = CATEGORIES.find((c) => c.slug === resolvedParams.slug);
+  const category = await getCategoryBySlug(resolvedParams.slug);
 
   if (!category) {
     notFound();
   }
 
   // Filter artworks to only those in this category
-  const categoryArtworks = ARTWORKS.filter(a => a.categoryId === category.id);
+  const categoryArtworks = await getArtworksByCategory(category.id);
+  const shopData = await getShopData();
+  const allCategories = shopData.categories;
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
-    { label: "Shop", href: "/shop" },
+    { label: "Categories", href: "/categories" },
     { label: category.name }
   ];
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12 lg:px-10">
         <Breadcrumbs crumbs={breadcrumbs} />
       </div>
 
-      {/* Hero Header */}
-      <section className="border-b border-border/80 px-5 pb-10 pt-4 sm:px-8 sm:pb-16 lg:px-10">
-        <div className="mx-auto max-w-4xl text-center">
-          <span className="aa-eyebrow mb-3 inline-block">Art Category</span>
-          <h1 className="font-serif text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-5xl lg:text-6xl">
-            {category.name}
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+      <header className="relative overflow-hidden bg-primary px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
+        <div className="absolute inset-0 opacity-10 mix-blend-overlay">
+          <svg className="absolute h-full w-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="pattern-category" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.5" fill="currentColor"></circle>
+              </pattern>
+            </defs>
+            <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-category)"></rect>
+          </svg>
+        </div>
+        <div className="relative mx-auto max-w-3xl text-center text-primary-foreground">
+          <h1 className="mb-4 font-serif text-4xl font-bold sm:text-5xl md:text-6xl">{category.name} Paintings</h1>
+          <p className="text-lg opacity-90 sm:text-xl">
             {category.description}
           </p>
         </div>
-      </section>
+      </header>
 
       <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
         <div className="flex flex-wrap gap-2">
@@ -87,7 +94,7 @@ export default async function CategoryPage({ params }: PageProps) {
           >
             All Artworks
           </Link>
-          {CATEGORIES.map((cat) => {
+          {allCategories.map((cat) => {
             const isActive = cat.id === category.id;
             return (
               <Link
@@ -110,12 +117,12 @@ export default async function CategoryPage({ params }: PageProps) {
       <Suspense fallback={<div className="h-96 flex items-center justify-center">Loading gallery...</div>}>
         <ShopGallery 
           artworks={categoryArtworks} 
-          categories={CATEGORIES} 
+          categories={allCategories} 
           initialCategory={category.id}
           hideCategoryFilter={true}
         />
       </Suspense>
-    </main>
+    </div>
   );
 }
 

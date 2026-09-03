@@ -20,7 +20,7 @@ export default async function BlogListingPage() {
   const blogPosts = posts || [];
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <section className="aa-hero-grid border-b border-border/80 px-5 py-16 sm:px-8 sm:py-24 lg:px-10 mb-12 sm:mb-16">
         <div className="mx-auto max-w-4xl text-center">
           <span className="aa-eyebrow inline-block mb-3">Journal &amp; News</span>
@@ -37,7 +37,7 @@ export default async function BlogListingPage() {
         {/* @ts-ignore - Supabase type mismatch with BlogList */}
         <BlogList initialPosts={blogPosts} initialCount={count || 0} />
       </div>
-    </main>
+    </div>
   );
 }
 

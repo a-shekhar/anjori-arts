@@ -44,7 +44,7 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
   const surfaceOptions = surfaces?.map((s) => s.name) || [];
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="border-b border-border bg-muted/30 px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
@@ -139,6 +139,6 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

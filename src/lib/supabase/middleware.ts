@@ -11,9 +11,8 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  // If Supabase credentials are not configured yet, don't crash middleware
   if (!supabaseUrl || !supabaseKey) {
-    return supabaseResponse;
+    return { response: supabaseResponse, user: null };
   }
 
   try {
@@ -37,12 +36,11 @@ export async function updateSession(request: NextRequest) {
       db: { schema: "arts" },
     });
 
-    // Refresh auth session (does not throw if unauthenticated)
-    await supabase.auth.getUser();
+    // Refresh auth session
+    const { data: { user } } = await supabase.auth.getUser();
+    return { response: supabaseResponse, user };
   } catch (error) {
-    // Prevent middleware crash if network or auth error occurs
     console.error("Supabase middleware error:", error);
+    return { response: supabaseResponse, user: null };
   }
-
-  return supabaseResponse;
 }

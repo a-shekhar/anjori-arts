@@ -90,7 +90,7 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Product JSON-LD */}
       <script
         type="application/ld+json"
@@ -137,10 +137,6 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
             {/* Details Grid */}
             <div className="mb-8 grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-border bg-muted/10 p-5 text-sm">
               <div>
-                <span className="block text-xs font-medium text-muted-foreground mb-1">Base Dimensions</span>
-                <span className="font-medium text-foreground">{artwork.dimensions}</span>
-              </div>
-              <div>
                 <span className="block text-xs font-medium text-muted-foreground mb-1">Surface</span>
                 <span className="font-medium text-foreground">{artwork.surface}</span>
               </div>
@@ -164,7 +160,7 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
 
             {/* Actions (Size, Add to Cart, WhatsApp) */}
             <div className="mb-10">
-              <ArtworkActions artwork={artwork} />
+              <ArtworkActions artwork={artwork} category={category} />
             </div>
 
             {/* Artist Note */}
@@ -195,7 +191,7 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
           />
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

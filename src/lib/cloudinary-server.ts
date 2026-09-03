@@ -29,3 +29,42 @@ export async function uploadStream(buffer: Buffer, folder: string): Promise<{ pu
   });
 }
 
+/**
+ * Deletes a single asset from Cloudinary by publicId.
+ */
+export async function deleteAsset(publicId: string): Promise<any> {
+  if (!publicId) return null;
+  try {
+    return await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error(`Failed to delete Cloudinary asset ${publicId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Deletes all assets in an artwork's folder and removes the folder from Cloudinary.
+ */
+export async function deleteArtworkFolder(slug: string): Promise<void> {
+  if (!slug) return;
+  const envFolder = process.env.NODE_ENV === "production" ? "prod" : "dev";
+  const foldersToClean = [
+    `anjori-arts/${envFolder}/artworks/${slug}`,
+    `anjori-arts/artworks/${slug}`,
+  ];
+
+  for (const folderPath of foldersToClean) {
+    try {
+      // 1. Delete all assets with this folder prefix
+      await cloudinary.api.delete_resources_by_prefix(folderPath);
+      // 2. Delete the folder itself
+      await cloudinary.api.delete_folder(folderPath);
+    } catch (error: any) {
+      // If folder or resources do not exist (404), ignore silently
+      if (error?.error?.http_code !== 404 && error?.http_code !== 404) {
+        console.warn(`Note on deleting Cloudinary folder ${folderPath}:`, error?.message || error);
+      }
+    }
+  }
+}
+

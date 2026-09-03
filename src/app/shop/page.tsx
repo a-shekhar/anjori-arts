@@ -26,7 +26,7 @@ export default async function ShopPage() {
   const { artworks, categories } = await getShopData();
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       {/* Hero Header */}
       <section className="border-b border-border/80 px-5 py-14 sm:px-8 sm:py-20 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
@@ -45,6 +45,6 @@ export default async function ShopPage() {
       <Suspense fallback={<div className="h-96 flex items-center justify-center">Loading gallery...</div>}>
         <ShopGallery artworks={artworks} categories={categories} />
       </Suspense>
-    </main>
+    </div>
   );
 }
