@@ -27,7 +27,7 @@ export function NavSearch() {
         placeholder="Search artworks..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="h-9 w-48 lg:w-64 rounded-full border border-input bg-transparent px-4 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="h-9 w-40 md:w-44 lg:w-52 transition-all duration-300 focus:w-48 lg:focus:w-64 rounded-full border border-input bg-transparent px-4 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
       <button 
         type="submit" 

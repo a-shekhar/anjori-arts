@@ -4,6 +4,7 @@ export type Category = {
   name: string;
   description: string;
   cover_image?: string | null;
+  alt_text?: string | null;
 };
 
 export type ArtworkVariant = {

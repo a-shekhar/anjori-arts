@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { getCategoryBySlug, getArtworksByCategory, getAllCategorySlugs, getShopData } from "@/actions/shop";
 import { siteConfig } from "@/config/site";
 import { ShopGallery } from "@/components/shared/ShopGallery";
-import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -55,36 +54,21 @@ export default async function CategoryPage({ params }: PageProps) {
   const shopData = await getShopData();
   const allCategories = shopData.categories;
 
-  const breadcrumbs = [
-    { label: "Home", href: "/" },
-    { label: "Categories", href: "/categories" },
-    { label: category.name }
-  ];
-
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12 lg:px-10">
-        <Breadcrumbs crumbs={breadcrumbs} />
-      </div>
 
-      <header className="relative overflow-hidden bg-primary px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay">
-          <svg className="absolute h-full w-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="pattern-category" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1.5" fill="currentColor"></circle>
-              </pattern>
-            </defs>
-            <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-category)"></rect>
-          </svg>
-        </div>
-        <div className="relative mx-auto max-w-3xl text-center text-primary-foreground">
-          <h1 className="mb-4 font-serif text-4xl font-bold sm:text-5xl md:text-6xl">{category.name} Paintings</h1>
-          <p className="text-lg opacity-90 sm:text-xl">
+      {/* Category Hero Banner */}
+      <section className="aa-hero-grid border-b border-border/80 px-5 py-14 sm:px-8 sm:py-20 lg:px-10">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="aa-eyebrow mb-3 inline-block">Art Tradition</span>
+          <h1 className="font-serif text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-5xl lg:text-6xl">
+            {category.name} Paintings
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             {category.description}
           </p>
         </div>
-      </header>
+      </section>
 
       <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
         <div className="flex flex-wrap gap-2">

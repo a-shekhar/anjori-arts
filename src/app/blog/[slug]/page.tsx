@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 import { ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-// Next.js 15 requires async params access
+// Next.js requires async params access
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const supabase = await createClient();
@@ -30,12 +31,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${post.title} - Anjori Arts Blog`,
+    title: `${post.title} | Anjori Arts`,
     description: post.excerpt,
+    alternates: {
+      canonical: `${siteConfig.url}/blog/${post.slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
+      url: `${siteConfig.url}/blog/${post.slug}`,
       images: [post.cover_image],
+      type: "article",
     },
   };
 }
@@ -66,8 +72,39 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    image: [post.cover_image],
+    author: {
+      "@type": "Person",
+      name: post.author,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteConfig.url}/logo.jpg`,
+      },
+    },
+    datePublished: post.published_at || post.created_at,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${siteConfig.url}/blog/${post.slug}`,
+    },
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+
       <Link 
         href="/blog" 
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"

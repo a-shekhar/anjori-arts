@@ -333,6 +333,7 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
                       src={preview} 
                       alt={`Preview ${index + 1}`}
                       fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
                       className="object-cover"
                     />
                     <button

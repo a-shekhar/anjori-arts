@@ -1,7 +1,8 @@
 export const NAV_LINKS = [
-  { label: "Shop Artworks", href: "/shop" },
-  { label: "Custom Commissions", href: "/custom-order" },
-  { label: "About Us", href: "/about" },
+  { label: "Shop", href: "/shop" },
+  { label: "Traditions", href: "/categories" },
+  { label: "Commissions", href: "/custom-order" },
+  { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ] as const;
@@ -9,6 +10,7 @@ export const NAV_LINKS = [
 export const ADMIN_NAV_LINKS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Artworks", href: "/admin/artworks" },
+  { label: "Categories", href: "/admin/categories" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Custom Orders", href: "/admin/custom-orders" },
   { label: "Blog", href: "/admin/blog" },
@@ -28,6 +30,7 @@ export const FOOTER_LINKS = {
   ],
   explore: [
     { label: "About Us", href: "/about" },
+    { label: "Art Traditions", href: "/categories" },
     { label: "Blog", href: "/blog" },
     { label: "Contact", href: "/contact" },
   ],

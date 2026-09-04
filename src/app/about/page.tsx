@@ -75,11 +75,15 @@ export default function AboutPage() {
             </div>
           </div>
           
-          <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden rounded-[2rem] border border-border bg-muted/40 shadow-sm">
-             <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent mix-blend-multiply" />
-             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/50 font-serif">
-                <span className="text-sm tracking-widest uppercase">Close-up of Artwork</span>
-             </div>
+          <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden rounded-[2rem] border border-border bg-muted/40 shadow-md group">
+            <Image
+              src="/images/about-artist.jpg"
+              alt="Artist in studio painting traditional Indian artwork by hand at Anjori Arts"
+              fill
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              sizes="(min-width: 1024px) 50vw, 100vw"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-60" />
           </div>
         </div>
       </section>
@@ -96,7 +100,7 @@ export default function AboutPage() {
           </div>
           
           <div className="relative size-40 sm:size-56 overflow-hidden rounded-full shadow-lg transition-transform duration-500 hover:scale-110 cursor-crosshair border-4 border-muted/50">
-            <Image src="/logo.jpg" alt="Anjori Arts Logo" fill className="object-cover" />
+            <Image src="/logo.jpg" alt="Anjori Arts Logo" fill className="object-cover scale-150" sizes="(max-width: 640px) 160px, 224px" />
           </div>
           
           <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">

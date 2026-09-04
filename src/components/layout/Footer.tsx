@@ -49,7 +49,7 @@ export function Footer() {
             <Link href="/shop" className="hover:text-primary transition-colors">Shop Artworks</Link>
             <Link href="/custom-order" className="hover:text-primary transition-colors">Custom Commissions</Link>
             <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
-            <Link href="/#traditions" className="hover:text-primary transition-colors">Art Traditions</Link>
+            <Link href="/categories" className="hover:text-primary transition-colors">Art Traditions</Link>
           </div>
         </div>
 

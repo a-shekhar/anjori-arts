@@ -9,7 +9,7 @@ import { CartIcon } from "./CartIcon";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/95">
+    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
         <Link href="/" className="group flex items-center gap-2.5" aria-label="Anjori Arts Home">
           <div className="relative size-10 overflow-hidden rounded-full shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md">

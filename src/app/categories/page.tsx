@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { getShopData } from "@/actions/shop";
-import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -29,20 +28,10 @@ export const metadata: Metadata = {
 export default async function CategoriesPage() {
   const { categories, artworks } = await getShopData();
 
-  const breadcrumbs = [
-    { label: "Home", href: "/" },
-    { label: "Categories" },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Breadcrumbs */}
-      <div className="mx-auto max-w-7xl px-5 py-4 sm:px-8 sm:py-6 lg:px-10">
-        <Breadcrumbs crumbs={breadcrumbs} />
-      </div>
-
       {/* Hero Header */}
-      <section className="border-b border-border/80 px-5 py-12 sm:px-8 sm:py-16 lg:px-10">
+      <section className="border-b border-border/80 px-5 py-14 sm:px-8 sm:py-20 lg:px-10">
         <div className="mx-auto max-w-4xl text-center">
           <span className="aa-eyebrow mb-3 inline-block">Living Heritage</span>
           <h1 className="font-serif text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-5xl lg:text-6xl">
@@ -73,7 +62,7 @@ export default async function CategoriesPage() {
                   {category.cover_image ? (
                     <Image
                       src={category.cover_image}
-                      alt={category.name}
+                      alt={category.alt_text || `Handmade ${category.name} paintings and traditional Indian art collection`}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"

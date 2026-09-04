@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { ADMIN_NAV_LINKS } from "@/config/navigation";
-import { ExternalLink, LayoutDashboard, Palette, ShoppingBag, Paintbrush, PenTool, Menu } from "lucide-react";
+import { ExternalLink, LayoutDashboard, Palette, ShoppingBag, Paintbrush, PenTool, FolderTree, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { siteConfig } from "@/config/site";
@@ -12,6 +12,7 @@ import { siteConfig } from "@/config/site";
 const ICONS = {
   "/admin": LayoutDashboard,
   "/admin/artworks": Palette,
+  "/admin/categories": FolderTree,
   "/admin/orders": ShoppingBag,
   "/admin/custom-orders": Paintbrush,
   "/admin/blog": PenTool,
@@ -37,7 +38,9 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
         <nav className="grid items-start px-2 text-sm font-medium lg:px-4 gap-1">
           {ADMIN_NAV_LINKS.map((link) => {
             const Icon = ICONS[link.href as keyof typeof ICONS] || LayoutDashboard;
-            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const isActive = link.href === "/admin"
+              ? pathname === "/admin"
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
             
             return (
               <Link
@@ -91,7 +94,11 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
           </Sheet>
           <div className="w-full flex-1">
             <h1 className="font-semibold text-lg hidden sm:block">
-              {ADMIN_NAV_LINKS.find((l) => pathname === l.href || pathname.startsWith(`${l.href}/`))?.label || "Admin"}
+              {ADMIN_NAV_LINKS.find((l) =>
+                l.href === "/admin"
+                  ? pathname === "/admin"
+                  : pathname === l.href || pathname.startsWith(`${l.href}/`)
+              )?.label || "Admin"}
             </h1>
           </div>
         </header>

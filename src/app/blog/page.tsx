@@ -1,10 +1,22 @@
 import { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
 import { BlogList } from "@/components/shared/BlogList";
 
 export const metadata: Metadata = {
-  title: "Blog - Anjori Arts",
-  description: "Read the latest news, stories, and insights about traditional Indian art forms.",
+  title: "Art Journal & Blog",
+  description: "Read stories, cultural history, and artistic insights into traditional Indian art forms—from Madhubani and Tanjore to Warli and contemporary paintings.",
+  alternates: {
+    canonical: `${siteConfig.url}/blog`,
+  },
+  openGraph: {
+    title: "Art Journal & Stories | Anjori Arts",
+    description: "Read stories, cultural history, and artistic insights into traditional Indian art forms—from Madhubani and Tanjore to Warli and contemporary paintings.",
+    url: `${siteConfig.url}/blog`,
+    siteName: siteConfig.name,
+    locale: "en_IN",
+    type: "website",
+  },
 };
 
 export default async function BlogListingPage() {

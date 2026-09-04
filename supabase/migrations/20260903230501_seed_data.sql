@@ -1,14 +1,15 @@
--- 01_seed_data.sql
--- Seed Data for Anjori Arts
+-- 20260903000001_seed_data.sql
+-- Consolidated Seed Data for Anjori Arts (Targeting `arts` schema)
 
 -- ==========================================
--- 1. MEDIUMS (Restricted to Oil & Acrylic)
+-- 1. MEDIUMS
 -- ==========================================
 INSERT INTO arts.mediums (id, slug, name, description) VALUES
   ('med-1', 'oil', 'Oil', 'Traditional oil painting medium.'),
   ('med-2', 'acrylic', 'Acrylic', 'Fast-drying acrylic paints.')
 ON CONFLICT (id) DO UPDATE SET 
-  name = EXCLUDED.name, description = EXCLUDED.description;
+  name = EXCLUDED.name, 
+  description = EXCLUDED.description;
 
 
 -- ==========================================
@@ -21,14 +22,12 @@ INSERT INTO arts.surfaces (slug, name, display_order) VALUES
   ('not-sure', 'Not sure / Recommend me something', 90),
   ('other', 'Other', 99)
 ON CONFLICT (slug) DO UPDATE SET 
-  name = EXCLUDED.name, display_order = EXCLUDED.display_order;
-
-
-
+  name = EXCLUDED.name, 
+  display_order = EXCLUDED.display_order;
 
 
 -- ==========================================
--- 4. CATEGORIES (MVP 1 Core 12 Categories)
+-- 3. CATEGORIES (Core 12 Categories)
 -- ==========================================
 INSERT INTO arts.categories (id, slug, name, description, cover_image) VALUES
   (
@@ -82,11 +81,13 @@ INSERT INTO arts.categories (id, slug, name, description, cover_image) VALUES
     'Intricate geometric designs that represent the universe, offering visual harmony and meditative focus.', ''
   )
 ON CONFLICT (id) DO UPDATE SET 
-  name = EXCLUDED.name, description = EXCLUDED.description, cover_image = EXCLUDED.cover_image;
+  name = EXCLUDED.name, 
+  description = EXCLUDED.description, 
+  cover_image = EXCLUDED.cover_image;
 
 
 -- ==========================================
--- 5. BLOG POSTS (Dummy Data)
+-- 4. BLOG POSTS
 -- ==========================================
 INSERT INTO arts.blog_posts (id, slug, title, excerpt, content, cover_image, author, published_at, tags)
 VALUES
@@ -154,3 +155,13 @@ The rhythmic patterns and simple figures of Warli paintings have found their way
   ARRAY['Warli', 'Tribal Art', 'Motifs']
 )
 ON CONFLICT (slug) DO NOTHING;
+
+
+-- ==========================================
+-- 5. ADMIN USER PROMOTION (TEMPLATE)
+-- ==========================================
+-- To promote an existing signed-up user to ADMIN, execute:
+-- UPDATE arts.profiles 
+-- SET role = 'ADMIN' 
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'your-admin-email@example.com');
+

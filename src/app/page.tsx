@@ -196,8 +196,9 @@ export default async function HomePage() {
                   <div className="relative aspect-[0.92] overflow-hidden rounded-[1.5rem] border border-black/5">
                      <Image 
                         src={category.cover_image} 
-                        alt={category.name} 
+                        alt={category.alt_text || `Handmade ${category.name} paintings and traditional Indian art collection`} 
                         fill 
+                        sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105" 
                      />
                   </div>
@@ -273,6 +274,7 @@ export default async function HomePage() {
                         src={post.cover_image}
                         alt={post.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
