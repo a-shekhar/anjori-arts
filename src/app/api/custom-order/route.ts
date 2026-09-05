@@ -20,20 +20,25 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     
     // 1. Extract text fields
+    const getTrimmed = (field: string) => {
+      const val = formData.get(field);
+      return typeof val === "string" ? val.trim() || undefined : undefined;
+    };
+
     const rawData = {
-      artworkId: formData.get("artworkId") as string | null,
-      firstName: formData.get("firstName") as string,
-      lastName: formData.get("lastName") as string,
-      email: formData.get("email") as string,
-      countryCode: formData.get("countryCode") as string,
-      phone: formData.get("phone") as string,
-      category: formData.get("category") as string,
-      medium: formData.get("medium") as string,
-      surface: formData.get("surface") as string,
-      preferredSize: formData.get("preferredSize") as string,
-      budget: formData.get("budget") as string,
-      referenceLink: formData.get("referenceLink") as string,
-      message: formData.get("message") as string,
+      artworkId: (formData.get("artworkId") as string) || null,
+      firstName: (formData.get("firstName") as string)?.trim() || "",
+      lastName: (formData.get("lastName") as string)?.trim() || "",
+      email: (formData.get("email") as string)?.trim() || "",
+      countryCode: (formData.get("countryCode") as string)?.trim() || "+91",
+      phone: getTrimmed("phone"),
+      category: (formData.get("category") as string)?.trim() || "",
+      medium: getTrimmed("medium"),
+      surface: getTrimmed("surface"),
+      preferredSize: getTrimmed("preferredSize"),
+      budget: getTrimmed("budget"),
+      referenceLink: getTrimmed("referenceLink"),
+      message: (formData.get("message") as string)?.trim() || "",
     };
 
     const validated = customOrderSchema.safeParse(rawData);
@@ -113,6 +118,7 @@ export async function POST(req: NextRequest) {
     // 6. Send notification emails
     const emailPayload = {
       ...validated.data,
+      artworkType: validated.data.category,
       artworkId: rawData.artworkId,
       referenceImages: uploadedUrls,
       orderReference,

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { deleteBlogPost } from "@/actions/blog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Table,
@@ -88,8 +89,7 @@ export default async function AdminBlogsPage() {
                       </Link>
                       <form action={async () => {
                         "use server";
-                        const supabase = await createClient();
-                        await supabase.from("blog_posts").delete().eq("id", post.id);
+                        await deleteBlogPost(post.id);
                       }}>
                         <Button variant="ghost" size="icon" type="submit" className="text-destructive">
                           <Trash2 className="h-4 w-4" />

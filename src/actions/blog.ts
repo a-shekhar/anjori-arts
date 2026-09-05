@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -16,7 +17,7 @@ const blogSchema = z.object({
   is_published: z.boolean().default(false),
 });
 
-export async function createBlogPost(prevState: unknown, formData: FormData) {
+export const createBlogPost = withAdminAuth(async (prevState: unknown, formData: FormData) => {
   const supabase = await createClient();
 
   const validatedFields = blogSchema.safeParse({
@@ -56,9 +57,9 @@ export async function createBlogPost(prevState: unknown, formData: FormData) {
   revalidatePath("/blog");
   revalidatePath("/admin/blog");
   redirect("/admin/blog");
-}
+});
 
-export async function updateBlogPost(id: string, prevState: unknown, formData: FormData) {
+export const updateBlogPost = withAdminAuth(async (id: string, prevState: unknown, formData: FormData) => {
   const supabase = await createClient();
 
   const validatedFields = blogSchema.safeParse({
@@ -111,7 +112,18 @@ export async function updateBlogPost(id: string, prevState: unknown, formData: F
   revalidatePath(`/blog/${validatedFields.data.slug}`);
   revalidatePath("/admin/blog");
   redirect("/admin/blog");
-}
+});
+
+export const deleteBlogPost = withAdminAuth(async (id: string) => {
+  const supabase = await createClient();
+  const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+  if (error) {
+    return { success: false, message: error.message };
+  }
+  revalidatePath("/blog");
+  revalidatePath("/admin/blog");
+  return { success: true };
+});
 
 export async function fetchBlogPosts(options: {
   page: number;

@@ -4,8 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { artworkSchema } from "@/lib/validations/artwork";
 import { revalidatePath } from "next/cache";
 import { deleteArtworkFolder, deleteAsset } from "@/lib/cloudinary-server";
+import { withAdminAuth } from "@/lib/auth-admin";
 
-export async function getAdminArtworks() {
+export const getAdminArtworks = withAdminAuth(async () => {
   const supabase = createAdminClient();
   
   const { data, error } = await supabase
@@ -23,9 +24,9 @@ export async function getAdminArtworks() {
   }
 
   return data;
-}
+}, { fallback: [] });
 
-export async function getArtworkFormTaxonomies() {
+export const getArtworkFormTaxonomies = withAdminAuth(async () => {
   const supabase = createAdminClient();
 
   const [categoriesRes, surfacesRes, mediumsRes] = await Promise.all([
@@ -39,9 +40,9 @@ export async function getArtworkFormTaxonomies() {
     surfaces: surfacesRes.data || [],
     mediums: mediumsRes.data || [],
   };
-}
+}, { fallback: { categories: [], surfaces: [], mediums: [] } });
 
-export async function getAdminArtworkById(id: string) {
+export const getAdminArtworkById = withAdminAuth(async (id: string) => {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("artworks")
@@ -82,9 +83,9 @@ export async function getAdminArtworkById(id: string) {
       framingPrice: v.framing_price ? v.framing_price / 100 : 0,
     }))
   };
-}
+}, { fallback: null });
 
-export async function createArtwork(prevState: unknown, formData: FormData) {
+export const createArtwork = withAdminAuth(async (prevState: unknown, formData: FormData) => {
   const supabase = createAdminClient();
 
   const payloadStr = formData.get("payload") as string;
@@ -158,9 +159,9 @@ export async function createArtwork(prevState: unknown, formData: FormData) {
   revalidatePath("/shop");
   revalidatePath("/admin/artworks");
   return { success: true, artworkId };
-}
+});
 
-export async function updateArtwork(id: string, prevState: unknown, formData: FormData) {
+export const updateArtwork = withAdminAuth(async (id: string, prevState: unknown, formData: FormData) => {
   const supabase = createAdminClient();
 
   const payloadStr = formData.get("payload") as string;
@@ -257,9 +258,9 @@ export async function updateArtwork(id: string, prevState: unknown, formData: Fo
   revalidatePath(`/artworks/${baseData.slug}`);
   revalidatePath("/admin/artworks");
   return { success: true };
-}
+});
 
-export async function deleteArtwork(id: string) {
+export const deleteArtwork = withAdminAuth(async (id: string) => {
   const supabase = createAdminClient();
 
   // 1. Fetch artwork slug and images before deletion
@@ -295,22 +296,22 @@ export async function deleteArtwork(id: string) {
   revalidatePath("/shop");
   revalidatePath("/admin/artworks");
   return { success: true };
-}
+});
 
-export async function toggleArtworkStatus(id: string, isAvailable: boolean) {
+export const toggleArtworkStatus = withAdminAuth(async (id: string, isAvailable: boolean) => {
   const supabase = createAdminClient();
   const { error } = await supabase.from("artworks").update({ is_available: isAvailable }).eq("id", id);
   if (error) return { success: false, message: error.message };
   revalidatePath("/shop");
   revalidatePath("/admin/artworks");
   return { success: true };
-}
+});
 
-export async function toggleArtworkFeatured(id: string, isFeatured: boolean) {
+export const toggleArtworkFeatured = withAdminAuth(async (id: string, isFeatured: boolean) => {
   const supabase = createAdminClient();
   const { error } = await supabase.from("artworks").update({ is_featured: isFeatured }).eq("id", id);
   if (error) return { success: false, message: error.message };
   revalidatePath("/shop");
   revalidatePath("/admin/artworks");
   return { success: true };
-}
+});

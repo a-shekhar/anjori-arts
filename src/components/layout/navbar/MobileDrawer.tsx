@@ -3,18 +3,20 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, MessageCircle, X } from "lucide-react";
+import { ChevronRight, MessageCircle, ShoppingBag, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { NAV_LINKS } from "@/config/navigation";
 import { hasWhatsApp, inquiryHref } from "@/config/site";
 import { ThemeToggle } from "./ThemeToggle";
 import { useUIStore } from "@/stores/ui-store";
+import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
 
 export function MobileDrawer() {
   const isOpen = useUIStore((state) => state.isMobileMenuOpen);
   const close = useUIStore((state) => state.closeMobileMenu);
   const pathname = usePathname();
+  const itemCount = useCartStore((state) => state.getItemCount());
   const mounted = React.useSyncExternalStore(
     () => () => {},
     () => true,
@@ -100,6 +102,29 @@ export function MobileDrawer() {
 
           {/* Navigation links */}
           <nav className="flex flex-col gap-1.5" aria-label="Mobile navigation links">
+            <Link
+              href="/cart"
+              onClick={close}
+              className={cn(
+                "flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                pathname === "/cart"
+                  ? "bg-muted text-primary font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <ShoppingBag className="size-4" aria-hidden="true" />
+                <span>Shopping Bag</span>
+              </div>
+              {mounted && itemCount > 0 ? (
+                <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                  {itemCount > 9 ? "9+" : itemCount}
+                </span>
+              ) : (
+                <ChevronRight className="size-4 opacity-40" aria-hidden="true" />
+              )}
+            </Link>
+
             {NAV_LINKS.map((item) => {
               const isActive = pathname === item.href;
               return (

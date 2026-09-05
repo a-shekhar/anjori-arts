@@ -8,10 +8,17 @@ export const CGST_RATE = GST_RATE / 2;
 /** SGST = half of total GST */
 export const SGST_RATE = GST_RATE / 2;
 
-/** Delivery charge in paise (₹70 = 7000) */
-export const DELIVERY_CHARGE = 7000;
+/**
+ * Delivery charge in paise.
+ * Set to 0 for promotional complimentary pan-India launch.
+ * Easily swappable with backend dynamic pricing API.
+ */
+export const DELIVERY_CHARGE = 0;
 
-/** Free delivery above this amount in paise (₹1500 = 150000) */
+/** Nominal delivery charge in paise for display comparison (₹150 = 15000) */
+export const STANDARD_DELIVERY_CHARGE = 15000;
+
+/** Free delivery threshold in paise (₹1500 = 150000) */
 export const FREE_DELIVERY_THRESHOLD = 150000;
 
 // ---------- Pagination ----------

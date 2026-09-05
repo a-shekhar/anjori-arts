@@ -13,6 +13,7 @@ export interface SendInquiryEmailProps {
     subject?: string;
     message?: string;
     artworkType?: string;
+    medium?: string;
     surface?: string;
     preferredSize?: string;
     budget?: string;
@@ -53,10 +54,11 @@ export async function sendNotificationEmail({ type, data }: SendInquiryEmailProp
     htmlBody += `
       <p><strong>Order Reference:</strong> ${data.orderReference}</p>
       ${data.artworkId ? `<p><strong>Artwork ID:</strong> ${data.artworkId}</p>` : ""}
-      <p><strong>Artwork Type:</strong> ${data.artworkType}</p>
+      <p><strong>Category:</strong> ${data.category || data.artworkType || "Custom"}</p>
+      <p><strong>Medium:</strong> ${data.medium || "Not specified"}</p>
       <p><strong>Surface:</strong> ${data.surface || "Not specified"}</p>
-      <p><strong>Preferred Size:</strong> ${data.preferredSize || "Not provided"}</p>
-      <p><strong>Budget:</strong> ${data.budget || "Not provided"}</p>
+      <p><strong>Preferred Size:</strong> ${data.preferredSize || "Not specified"}</p>
+      <p><strong>Estimated Budget:</strong> ${data.budget || "Flexible"}</p>
       <p><strong>Reference Link:</strong> ${
         data.referenceLink ? `<a href="${data.referenceLink}">${data.referenceLink}</a>` : "None"
       }</p>
@@ -115,9 +117,12 @@ export async function sendCustomerConfirmationEmail(data: SendInquiryEmailProps[
       
       <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #666;">
         <h3 style="margin-top: 0; color: #444;">Your Request Summary:</h3>
-        <p><strong>Type:</strong> ${data.artworkType}</p>
+        <p><strong>Category:</strong> ${data.category || data.artworkType || "Custom"}</p>
+        <p><strong>Medium:</strong> ${data.medium || "Not specified"}</p>
         <p><strong>Surface:</strong> ${data.surface || "Not specified"}</p>
-        <p><strong>Details:</strong><br/>${data.message}</p>
+        <p><strong>Preferred Size:</strong> ${data.preferredSize || "Not specified"}</p>
+        <p><strong>Estimated Budget:</strong> ${data.budget || "Flexible"}</p>
+        <p><strong>Project Details:</strong><br/>${data.message}</p>
       </div>
 
       <p>If you have any additional reference images or thoughts to share in the meantime, simply reply directly to this email. I love seeing what inspires you!</p>

@@ -40,3 +40,55 @@ export type Artwork = {
   artistNote?: string;
 };
 
+export type CustomOrderStatus =
+  | "new"
+  | "submitted"
+  | "reviewed"
+  | "quoted"
+  | "accepted"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
+
+export interface CustomOrderItem {
+  id: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number; // in Rupees
+  totalPrice: number; // quantity * unitPrice
+}
+
+export type CustomOrder = {
+  id: string;
+  order_reference: string;
+  status: CustomOrderStatus | string;
+  created_at: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  country_code: string;
+  phone?: string | null;
+  category: string;
+  medium?: string | null;
+  surface?: string | null;
+  preferred_size?: string | null;
+  budget?: string | null;
+  reference_link?: string | null;
+  reference_images: string[];
+  message: string;
+  // Agreed / Admin-edited Specifications
+  final_category?: string | null;
+  final_medium?: string | null;
+  final_surface?: string | null;
+  final_size?: string | null;
+  final_budget?: string | null;
+  // Itemized Quotation
+  items?: CustomOrderItem[];
+  quote_total?: number; // in Rupees
+  deposit_percentage?: number; // default 50
+  advance_deposit?: number; // in Rupees
+  estimated_timeline?: string | null;
+  admin_notes?: string | null;
+};
+

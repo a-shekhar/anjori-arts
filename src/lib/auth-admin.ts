@@ -30,8 +30,45 @@ export async function verifyAdminRole() {
     }
 
     return { authorized: true, user };
-  } catch (error) {
+  } catch (error: any) {
+    // Never swallow Next.js internal control flow errors (dynamic bailout, redirects, not-found)
+    if (
+      error &&
+      typeof error === "object" &&
+      "digest" in error &&
+      typeof error.digest === "string" &&
+      (error.digest.startsWith("DYNAMIC_SERVER_USAGE") ||
+       error.digest.startsWith("NEXT_"))
+    ) {
+      throw error;
+    }
     console.error("[verifyAdminRole] Unexpected error:", error);
     return { authorized: false, error: "Internal Server Error" };
   }
 }
+
+export interface WithAdminAuthOptions<TReturn> {
+  fallback?: TReturn | (() => TReturn);
+}
+
+export function withAdminAuth<TArgs extends any[], TReturn>(
+  action: (...args: TArgs) => Promise<TReturn>,
+  options?: WithAdminAuthOptions<TReturn>
+): (...args: TArgs) => Promise<TReturn> {
+  return async (...args: TArgs): Promise<TReturn> => {
+    const { authorized, error } = await verifyAdminRole();
+    if (!authorized) {
+      if (options && "fallback" in options) {
+        return typeof options.fallback === "function"
+          ? (options.fallback as () => TReturn)()
+          : (options.fallback as TReturn);
+      }
+      return {
+        success: false,
+        message: error || "Unauthorized",
+      } as unknown as TReturn;
+    }
+    return action(...args);
+  };
+}
+

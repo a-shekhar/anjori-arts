@@ -2,6 +2,8 @@ import { verifyAdminRole } from "@/lib/auth-admin";
 import { redirect } from "next/navigation";
 import { AdminLayoutClient } from "@/components/admin-layout-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { authorized, error } = await verifyAdminRole();
   

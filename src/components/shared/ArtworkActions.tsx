@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingBag, MessageCircle, AlertCircle, Check, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -16,6 +17,7 @@ interface ArtworkActionsProps {
 }
 
 export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
+  const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   
   // Default to first variant if variants exist, otherwise we just handle a single product state.
@@ -65,6 +67,7 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
     addItem({
       id: `${selectedVariant.id}-${isFramed ? 'framed' : 'unframed'}`,
       artworkId: artwork.id,
+      slug: artwork.slug,
       variantId: selectedVariant.id,
       quantity: 1,
       isFramed,
@@ -76,8 +79,14 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
       mrp: selectedVariant.mrp
     });
 
-    toast.success(`"${artwork.title}" added to cart!`, {
-      description: "Direct checkout is coming soon. Use 'Buy Now' to order immediately via WhatsApp.",
+    toast.success(`"${artwork.title}" added to your bag!`, {
+      description: "Review your items and proceed with your order.",
+      action: {
+        label: "View Bag",
+        onClick: () => {
+          router.push("/cart");
+        },
+      },
     });
   };
 

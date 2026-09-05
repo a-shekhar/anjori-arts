@@ -35,13 +35,18 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
 
   const supabase = await createClient();
 
-  const [{ data: categories }, { data: surfaces }] = await Promise.all([
+  const [{ data: categories }, { data: surfaces }, { data: mediums }] = await Promise.all([
     supabase.from("categories").select("name").order("name"),
     supabase.from("surfaces").select("name").order("display_order"),
+    supabase.from("mediums").select("name").order("name"),
   ]);
 
   const categoryOptions = categories?.map((c) => c.name) || [];
   const surfaceOptions = surfaces?.map((s) => s.name) || [];
+  const mediumOptions =
+    mediums && mediums.length > 0
+      ? mediums.map((m) => m.name)
+      : ["Acrylic", "Oil"];
 
   return (
     <div className="min-h-screen bg-background">
@@ -130,7 +135,7 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
             </h2>
             <CommissionForm 
               categories={categoryOptions} 
-              mediums={[...MEDIUMS]}
+              mediums={mediumOptions}
               surfaces={surfaceOptions} 
               defaultCategory={prefillType}
               defaultDetails={prefillTitle ? `I am interested in a custom size for "${prefillTitle}".\n\n` : undefined}

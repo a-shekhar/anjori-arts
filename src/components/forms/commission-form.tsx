@@ -52,20 +52,39 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
         formData.append("images", file);
       });
 
-      // Handle "Other" selections
-      if (selectedCategory !== "Other") {
+      // Handle Category
+      const customCat = (formData.get("customCategory") as string)?.trim();
+      if (selectedCategory === "Other") {
+        formData.set("category", customCat || "Other");
+      } else if (selectedCategory) {
         formData.set("category", selectedCategory);
       }
-      if (selectedMedium && selectedMedium !== "Other") {
+      formData.delete("customCategory");
+      formData.delete("categorySelect");
+
+      // Handle Medium
+      const customMed = (formData.get("customMedium") as string)?.trim();
+      if (selectedMedium === "Other") {
+        formData.set("medium", customMed || "Other");
+      } else if (selectedMedium) {
         formData.set("medium", selectedMedium);
-      } else if (!selectedMedium) {
+      } else {
         formData.delete("medium");
       }
-      if (selectedSurface && selectedSurface !== "Other") {
+      formData.delete("customMedium");
+      formData.delete("mediumSelect");
+
+      // Handle Surface
+      const customSurf = (formData.get("customSurface") as string)?.trim();
+      if (selectedSurface === "Other") {
+        formData.set("surface", customSurf || "Other");
+      } else if (selectedSurface) {
         formData.set("surface", selectedSurface);
-      } else if (!selectedSurface) {
-        formData.delete("surface"); // Optional field
+      } else {
+        formData.delete("surface");
       }
+      formData.delete("customSurface");
+      formData.delete("surfaceSelect");
 
       const response = await fetch("/api/custom-order", {
         method: "POST",
@@ -172,7 +191,7 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
           <div className="relative">
             <select
               id="category"
-              name="category"
+              name="categorySelect"
               required
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -195,7 +214,7 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
           <div className="relative">
             <select
               id="medium"
-              name="medium"
+              name="mediumSelect"
               value={selectedMedium}
               onChange={(e) => setSelectedMedium(e.target.value)}
               className="h-8 w-full min-w-0 appearance-none rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80"
@@ -214,13 +233,12 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
       </div>
       
       <div className="space-y-2">
-
         <div className="space-y-2">
           <Label htmlFor="surface">Preferred Surface (Optional)</Label>
           <div className="relative">
             <select
               id="surface"
-              name="surface"
+              name="surfaceSelect"
               value={selectedSurface}
               onChange={(e) => setSelectedSurface(e.target.value)}
               className="h-8 w-full min-w-0 appearance-none rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80"
@@ -229,6 +247,9 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
               {surfaces.map((surface) => (
                 <option className="bg-background text-foreground" key={surface} value={surface}>{surface}</option>
               ))}
+              {!surfaces.includes("Other") && (
+                <option className="bg-background text-foreground" value="Other">Other</option>
+              )}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><polyline points="6 9 12 15 18 9"/></svg>
@@ -240,21 +261,21 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
       {selectedCategory === "Other" && (
         <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
           <Label htmlFor="customCategory">Please specify the category</Label>
-          <Input id="customCategory" name="category" defaultValue={defaultCategory && !categories.includes(defaultCategory) ? defaultCategory : ""} required placeholder="e.g. Mixed Media" />
+          <Input id="customCategory" name="customCategory" defaultValue={defaultCategory && !categories.includes(defaultCategory) ? defaultCategory : ""} required placeholder="e.g. Mixed Media" />
         </div>
       )}
 
       {selectedMedium === "Other" && (
         <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
           <Label htmlFor="customMedium">Please specify the medium</Label>
-          <Input id="customMedium" name="medium" required placeholder="e.g. Ink" />
+          <Input id="customMedium" name="customMedium" required placeholder="e.g. Ink" />
         </div>
       )}
 
       {selectedSurface === "Other" && (
         <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
           <Label htmlFor="customSurface">Please specify the surface</Label>
-          <Input id="customSurface" name="surface" required placeholder="e.g. Fabric, Glass" />
+          <Input id="customSurface" name="customSurface" required placeholder="e.g. Fabric, Glass" />
         </div>
       )}
 

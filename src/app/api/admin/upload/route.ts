@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadStream } from "@/lib/cloudinary-server";
+import { verifyAdminRole } from "@/lib/auth-admin";
 
 export async function POST(req: NextRequest) {
   try {
+    const { authorized } = await verifyAdminRole();
+    if (!authorized) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const folder = formData.get("folder") as string || "anjori-arts/artworks";

@@ -2,10 +2,12 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { DELIVERY_CHARGE } from "@/config/constants";
 
 export interface CartItem {
   id: string; // Unique ID for cart entry (e.g. variantId + framed state)
   artworkId: string;
+  slug?: string;
   variantId: string;
   quantity: number;
   isFramed?: boolean;
@@ -26,6 +28,8 @@ interface CartState {
   clearCart: () => void;
   getItemCount: () => number;
   getSubtotal: () => number;
+  getDeliveryCharge: () => number;
+  getTotal: () => number;
 }
 
 export const useCartStore = create<CartState>()(
@@ -77,6 +81,14 @@ export const useCartStore = create<CartState>()(
           (sum, item) => sum + ((item.sellingPrice + (item.framingPrice || 0)) * item.quantity),
           0
         ),
+
+      getDeliveryCharge: () => {
+        return DELIVERY_CHARGE;
+      },
+
+      getTotal: () => {
+        return get().getSubtotal() + get().getDeliveryCharge();
+      },
     }),
     {
       name: "anjori-cart",

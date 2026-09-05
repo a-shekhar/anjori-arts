@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { withAdminAuth } from "@/lib/auth-admin";
 
 export type AdminCategory = {
   id: string;
@@ -13,7 +14,7 @@ export type AdminCategory = {
   artworkCount: number;
 };
 
-export async function getAdminCategories(): Promise<AdminCategory[]> {
+export const getAdminCategories = withAdminAuth(async (): Promise<AdminCategory[]> => {
   const supabase = createAdminClient();
 
   const [categoriesRes, artworksRes] = await Promise.all([
@@ -50,15 +51,15 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
     alt_text: cat.alt_text || "",
     artworkCount: countsMap.get(cat.id) || 0,
   }));
-}
+}, { fallback: [] });
 
-export async function createCategory(data: {
+export const createCategory = withAdminAuth(async (data: {
   name: string;
   slug: string;
   description: string;
   cover_image?: string;
   alt_text?: string;
-}) {
+}) => {
   const supabase = createAdminClient();
 
   const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
@@ -86,9 +87,9 @@ export async function createCategory(data: {
   revalidatePath("/");
 
   return { success: true, id };
-}
+});
 
-export async function updateCategory(
+export const updateCategory = withAdminAuth(async (
   id: string,
   data: {
     name: string;
@@ -97,7 +98,7 @@ export async function updateCategory(
     cover_image?: string;
     alt_text?: string;
   }
-) {
+) => {
   const supabase = createAdminClient();
 
   const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
@@ -125,9 +126,9 @@ export async function updateCategory(
   revalidatePath("/");
 
   return { success: true };
-}
+});
 
-export async function updateCategoryCoverImage(id: string, coverImage: string) {
+export const updateCategoryCoverImage = withAdminAuth(async (id: string, coverImage: string) => {
   const supabase = createAdminClient();
 
   const { error } = await supabase
@@ -146,9 +147,9 @@ export async function updateCategoryCoverImage(id: string, coverImage: string) {
   revalidatePath("/");
 
   return { success: true };
-}
+});
 
-export async function deleteCategory(id: string) {
+export const deleteCategory = withAdminAuth(async (id: string) => {
   const supabase = createAdminClient();
 
   // Check if any artworks reference this category
@@ -183,5 +184,5 @@ export async function deleteCategory(id: string) {
   revalidatePath("/");
 
   return { success: true };
-}
+});
 

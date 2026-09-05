@@ -27,13 +27,11 @@ export function Navbar() {
 
         <DesktopNav />
 
-        <div className="flex items-center gap-1.5 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <NavSearch />
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* <CartIcon /> Hidden for MVP 1 */}
-            <div className="hidden sm:block">
-              <ThemeToggle />
-            </div>
+          <CartIcon />
+          <div className="hidden sm:block">
+            <ThemeToggle />
           </div>
           <MobileNav />
         </div>
