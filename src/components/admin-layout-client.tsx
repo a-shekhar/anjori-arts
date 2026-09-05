@@ -82,9 +82,13 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
         <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger render={
-              <button className="shrink-0 md:hidden p-2 -ml-2 rounded-md hover:bg-muted">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+              <button
+                type="button"
+                aria-label="Open admin navigation menu"
+                className="inline-flex size-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden cursor-pointer -ml-2"
+              >
+                <Menu className="size-5" />
+                <span className="sr-only">Open admin navigation menu</span>
               </button>
             } />
             <SheetContent side="left" className="flex flex-col p-0 w-72">

@@ -16,8 +16,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const mode = body.mode || body.type || "artwork";
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+
+    const mode = body?.mode || body?.type || "artwork";
 
     if (mode === "category") {
       const { imageUrl, name } = body;

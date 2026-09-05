@@ -15,42 +15,47 @@ export type AdminCategory = {
 };
 
 export const getAdminCategories = withAdminAuth(async (): Promise<AdminCategory[]> => {
-  const supabase = createAdminClient();
+  try {
+    const supabase = createAdminClient();
 
-  const [categoriesRes, artworksRes] = await Promise.all([
-    supabase
-      .from("categories")
-      .select("*")
-      .order("name", { ascending: true }),
-    supabase
-      .from("artworks")
-      .select("category_id"),
-  ]);
+    const [categoriesRes, artworksRes] = await Promise.all([
+      supabase
+        .from("categories")
+        .select("*")
+        .order("name", { ascending: true }),
+      supabase
+        .from("artworks")
+        .select("category_id"),
+    ]);
 
-  if (categoriesRes.error || !categoriesRes.data) {
-    console.error("Error fetching admin categories:", categoriesRes.error);
-    return [];
-  }
+    if (categoriesRes.error || !categoriesRes.data) {
+      console.error("Error fetching admin categories:", categoriesRes.error);
+      return [];
+    }
 
-  // Calculate artwork count per category
-  const countsMap = new Map<string, number>();
-  if (artworksRes.data) {
-    for (const art of artworksRes.data) {
-      if (art.category_id) {
-        countsMap.set(art.category_id, (countsMap.get(art.category_id) || 0) + 1);
+    // Calculate artwork count per category
+    const countsMap = new Map<string, number>();
+    if (artworksRes.data) {
+      for (const art of artworksRes.data) {
+        if (art.category_id) {
+          countsMap.set(art.category_id, (countsMap.get(art.category_id) || 0) + 1);
+        }
       }
     }
-  }
 
-  return categoriesRes.data.map((cat: any) => ({
-    id: cat.id,
-    slug: cat.slug,
-    name: cat.name,
-    description: cat.description || "",
-    cover_image: cat.cover_image || "",
-    alt_text: cat.alt_text || "",
-    artworkCount: countsMap.get(cat.id) || 0,
-  }));
+    return categoriesRes.data.map((cat: any) => ({
+      id: cat.id,
+      slug: cat.slug,
+      name: cat.name,
+      description: cat.description || "",
+      cover_image: cat.cover_image || "",
+      alt_text: cat.alt_text || "",
+      artworkCount: countsMap.get(cat.id) || 0,
+    }));
+  } catch (err) {
+    console.error("[getAdminCategories] Unexpected error:", err);
+    return [];
+  }
 }, { fallback: [] });
 
 export const createCategory = withAdminAuth(async (data: {
@@ -60,33 +65,38 @@ export const createCategory = withAdminAuth(async (data: {
   cover_image?: string;
   alt_text?: string;
 }) => {
-  const supabase = createAdminClient();
+  try {
+    const supabase = createAdminClient();
 
-  const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
-  const id = `cat-${formattedSlug || Date.now()}`;
+    const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    const id = `cat-${formattedSlug || Date.now()}`;
 
-  const { error } = await supabase
-    .from("categories")
-    .insert({
-      id,
-      name: data.name.trim(),
-      slug: formattedSlug,
-      description: data.description.trim(),
-      cover_image: data.cover_image?.trim() || "",
-      alt_text: data.alt_text?.trim() || null,
-    });
+    const { error } = await supabase
+      .from("categories")
+      .insert({
+        id,
+        name: data.name.trim(),
+        slug: formattedSlug,
+        description: data.description.trim(),
+        cover_image: data.cover_image?.trim() || "",
+        alt_text: data.alt_text?.trim() || null,
+      });
 
-  if (error) {
-    console.error("Error creating category:", error);
-    return { success: false, message: error.message };
+    if (error) {
+      console.error("Error creating category:", error);
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/categories");
+    revalidatePath("/shop");
+    revalidatePath("/");
+
+    return { success: true, id };
+  } catch (err: any) {
+    console.error("[createCategory] Unexpected error:", err);
+    return { success: false, message: err?.message || "An unexpected error occurred while creating the category." };
   }
-
-  revalidatePath("/admin/categories");
-  revalidatePath("/categories");
-  revalidatePath("/shop");
-  revalidatePath("/");
-
-  return { success: true, id };
 });
 
 export const updateCategory = withAdminAuth(async (
@@ -99,90 +109,105 @@ export const updateCategory = withAdminAuth(async (
     alt_text?: string;
   }
 ) => {
-  const supabase = createAdminClient();
+  try {
+    const supabase = createAdminClient();
 
-  const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+    const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
-  const { error } = await supabase
-    .from("categories")
-    .update({
-      name: data.name.trim(),
-      slug: formattedSlug,
-      description: data.description.trim(),
-      cover_image: data.cover_image?.trim() || "",
-      alt_text: data.alt_text?.trim() || null,
-    })
-    .eq("id", id);
+    const { error } = await supabase
+      .from("categories")
+      .update({
+        name: data.name.trim(),
+        slug: formattedSlug,
+        description: data.description.trim(),
+        cover_image: data.cover_image?.trim() || "",
+        alt_text: data.alt_text?.trim() || null,
+      })
+      .eq("id", id);
 
-  if (error) {
-    console.error("Error updating category:", error);
-    return { success: false, message: error.message };
+    if (error) {
+      console.error("Error updating category:", error);
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/categories");
+    revalidatePath(`/categories/${formattedSlug}`);
+    revalidatePath("/categories");
+    revalidatePath("/shop");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[updateCategory] Unexpected error:", err);
+    return { success: false, message: err?.message || "An unexpected error occurred while updating the category." };
   }
-
-  revalidatePath("/admin/categories");
-  revalidatePath(`/categories/${formattedSlug}`);
-  revalidatePath("/categories");
-  revalidatePath("/shop");
-  revalidatePath("/");
-
-  return { success: true };
 });
 
 export const updateCategoryCoverImage = withAdminAuth(async (id: string, coverImage: string) => {
-  const supabase = createAdminClient();
+  try {
+    const supabase = createAdminClient();
 
-  const { error } = await supabase
-    .from("categories")
-    .update({ cover_image: coverImage })
-    .eq("id", id);
+    const { error } = await supabase
+      .from("categories")
+      .update({ cover_image: coverImage })
+      .eq("id", id);
 
-  if (error) {
-    console.error("Error updating category cover image:", error);
-    return { success: false, message: error.message };
+    if (error) {
+      console.error("Error updating category cover image:", error);
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/categories");
+    revalidatePath("/shop");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[updateCategoryCoverImage] Unexpected error:", err);
+    return { success: false, message: err?.message || "An unexpected error occurred while updating the category cover image." };
   }
-
-  revalidatePath("/admin/categories");
-  revalidatePath("/categories");
-  revalidatePath("/shop");
-  revalidatePath("/");
-
-  return { success: true };
 });
 
 export const deleteCategory = withAdminAuth(async (id: string) => {
-  const supabase = createAdminClient();
+  try {
+    const supabase = createAdminClient();
 
-  // Check if any artworks reference this category
-  const { count, error: countError } = await supabase
-    .from("artworks")
-    .select("id", { count: "exact", head: true })
-    .eq("category_id", id);
+    // Check if any artworks reference this category
+    const { count, error: countError } = await supabase
+      .from("artworks")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", id);
 
-  if (countError) {
-    return { success: false, message: countError.message };
+    if (countError) {
+      return { success: false, message: countError.message };
+    }
+
+    if (count && count > 0) {
+      return {
+        success: false,
+        message: `Cannot delete this category because ${count} artwork(s) are assigned to it. Please reassign or delete the artworks first.`,
+      };
+    }
+
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/categories");
+    revalidatePath("/shop");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[deleteCategory] Unexpected error:", err);
+    return { success: false, message: err?.message || "An unexpected error occurred while deleting the category." };
   }
-
-  if (count && count > 0) {
-    return {
-      success: false,
-      message: `Cannot delete this category because ${count} artwork(s) are assigned to it. Please reassign or delete the artworks first.`,
-    };
-  }
-
-  const { error } = await supabase
-    .from("categories")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    return { success: false, message: error.message };
-  }
-
-  revalidatePath("/admin/categories");
-  revalidatePath("/categories");
-  revalidatePath("/shop");
-  revalidatePath("/");
-
-  return { success: true };
 });
 

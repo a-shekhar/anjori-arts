@@ -45,3 +45,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - ALWAYS go in plan mode first. Discuss the proposed solution with the user and get approval BEFORE implementing any code changes.
 - ALWAYS choose consistency: match the style, format, and design conventions of existing pages (e.g. hero sections, search bars, component layouts) when building new features.
 - ALWAYS verify compilation after every change: run TypeScript checks (`tsc --noEmit`) and compilation checks. If it is not compiling, it is NOT done.
+- "fatal: .git/index: index file smaller than expected this error should never appear" — ensure git operations preserve index integrity and never leave a corrupted .git/index file.

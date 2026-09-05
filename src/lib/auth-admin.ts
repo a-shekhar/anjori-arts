@@ -56,8 +56,33 @@ export function withAdminAuth<TArgs extends any[], TReturn>(
   options?: WithAdminAuthOptions<TReturn>
 ): (...args: TArgs) => Promise<TReturn> {
   return async (...args: TArgs): Promise<TReturn> => {
-    const { authorized, error } = await verifyAdminRole();
-    if (!authorized) {
+    try {
+      const { authorized, error } = await verifyAdminRole();
+      if (!authorized) {
+        if (options && "fallback" in options) {
+          return typeof options.fallback === "function"
+            ? (options.fallback as () => TReturn)()
+            : (options.fallback as TReturn);
+        }
+        return {
+          success: false,
+          message: error || "Unauthorized",
+        } as unknown as TReturn;
+      }
+      return await action(...args);
+    } catch (error: any) {
+      // Never swallow Next.js internal control flow errors (dynamic bailout, redirects, not-found)
+      if (
+        error &&
+        typeof error === "object" &&
+        "digest" in error &&
+        typeof error.digest === "string" &&
+        (error.digest.startsWith("DYNAMIC_SERVER_USAGE") ||
+         error.digest.startsWith("NEXT_"))
+      ) {
+        throw error;
+      }
+      console.error("[withAdminAuth] Unhandled error:", error);
       if (options && "fallback" in options) {
         return typeof options.fallback === "function"
           ? (options.fallback as () => TReturn)()
@@ -65,10 +90,9 @@ export function withAdminAuth<TArgs extends any[], TReturn>(
       }
       return {
         success: false,
-        message: error || "Unauthorized",
+        message: error?.message || "An unexpected error occurred",
       } as unknown as TReturn;
     }
-    return action(...args);
   };
 }
 

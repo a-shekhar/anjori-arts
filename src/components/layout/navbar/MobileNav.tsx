@@ -12,7 +12,7 @@ export function MobileNav() {
     <button
       type="button"
       onClick={toggleMobileMenu}
-      className="inline-flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden cursor-pointer active:scale-95"
+      className="inline-flex size-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden cursor-pointer active:scale-95"
       aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
       aria-expanded={isMobileMenuOpen}
     >

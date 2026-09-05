@@ -5,12 +5,12 @@ import { uploadStream } from "@/lib/cloudinary-server";
 import { sendNotificationEmail, sendCustomerConfirmationEmail } from "@/lib/email";
 import crypto from "crypto";
 
-// Helper to generate a short human-readable order reference like AA-9K2M
+// Helper to generate a short human-readable order reference like CUS-9K2MPX
 function generateOrderReference() {
-  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 1, 0
+  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 characters without ambiguous I, O, 1, 0
   let result = 'CUS-';
-  for (let i = 0; i < 4; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(crypto.randomInt(0, characters.length));
   }
   return result;
 }
@@ -61,9 +61,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Generate IDs
+    // 3. Generate ID
     const orderId = crypto.randomUUID();
-    const orderReference = generateOrderReference();
 
     // 4. Upload images to Cloudinary
     const envFolder = process.env.NODE_ENV === "production" ? "prod" : "dev";
@@ -88,27 +87,49 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Insert into DB with images already included
+    // 5. Insert into DB with images already included (with retry on collision)
     const supabase = createAdminClient();
-    const { error: dbError } = await supabase
-      .from("custom_orders")
-      .insert({
-        id: orderId,
-        order_reference: orderReference,
-        first_name: validated.data.firstName,
-        last_name: validated.data.lastName,
-        email: validated.data.email,
-        country_code: validated.data.countryCode,
-        phone: validated.data.phone || null,
-        category: validated.data.category,
-        medium: validated.data.medium || null,
-        surface: validated.data.surface || null,
-        preferred_size: validated.data.preferredSize || null,
-        budget: validated.data.budget || null,
-        reference_link: validated.data.referenceLink || null,
-        reference_images: uploadedUrls,
-        message: validated.data.message,
-      });
+    let orderReference = "";
+    let dbError: any = null;
+    const maxAttempts = 3;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      orderReference = generateOrderReference();
+      const { error } = await supabase
+        .from("custom_orders")
+        .insert({
+          id: orderId,
+          order_reference: orderReference,
+          first_name: validated.data.firstName,
+          last_name: validated.data.lastName,
+          email: validated.data.email,
+          country_code: validated.data.countryCode,
+          phone: validated.data.phone || null,
+          category: validated.data.category,
+          medium: validated.data.medium || null,
+          surface: validated.data.surface || null,
+          preferred_size: validated.data.preferredSize || null,
+          budget: validated.data.budget || null,
+          reference_link: validated.data.referenceLink || null,
+          reference_images: uploadedUrls,
+          message: validated.data.message,
+        });
+
+      if (!error) {
+        dbError = null;
+        break;
+      }
+
+      // If unique constraint violation on order_reference (Postgres error 23505), retry with a new reference
+      if (error.code === "23505") {
+        console.warn(`[custom-order] Collision on ${orderReference}, retrying (attempt ${attempt + 1}/${maxAttempts})...`);
+        dbError = error;
+        continue;
+      }
+
+      dbError = error;
+      break;
+    }
 
     if (dbError) {
       console.error("Supabase Insert Error:", dbError);

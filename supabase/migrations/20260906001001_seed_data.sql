@@ -1,5 +1,8 @@
--- 20260903000001_seed_data.sql
--- Consolidated Seed Data for Anjori Arts (Targeting `arts` schema)
+-- ==========================================================
+-- 20260906001001_seed_data.sql
+-- Anjori Arts — Consolidated DML Seed Data
+-- Target Schema: `arts`
+-- ==========================================================
 
 -- ==========================================
 -- 1. MEDIUMS
@@ -29,61 +32,74 @@ ON CONFLICT (slug) DO UPDATE SET
 -- ==========================================
 -- 3. CATEGORIES (Core 12 Categories)
 -- ==========================================
-INSERT INTO arts.categories (id, slug, name, description, cover_image) VALUES
+INSERT INTO arts.categories (id, slug, name, description, cover_image, alt_text) VALUES
   (
     'cat-1', 'madhubani', 'Madhubani', 
     'Traditional folk art from the Mithila region known for geometric patterns.',
-    'https://images.unsplash.com/photo-1583594895781-8d0702c2db26?q=80&w=800&auto=format&fit=crop'
+    'https://images.unsplash.com/photo-1583594895781-8d0702c2db26?q=80&w=800&auto=format&fit=crop',
+    'Handmade authentic Madhubani painting depicting traditional motifs and vibrant natural dyes'
   ),
   (
     'cat-2', 'tanjore', 'Tanjore', 
     'Classical South Indian art famous for rich colours and gold foil embellishments.',
-    'https://images.unsplash.com/photo-1599557766399-52e850b55146?q=80&w=800&auto=format&fit=crop'
+    'https://images.unsplash.com/photo-1599557766399-52e850b55146?q=80&w=800&auto=format&fit=crop',
+    'Traditional handcrafted Tanjore gold foil painting with sacred Indian iconography'
   ),
   (
     'cat-3', 'warli', 'Warli Art', 
-    'Tribal art style from Maharashtra depicting daily life and nature.', ''
+    'Tribal art style from Maharashtra depicting daily life and nature.', '',
+    'Handcrafted Warli tribal painting with ritual dance and nature motifs'
   ),
   (
     'cat-4', 'mythological-devotional', 'Mythological & Devotional', 
-    'Intricate devotional paintings capturing stories of the divine.', ''
+    'Intricate devotional paintings capturing stories of the divine.', '',
+    'Devotional Hindu sacred artwork with intricate spiritual storytelling'
   ),
   (
     'cat-5', 'contemporary', 'Contemporary Works', 
-    'Modern artistic expressions breaking traditional boundaries.', ''
+    'Modern artistic expressions breaking traditional boundaries.', '',
+    'Original contemporary Indian canvas artwork with rich textures and modern palette'
   ),
   (
     'cat-6', 'portraiture', 'Portraiture', 
-    'Lifelike custom portraits tailored to capture the essence of the subject.', ''
+    'Lifelike custom portraits tailored to capture the essence of the subject.', '',
+    'Custom bespoke portraiture capturing authentic lifelike expressions'
   ),
   (
     'cat-7', 'figurative', 'Figurative Painting', 
-    'Artworks retaining strong references to the real world and human form.', ''
+    'Artworks retaining strong references to the real world and human form.', '',
+    'Indian figurative painting celebrating human forms and cultural heritage'
   ),
   (
     'cat-8', 'customised-branding', 'Branding & Logo Art', 
-    'Art-based conceptual branding, logos, and business artwork.', ''
+    'Art-based conceptual branding, logos, and business artwork.', '',
+    'Bespoke artistic branding and custom cultural identity design'
   ),
   (
     'cat-9', 'poster-designing', 'Poster Designing', 
-    'Aesthetic and communicative poster designs.', ''
+    'Aesthetic and communicative poster designs.', '',
+    'Graphic Indian art exhibition poster design with artisanal typography'
   ),
   (
     'cat-10', 'cyanotype', 'Cyanotype Prints', 
-    'Photographic printing process that produces a cyan-blue print.', ''
+    'Photographic printing process that produces a cyan-blue print.', '',
+    'Botanical Prussian blue cyanotype sun print on handmade cotton rag paper'
   ),
   (
     'cat-11', 'earrings', 'Handcrafted Earrings', 
-    'Unique artisan-made earrings combining traditional motifs with modern wearability.', ''
+    'Unique artisan-made earrings combining traditional motifs with modern wearability.', '',
+    'Handcrafted artisan earrings featuring traditional hand-painted Indian motifs'
   ),
   (
     'cat-12', 'mandala', 'Mandala Art', 
-    'Intricate geometric designs that represent the universe, offering visual harmony and meditative focus.', ''
+    'Intricate geometric designs that represent the universe, offering visual harmony and meditative focus.', '',
+    'Intricate sacred geometric mandala artwork created with meditative precision'
   )
 ON CONFLICT (id) DO UPDATE SET 
   name = EXCLUDED.name, 
   description = EXCLUDED.description, 
-  cover_image = EXCLUDED.cover_image;
+  cover_image = EXCLUDED.cover_image,
+  alt_text = EXCLUDED.alt_text;
 
 
 -- ==========================================

@@ -485,8 +485,8 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          size="icon-sm"
+                          className="size-8 text-muted-foreground hover:text-foreground relative after:absolute after:-inset-1.5"
                           onClick={() => setSelectedOrder(order)}
                           title="Quick View"
                           aria-label="Quick View Details"
@@ -497,8 +497,8 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                           href={`/admin/custom-orders/${order.id}`}
                           className={buttonVariants({
                             variant: "ghost",
-                            size: "icon",
-                            className: "h-8 w-8 text-muted-foreground hover:text-primary",
+                            size: "icon-sm",
+                            className: "size-8 text-muted-foreground hover:text-primary relative after:absolute after:-inset-1.5",
                           })}
                           title="Open Full Page"
                           aria-label="Open Full Order Page"
@@ -508,7 +508,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                         <DropdownMenu>
                           <DropdownMenuTrigger render={
                             <button
-                              className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                              className="size-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground relative after:absolute after:-inset-1.5 cursor-pointer"
                               aria-label="More options"
                             >
                               <MoreVertical className="h-4 w-4" />
@@ -527,6 +527,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                               <DropdownMenuItem render={
                                 <a href={waLink} target="_blank" rel="noopener noreferrer">
                                   <Phone className="mr-2 h-4 w-4 text-emerald-600" /> WhatsApp Customer
+                                  <Phone className="mr-2 h-4 w-4 text-whatsapp" /> WhatsApp Customer
                                 </a>
                               } />
                             )}
@@ -804,7 +805,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                               variant: "outline",
                               size: "sm",
                               className:
-                                "h-8 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+                                "h-8 text-xs text-whatsapp border-whatsapp/30",
                             })}
                           >
                             <Phone className="mr-1.5 h-3.5 w-3.5" /> WhatsApp

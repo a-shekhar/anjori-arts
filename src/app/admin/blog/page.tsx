@@ -89,7 +89,11 @@ export default async function AdminBlogsPage() {
                       </Link>
                       <form action={async () => {
                         "use server";
-                        await deleteBlogPost(post.id);
+                        try {
+                          await deleteBlogPost(post.id);
+                        } catch (err) {
+                          console.error("[deleteBlogPost action] Unexpected error:", err);
+                        }
                       }}>
                         <Button variant="ghost" size="icon" type="submit" className="text-destructive">
                           <Trash2 className="h-4 w-4" />

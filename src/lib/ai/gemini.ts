@@ -72,7 +72,27 @@ Follow these guidelines:
     throw new Error("No response received from Gemini AI");
   }
 
-  return JSON.parse(responseText);
+  return safeParseGeminiJson<ArtworkAISuggestions>(responseText, "artwork analysis");
+}
+
+/**
+ * Safely parses JSON response from Gemini, removing any accidental markdown code fences
+ * and providing descriptive error reporting.
+ */
+function safeParseGeminiJson<T>(responseText: string, context: string): T {
+  try {
+    // Strip markdown code fences if Gemini returned ```json ... ``` despite application/json mime type
+    const sanitized = responseText
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    return JSON.parse(sanitized) as T;
+  } catch (err: any) {
+    console.error(`[Gemini AI] Failed to parse JSON response for ${context}:`, responseText, err);
+    throw new Error(`AI returned an invalid JSON response for ${context}.`);
+  }
 }
 
 export interface CategoryAISuggestions {
@@ -125,6 +145,7 @@ Generate two fields:
     throw new Error("No response received from Gemini AI");
   }
 
-  return JSON.parse(responseText);
+  return safeParseGeminiJson<CategoryAISuggestions>(responseText, "category details");
 }
+
 

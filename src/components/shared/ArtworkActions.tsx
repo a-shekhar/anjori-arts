@@ -280,6 +280,7 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground transition-colors hover:bg-muted"
       >
         <MessageCircle className="size-4 text-[#25D366]" />
+        <MessageCircle className="size-4 text-whatsapp" />
         Ask About This Artwork
       </a>
     </div>

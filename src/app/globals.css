@@ -25,6 +25,8 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-foreground: var(--whatsapp-foreground);
   --radius: 0.875rem;
 }
 
@@ -45,6 +47,8 @@
   --input: #e4ded1;
   --ring: #5f9795;
   --destructive: #b4473d;
+  --whatsapp: #25d366;
+  --whatsapp-foreground: #ffffff;
   --radius: 0.875rem;
   --art-hero-start: #faf7f0;
   --art-hero-end: #f4f6f1;
@@ -75,6 +79,8 @@
   --border: #414c48;
   --input: #414c48;
   --ring: #8ec4c0;
+  --whatsapp: #34d399;
+  --whatsapp-foreground: #0f241d;
   --art-hero-start: #1e2524;
   --art-hero-end: #263330;
   --art-hero-base: #3e7472;
