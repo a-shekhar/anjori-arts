@@ -148,4 +148,61 @@ Generate two fields:
   return safeParseGeminiJson<CategoryAISuggestions>(responseText, "category details");
 }
 
+export interface TestimonialAISuggestions {
+  altText: string;
+}
+
+/**
+ * Analyzes a collector living space photograph with Gemini Vision to generate an SEO-rich, accessible alt description.
+ */
+export async function suggestTestimonialAltText(params: {
+  imageUrl: string;
+  artworkTitle?: string;
+  authorName?: string;
+  authorLocation?: string;
+}): Promise<TestimonialAISuggestions> {
+  const { imageUrl, artworkTitle, authorName, authorLocation } = params;
+  const { base64Image, mimeType } = await fetchImageAsBase64(imageUrl);
+
+  const contextDetails = [
+    artworkTitle ? `Artwork Title/Style: "${artworkTitle}"` : null,
+    authorName ? `Collector: "${authorName}"` : null,
+    authorLocation ? `Location: "${authorLocation}"` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const prompt = `You are an expert SEO and art copywriter for Anjori Arts, an authentic Indian handmade art studio.
+Analyze this photograph showing an artwork in a collector's living space or home.
+${contextDetails ? `Context: ${contextDetails}` : ""}
+
+Generate an accurate, accessible, and SEO-rich "altText" (under 120 characters) describing the painting and its home setting (e.g. wall, frame, lighting, living room, pooja room, or foyer). Avoid phrases like 'picture of' or 'image of'.
+Highlight traditional Indian art motifs and interior context.`;
+
+  const response = await ai.models.generateContent({
+    model: DEFAULT_AI_MODEL,
+    contents: [
+      prompt,
+      { inlineData: { data: base64Image, mimeType } },
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          altText: { type: Type.STRING },
+        },
+        required: ["altText"],
+      },
+    },
+  });
+
+  const responseText = response.text;
+  if (!responseText) {
+    throw new Error("No response received from Gemini AI");
+  }
+
+  return safeParseGeminiJson<TestimonialAISuggestions>(responseText, "testimonial alt text");
+}
+
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminRole } from "@/lib/auth-admin";
-import { analyzeArtworkImage, suggestCategoryDetails } from "@/lib/ai/gemini";
+import { analyzeArtworkImage, suggestCategoryDetails, suggestTestimonialAltText } from "@/lib/ai/gemini";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +27,24 @@ export async function POST(req: NextRequest) {
     }
 
     const mode = body?.mode || body?.type || "artwork";
+
+    if (mode === "testimonial") {
+      const { imageUrl, artworkTitle, authorName, authorLocation } = body;
+      if (!imageUrl) {
+        return NextResponse.json(
+          { success: false, error: "Image URL is required for testimonial alt text analysis" },
+          { status: 400 }
+        );
+      }
+
+      const data = await suggestTestimonialAltText({
+        imageUrl,
+        artworkTitle,
+        authorName,
+        authorLocation,
+      });
+      return NextResponse.json({ success: true, data });
+    }
 
     if (mode === "category") {
       const { imageUrl, name } = body;

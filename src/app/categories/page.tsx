@@ -6,6 +6,7 @@ import { siteConfig } from "@/config/site";
 import { getShopData } from "@/actions/shop";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { getCategoryCoverImage, getCategoryAltText } from "@/config/category-images";
 
 export const metadata: Metadata = {
   title: "Art Traditions & Categories",
@@ -49,6 +50,8 @@ export default async function CategoriesPage() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => {
             const count = artworks.filter((art) => art.categoryId === category.id).length;
+            const coverImage = getCategoryCoverImage(category);
+            const altText = getCategoryAltText(category);
 
             return (
               <article
@@ -59,22 +62,13 @@ export default async function CategoriesPage() {
                   href={`/categories/${category.slug}`}
                   className="relative aspect-[16/10] w-full overflow-hidden bg-muted"
                 >
-                  {category.cover_image ? (
-                    <Image
-                      src={category.cover_image}
-                      alt={category.alt_text || `Handmade ${category.name} paintings and traditional Indian art collection`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div
-                      className={cn(
-                        "aa-art-card h-full w-full transition-transform duration-300 group-hover:scale-105",
-                        `aa-art-card-${category.slug}`
-                      )}
-                    />
-                  )}
+                  <Image
+                    src={coverImage}
+                    alt={altText}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
                   <span className="absolute right-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md shadow-xs">
                     {count} {count === 1 ? "Artwork" : "Artworks"}
                   </span>

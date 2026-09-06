@@ -75,15 +75,20 @@ export default function AboutPage() {
             </div>
           </div>
           
-          <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden rounded-[2rem] border border-border bg-muted/40 shadow-md group">
+          <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden rounded-[2rem] border border-border bg-muted/40 shadow-md group select-none">
             <Image
-              src="/images/about-artist.jpg"
-              alt="Artist in studio painting traditional Indian artwork by hand at Anjori Arts"
+              src="/images/avatar-jyotsna.png"
+              alt="Artistic illustration of Jyotsna Sharma, founder and traditional artist of Anjori Arts"
               fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              priority
+              className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105 pointer-events-none"
               sizes="(min-width: 1024px) 50vw, 100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-60" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/15 bg-background/85 px-4 py-2.5 backdrop-blur-md text-xs shadow-sm">
+              <p className="font-serif font-medium text-foreground text-sm">Jyotsna Sharma</p>
+              <p className="text-[11px] text-muted-foreground">Founder &amp; Traditional Artist &middot; Anjori Arts</p>
+            </div>
           </div>
         </div>
       </section>

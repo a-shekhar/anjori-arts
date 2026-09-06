@@ -9,7 +9,10 @@ import { ArtworkCard } from "@/components/shared/ArtworkCard";
 import type { Artwork, Category } from "@/types";
 import { getFeaturedArtworks } from "@/actions/shop";
 import { fetchBlogPosts } from "@/actions/blog";
+import { getPublicTestimonials } from "@/actions/testimonials";
+import { TestimonialsSection } from "@/components/shared/TestimonialsSection";
 import { formatDate } from "@/lib/helpers";
+import { getCategoryCoverImage, getCategoryAltText } from "@/config/category-images";
 
 const practices = [
   {
@@ -48,6 +51,9 @@ export default async function HomePage() {
   // Fetch Latest Blog Posts
   const { posts: latestPosts } = await fetchBlogPosts({ page: 1, limit: 3, sort: "newest" });
 
+  // Fetch Featured Testimonials
+  const testimonials = await getPublicTestimonials({ featuredOnly: true, limit: 3 });
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -84,7 +90,7 @@ export default async function HomePage() {
 
       <div className="overflow-hidden">
         <section className="aa-hero-grid border-b border-border">
-          <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[0.94fr_1.06fr] lg:items-center lg:gap-20 lg:px-10">
+          <div className="mx-auto grid max-w-7xl gap-12 px-5 pt-8 pb-14 sm:px-8 sm:pt-10 sm:pb-18 lg:grid-cols-[0.94fr_1.06fr] lg:items-center lg:gap-20 lg:px-10 lg:pt-12 lg:pb-20">
             <div className="max-w-xl">
               <p className="aa-eyebrow">Anjori Arts / Traditional art & bespoke design</p>
               <h1 className="mt-5 font-serif text-4xl font-medium leading-[1.04] tracking-[-0.035em] text-foreground sm:text-6xl lg:text-7xl">
@@ -117,15 +123,18 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-2xl">
-              <div className="aa-hero-art relative aspect-[1.05] overflow-hidden rounded-[2rem] border border-black/5 bg-secondary shadow-[0_24px_60px_-36px_rgba(43,41,38,0.45)] sm:aspect-[1.2]">
-                <div className="aa-hero-sun" />
-                <div className="aa-hero-river" />
-                <div className="aa-hero-arch aa-hero-arch-one" />
-                <div className="aa-hero-arch aa-hero-arch-two" />
-                <div className="aa-hero-stem aa-hero-stem-one" />
-                <div className="aa-hero-stem aa-hero-stem-two" />
-                <p className="absolute bottom-6 left-6 font-serif text-xl text-white/90 sm:bottom-8 sm:left-8 sm:text-2xl">A study in belonging</p>
+            <div className="relative mx-auto w-full max-w-lg lg:max-w-xl">
+              <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-black/10 bg-secondary shadow-[0_24px_60px_-36px_rgba(43,41,38,0.45)] sm:aspect-[4/5]">
+                <Image
+                  src="/images/hero-radha-krishna-gold.jpg"
+                  alt="Original handmade Radha Krishna artwork with intricate gold illumination on black canvas by Anjori Arts"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="object-cover object-[center_16%] transition-transform duration-700 ease-out hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                <p className="absolute bottom-6 left-6 font-serif text-xl text-white sm:bottom-8 sm:left-8 sm:text-2xl drop-shadow-sm">A study in devotion &amp; gold</p>
               </div>
               <div className="absolute -bottom-7 -left-3 hidden w-48 rounded-2xl border border-border bg-background p-4 shadow-lg sm:block">
                 <p className="aa-eyebrow text-[10px]">Made to order</p>
@@ -190,34 +199,32 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {categories.map((category) => (
-              <Link key={category.id} href={`/categories/${category.slug}`} className="group block">
-                {category.cover_image ? (
-                  <div className="relative aspect-[0.92] overflow-hidden rounded-[1.5rem] border border-black/5">
-                     <Image 
-                        src={category.cover_image} 
-                        alt={category.alt_text || `Handmade ${category.name} paintings and traditional Indian art collection`} 
-                        fill 
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105" 
-                     />
+            {categories.map((category) => {
+              const coverImage = getCategoryCoverImage(category);
+              const altText = getCategoryAltText(category);
+
+              return (
+                <Link key={category.id} href={`/categories/${category.slug}`} className="group block">
+                  <div className="relative aspect-[0.92] overflow-hidden rounded-[1.5rem] border border-black/10 bg-muted">
+                    <Image 
+                      src={coverImage} 
+                      alt={altText} 
+                      fill 
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                    />
                   </div>
-                ) : (
-                  <div className={`aa-art-card aa-art-card-${category.slug} aspect-[0.92] rounded-[1.5rem] border border-black/5 transition-transform duration-300 group-hover:-translate-y-1`} />
-                )}
-                <div className="mt-4 flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-serif text-2xl">{category.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{category.description}</p>
+                  <div className="mt-4 flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-serif text-2xl">{category.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{category.description}</p>
+                    </div>
+                    <ArrowDownRight className="mt-1 size-5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
                   </div>
-                  <ArrowDownRight className="mt-1 size-5 shrink-0 text-primary transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
-          {categories.every(c => !c.cover_image) && (
-            <p className="mt-7 text-xs leading-5 text-muted-foreground text-center">Artwork visuals are design studies while the original collection photography is being prepared.</p>
-          )}
 
           <div className="mt-12 flex justify-center">
             <Link 
@@ -228,6 +235,9 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
+
+        {/* Collector Stories / Testimonials */}
+        <TestimonialsSection testimonials={testimonials} />
 
         <section id="commission" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
           <div className="aa-commission-panel grid overflow-hidden rounded-[2rem] border border-border lg:grid-cols-[1fr_0.9fr]">
@@ -248,7 +258,19 @@ export default async function HomePage() {
                 <MessageCircle className="size-4" /> {hasWhatsApp ? "Chat with the artist" : "Email the artist"}
               </a>
             </div>
-            <div className="aa-commission-art min-h-72" aria-hidden="true" />
+            <div className="relative min-h-[320px] overflow-hidden bg-muted sm:min-h-[400px] lg:min-h-full">
+              <Image
+                src="/images/commission-handmade-paper.jpg"
+                alt="Handcrafted Radha Krishna bespoke painting on textured handmade paper by Anjori Arts"
+                fill
+                sizes="(min-width: 1024px) 45vw, 100vw"
+                className="object-cover object-center transition-transform duration-700 ease-out hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent lg:bg-gradient-to-r lg:from-black/20 lg:to-transparent pointer-events-none" />
+              <div className="absolute bottom-4 right-4 rounded-xl border border-border/60 bg-background/90 px-3.5 py-1.5 backdrop-blur-sm text-xs font-medium text-foreground shadow-sm">
+                Bespoke commissioned work
+              </div>
+            </div>
           </div>
         </section>
 

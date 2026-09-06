@@ -13,6 +13,7 @@ export const ADMIN_NAV_LINKS = [
   { label: "Categories", href: "/admin/categories" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Custom Orders", href: "/admin/custom-orders" },
+  { label: "Testimonials", href: "/admin/testimonials" },
   { label: "Blog", href: "/admin/blog" },
 ] as const;
 
@@ -31,6 +32,8 @@ export const FOOTER_LINKS = {
   explore: [
     { label: "About Us", href: "/about" },
     { label: "Art Traditions", href: "/categories" },
+    { label: "Collector Stories", href: "/stories" },
+    { label: "Share Your Story", href: "/share-story" },
     { label: "Blog", href: "/blog" },
     { label: "Contact", href: "/contact" },
   ],

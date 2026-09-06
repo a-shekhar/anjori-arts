@@ -48,6 +48,8 @@ export function Footer() {
           <div className="mt-4 flex flex-col gap-2.5 text-sm text-muted-foreground">
             <Link href="/shop" className="hover:text-primary transition-colors">Shop Artworks</Link>
             <Link href="/custom-order" className="hover:text-primary transition-colors">Custom Commissions</Link>
+            <Link href="/stories" className="hover:text-primary transition-colors">Collector Stories</Link>
+            <Link href="/share-story" className="hover:text-primary transition-colors">Share Your Story</Link>
             <Link href="/about" className="hover:text-primary transition-colors">About Us</Link>
             <Link href="/categories" className="hover:text-primary transition-colors">Art Traditions</Link>
           </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { ADMIN_NAV_LINKS } from "@/config/navigation";
-import { ExternalLink, LayoutDashboard, Palette, ShoppingBag, Paintbrush, PenTool, FolderTree, Menu } from "lucide-react";
+import { ExternalLink, LayoutDashboard, Palette, ShoppingBag, Paintbrush, PenTool, FolderTree, Menu, MessageSquareQuote } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { siteConfig } from "@/config/site";
@@ -15,6 +15,7 @@ const ICONS = {
   "/admin/categories": FolderTree,
   "/admin/orders": ShoppingBag,
   "/admin/custom-orders": Paintbrush,
+  "/admin/testimonials": MessageSquareQuote,
   "/admin/blog": PenTool,
 };
 

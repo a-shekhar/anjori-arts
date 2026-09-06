@@ -92,3 +92,19 @@ export type CustomOrder = {
   admin_notes?: string | null;
 };
 
+export type Testimonial = {
+  id: string;
+  author_name: string;
+  author_location?: string | null;
+  artwork_title?: string | null;
+  category_id?: string | null;
+  rating: number;
+  quote: string;
+  image_url?: string | null;
+  image_alt?: string | null;
+  is_approved: boolean;
+  is_featured: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at?: string;
+};
