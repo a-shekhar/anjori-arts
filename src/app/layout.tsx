@@ -92,11 +92,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <MobileDrawer />
-            <main id="main-content" className="flex-1">{children}</main>
-            <Footer />
-            <WhatsAppCTA />
+            <div className="print:hidden">
+              <Navbar />
+              <MobileDrawer />
+            </div>
+            <main id="main-content" className="flex-1 print:p-0 print:m-0">{children}</main>
+            <div className="print:hidden">
+              <Footer />
+              <WhatsAppCTA />
+            </div>
           </div>
           <Toaster position="top-right" richColors />
         </ThemeProvider>

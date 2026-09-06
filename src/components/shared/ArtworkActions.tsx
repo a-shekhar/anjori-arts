@@ -22,16 +22,18 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   
   // Default to first variant if variants exist, otherwise we just handle a single product state.
   // We'll mock a default variant if none are provided to keep it backward compatible.
-  const variants = artwork.variants?.length ? artwork.variants : [{
-    id: artwork.id,
-    label: "Standard",
-    widthInches: 12,
-    heightInches: 16,
-    mrp: artwork.price * 1.2,
-    sellingPrice: artwork.price,
-    stockQuantity: artwork.isAvailable ? 1 : 0,
-    isActive: true
-  }];
+  const variants = useMemo(() => {
+    return artwork.variants?.length ? artwork.variants : [{
+      id: artwork.id,
+      label: "Standard",
+      widthInches: 12,
+      heightInches: 16,
+      mrp: artwork.price * 1.2,
+      sellingPrice: artwork.price,
+      stockQuantity: artwork.isAvailable ? 1 : 0,
+      isActive: true
+    }];
+  }, [artwork]);
 
   // Group variants by label
   const groupedVariants = useMemo(() => {
@@ -90,16 +92,35 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
     });
   };
 
+  const handleBuyNow = () => {
+    if (isOutOfStock) return;
+
+    const cartItemId = `${selectedVariant.id}-${isFramed ? "framed" : "unframed"}`;
+    const existing = useCartStore.getState().items.find((item) => item.id === cartItemId);
+
+    if (!existing) {
+      addItem({
+        id: cartItemId,
+        artworkId: artwork.id,
+        slug: artwork.slug,
+        variantId: selectedVariant.id,
+        quantity: 1,
+        isFramed,
+        framingPrice: isFramed ? framingPrice : 0,
+        title: artwork.title,
+        imageUrl: artwork.images[0]?.url || "",
+        size: selectedVariant.label,
+        sellingPrice: selectedVariant.sellingPrice,
+        mrp: selectedVariant.mrp,
+      });
+    }
+
+    router.push("/checkout");
+  };
+
   // Pre-fill WhatsApp general inquiry message
   const whatsappUrl = `${inquiryHref}?text=${encodeURIComponent(
     `Hi! I'm interested in "${artwork.title}" (${selectedVariant.label}). Could you share more details?`
-  )}`;
-
-  // Pre-fill WhatsApp Buy Now / Order message
-  const totalAmountPaise = selectedVariant.sellingPrice + (isFramed ? framingPrice : 0);
-  const formattedPrice = `₹${(totalAmountPaise / 100).toLocaleString("en-IN")}`;
-  const buyNowWhatsappUrl = `${inquiryHref}?text=${encodeURIComponent(
-    `Hi! I want to order "${artwork.title}" (${selectedVariant.label}${isFramed ? ", with Premium Framing" : ""}) priced at ${formattedPrice}. Could you please guide me on payment and delivery?`
   )}`;
 
   return (
@@ -254,22 +275,17 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
           <ShoppingBag className="size-4" />
           Add to Cart
         </button>
-        <a
-          href={isOutOfStock ? undefined : buyNowWhatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => {
-            if (isOutOfStock) e.preventDefault();
-          }}
-          aria-disabled={isOutOfStock}
+        <button
+          type="button"
+          onClick={handleBuyNow}
+          disabled={isOutOfStock}
           className={cn(
-            "flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-md shadow-primary/10",
-            isOutOfStock && "pointer-events-none opacity-50"
+            "flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-md shadow-primary/10 disabled:pointer-events-none disabled:opacity-50"
           )}
         >
           Buy Now
           <ArrowRight className="size-4" />
-        </a>
+        </button>
       </div>
 
       {/* WhatsApp Inquiry */}
@@ -279,7 +295,6 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
         rel="noopener noreferrer"
         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground transition-colors hover:bg-muted"
       >
-        <MessageCircle className="size-4 text-[#25D366]" />
         <MessageCircle className="size-4 text-whatsapp" />
         Ask About This Artwork
       </a>

@@ -41,6 +41,18 @@ export const siteConfig = {
     "handcrafted earrings",
     "buy paintings online India",
   ],
+  payment: {
+    upiId: "anjoriarts@upi",
+    bankDetails: {
+      beneficiaryName: "Jyotsna Dinesh Sharma",
+      bankName: "Indian Bank",
+      accountNumber: "6618425635",
+      ifscCode: "IDIB000U016",
+      branch: "Ulhasnagar Branch (1085), Thane, Maharashtra",
+      address:
+        "Plot No 90, Jaidev Bldg, Dhar Compound, Central Hospital Road, Ulhasnagar, Thane, Maharashtra 421002",
+    },
+  },
 } as const;
 
 export type SiteConfig = typeof siteConfig;

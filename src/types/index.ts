@@ -108,3 +108,82 @@ export type Testimonial = {
   created_at: string;
   updated_at?: string;
 };
+
+export type OrderStatus =
+  | "received"
+  | "confirmed"
+  | "framing_packing"
+  | "dispatched"
+  | "delivered"
+  | "cancelled";
+
+export type PaymentMethod =
+  | "upi_qr"
+  | "bank_transfer"
+  | "pay_on_dispatch"
+  | "razorpay";
+
+export type PaymentStatus =
+  | "pending"
+  | "receipt_uploaded"
+  | "verified"
+  | "paid"
+  | "failed"
+  | "refunded";
+
+export interface ShippingAddress {
+  street: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  artwork_id?: string | null;
+  variant_id?: string | null;
+  title: string;
+  image_url?: string | null;
+  size: string;
+  is_framed: boolean;
+  framing_price: number; // in paise
+  unit_price: number; // in paise
+  quantity: number;
+  line_total: number; // in paise
+  created_at?: string;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  user_id?: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  country_code: string;
+  shipping_address: ShippingAddress;
+  delivery_instructions?: string | null;
+  subtotal: number; // in paise
+  delivery_charge: number; // in paise
+  discount_amount: number; // in paise
+  total_amount: number; // in paise
+  currency: string;
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  payment_reference?: string | null;
+  receipt_url?: string | null;
+  order_status: OrderStatus;
+  courier_name?: string | null;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
+  estimated_delivery?: string | null;
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  items?: OrderItem[];
+}
+
+export type { CartItem } from "@/stores/cart-store";

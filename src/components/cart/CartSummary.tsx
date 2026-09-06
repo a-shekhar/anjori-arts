@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MessageCircle, ShieldCheck, Truck, Sparkles, ArrowRight, FileText } from "lucide-react";
+import { MessageCircle, ShieldCheck, Truck, Sparkles, ArrowRight, FileText, Lock } from "lucide-react";
 import { type CartItem } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/helpers";
 import { STANDARD_DELIVERY_CHARGE } from "@/config/constants";
@@ -202,17 +202,25 @@ export function CartSummary({
 
       {/* Primary Checkout CTA */}
       <div className="mt-6 space-y-3">
-        <a
-          href={generateWhatsAppHref()}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/checkout"
           className={cn(
             "flex min-h-[48px] w-full items-center justify-center gap-2.5 rounded-xl bg-primary px-5 py-3.5 text-center font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.99]"
           )}
         >
-          <MessageCircle className="size-5" aria-hidden="true" />
-          <span>Order via WhatsApp</span>
+          <Lock className="size-4" aria-hidden="true" />
+          <span>Proceed to Checkout</span>
           <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
+
+        <a
+          href={generateWhatsAppHref()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/30 bg-emerald-500/10 px-4 py-2.5 text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-300 transition-colors hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        >
+          <MessageCircle className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+          <span>Prefer to discuss on WhatsApp?</span>
         </a>
 
         <Link

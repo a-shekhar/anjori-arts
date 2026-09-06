@@ -135,3 +135,97 @@
 .aa-commission-panel { background: var(--art-panel); }
 .aa-commission-art { background: linear-gradient(150deg, transparent 0 42%, rgba(255,255,255,.35) 42% 44%, transparent 44%), radial-gradient(circle at 67% 30%, #e8be67 0 13%, transparent 13.3%), radial-gradient(circle at 38% 70%, #f0eee5 0 25%, transparent 25.3%), #5f9795; position: relative; }
 .aa-commission-art::after { border: 1px solid rgba(255,255,255,.65); border-radius: 50% 50% 0 0; bottom: 14%; content: ""; height: 47%; left: 28%; position: absolute; width: 40%; }
+
+/* ---------- Print Styles for Collector Invoice & PDF Export ---------- */
+@media print {
+  /* Completely hide website navigation, header/search bar, footer, drawers, floating widgets, and toasts */
+  nav,
+  header,
+  footer,
+  aside,
+  [data-sonner-toaster],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Paper setup */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 12mm 15mm;
+  }
+
+  /* Force background to pure white and base text to deep dark */
+  html,
+  body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* High contrast Collector Invoice styling */
+  #collector-invoice {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    padding: 24px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure text colors in print are rich, sharp, and high-contrast */
+  #collector-invoice * {
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+    text-shadow: none !important;
+  }
+
+  #collector-invoice .text-muted-foreground,
+  #collector-invoice p,
+  #collector-invoice span,
+  #collector-invoice dt,
+  #collector-invoice dd {
+    color: #374151 !important; /* High-contrast charcoal gray */
+  }
+
+  #collector-invoice h1,
+  #collector-invoice h2,
+  #collector-invoice h3,
+  #collector-invoice strong,
+  #collector-invoice th,
+  #collector-invoice .font-bold,
+  #collector-invoice .font-semibold {
+    color: #000000 !important; /* Jet black for headers and titles */
+  }
+
+  #collector-invoice .text-primary {
+    color: #0f766e !important; /* Rich deep teal on paper */
+  }
+
+  #collector-invoice .text-emerald-600,
+  #collector-invoice .text-emerald-700,
+  #collector-invoice .text-emerald-800 {
+    color: #047857 !important; /* Rich emerald */
+  }
+
+  /* Keep table rows intact across pages */
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
