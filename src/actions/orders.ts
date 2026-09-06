@@ -2,6 +2,7 @@
 
  
 import crypto from "crypto";
+import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/validations/checkout";
 import { uploadStream } from "@/lib/cloudinary-server";
@@ -10,6 +11,7 @@ import {
   sendAdminOrderAlertEmail,
   sendOrderFailureAlertEmail,
 } from "@/lib/email";
+import { checkoutRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import { DELIVERY_CHARGE } from "@/config/constants";
 import type { Order, OrderItem, CartItem } from "@/types";
 
@@ -40,6 +42,17 @@ function generateOrderNumber(): string {
 
 export async function createOrder(payload: CreateOrderPayload): Promise<CreateOrderResult> {
   try {
+    // 0. Rate limiting by client IP
+    const reqHeaders = await headers();
+    const clientIp = getClientIp(reqHeaders);
+    const rateLimit = await checkRateLimit(checkoutRateLimiter, clientIp);
+    if (!rateLimit.success) {
+      return {
+        success: false,
+        error: "Too many order attempts from your device. Please wait a few minutes before trying again.",
+      };
+    }
+
     const { formData, items } = payload;
 
     if (!items || items.length === 0) {

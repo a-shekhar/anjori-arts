@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { customOrderSchema, CUSTOM_ORDER_IMAGE_LIMITS } from "@/lib/validations/contact";
 import { uploadStream } from "@/lib/cloudinary-server";
 import { sendNotificationEmail, sendCustomerConfirmationEmail } from "@/lib/email";
+import { customOrderRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import crypto from "crypto";
 
 // Helper to generate a short human-readable order reference like CUS-9K2MPX
@@ -17,6 +18,19 @@ function generateOrderReference() {
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. Check rate limit before parsing multipart files or uploading to Cloudinary
+    const clientIp = getClientIp(req.headers);
+    const rateLimit = await checkRateLimit(customOrderRateLimiter, clientIp);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too many custom order requests from your device. Please wait a few minutes before trying again.",
+        },
+        { status: 429 }
+      );
+    }
+
     const formData = await req.formData();
     
     // 1. Extract text fields

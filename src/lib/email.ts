@@ -1,6 +1,38 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+/**
+ * Safely escapes HTML special characters to prevent HTML/script injection in email templates.
+ */
+export function escapeHtml(str: unknown): string {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Validates that a given URL is safe (http or https) and escapes attribute-breaking characters.
+ * Returns null if the URL is invalid or uses an unsafe protocol (e.g. javascript:, data:, etc.).
+ */
+export function sanitizeUrl(url: unknown): string | null {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return escapeHtml(trimmed);
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export interface SendInquiryEmailProps {
   type: "inquiry" | "custom_order";
   data: {
@@ -13,6 +45,7 @@ export interface SendInquiryEmailProps {
     subject?: string;
     message?: string;
     artworkType?: string;
+    artworkId?: string | null;
     medium?: string;
     surface?: string;
     preferredSize?: string;
@@ -30,53 +63,81 @@ export async function sendNotificationEmail({ type, data }: SendInquiryEmailProp
     return { success: false, error: "Email configuration missing." };
   }
 
-  const subject =
+  const rawSubject =
     type === "inquiry"
-      ? `New Inquiry: ${data.subject} from ${data.firstName} ${data.lastName}`
-      : `New Custom Order [${data.orderReference}] from ${data.firstName} ${data.lastName}`;
+      ? `New Inquiry: ${data.subject || "No Subject"} from ${data.firstName || ""} ${data.lastName || ""}`.trim()
+      : `New Custom Order [${data.orderReference || "N/A"}] from ${data.firstName || ""} ${data.lastName || ""}`.trim();
+
+  // Escaped variables for HTML body
+  const safeHeadingSubject = escapeHtml(rawSubject);
+  const safeFirstName = escapeHtml(data.firstName || "");
+  const safeLastName = escapeHtml(data.lastName || "");
+  const safeEmail = escapeHtml(data.email || "");
+  const safePhone = escapeHtml(data.phone || "");
+  const safeCountryCode = escapeHtml(data.countryCode || "");
+  const safeMessage = escapeHtml(data.message || "");
 
   // Simple HTML email body
   let htmlBody = `
-    <h2>${subject}</h2>
-    <p><strong>Name:</strong> ${data.firstName} ${data.lastName}</p>
-    <p><strong>Email:</strong> <a href="mailto:${data.email}">${data.email}</a></p>
-    <p><strong>Phone:</strong> ${data.phone ? `${data.countryCode} ${data.phone}` : "Not provided"}</p>
+    <h2>${safeHeadingSubject}</h2>
+    <p><strong>Name:</strong> ${safeFirstName} ${safeLastName}</p>
+    <p><strong>Email:</strong> ${safeEmail ? `<a href="mailto:${safeEmail}">${safeEmail}</a>` : "Not provided"}</p>
+    <p><strong>Phone:</strong> ${safePhone ? `${safeCountryCode} ${safePhone}`.trim() : "Not provided"}</p>
   `;
 
   if (type === "inquiry") {
+    const safeCategory = escapeHtml(data.category || "General");
+    const safeSubject = escapeHtml(data.subject || "No Subject");
     htmlBody += `
-      <p><strong>Category:</strong> ${data.category}</p>
-      <p><strong>Subject:</strong> ${data.subject}</p>
+      <p><strong>Category:</strong> ${safeCategory}</p>
+      <p><strong>Subject:</strong> ${safeSubject}</p>
       <h3>Message:</h3>
-      <p style="white-space: pre-wrap;">${data.message}</p>
+      <p style="white-space: pre-wrap;">${safeMessage}</p>
     `;
   } else {
+    const safeOrderRef = escapeHtml(data.orderReference || "N/A");
+    const safeArtworkId = data.artworkId ? escapeHtml(data.artworkId) : null;
+    const safeCategory = escapeHtml(data.category || data.artworkType || "Custom");
+    const safeMedium = escapeHtml(data.medium || "Not specified");
+    const safeSurface = escapeHtml(data.surface || "Not specified");
+    const safePreferredSize = escapeHtml(data.preferredSize || "Not specified");
+    const safeBudget = escapeHtml(data.budget || "Flexible");
+
+    const safeRefLinkUrl = sanitizeUrl(data.referenceLink);
+    const refLinkHtml = safeRefLinkUrl
+      ? `<a href="${safeRefLinkUrl}" target="_blank" rel="noopener noreferrer">${safeRefLinkUrl}</a>`
+      : data.referenceLink
+      ? escapeHtml(data.referenceLink)
+      : "None";
+
+    const validReferenceImages = (data.referenceImages || [])
+      .map((url) => sanitizeUrl(url))
+      .filter((url): url is string => Boolean(url));
+
     htmlBody += `
-      <p><strong>Order Reference:</strong> ${data.orderReference}</p>
-      ${data.artworkId ? `<p><strong>Artwork ID:</strong> ${data.artworkId}</p>` : ""}
-      <p><strong>Category:</strong> ${data.category || data.artworkType || "Custom"}</p>
-      <p><strong>Medium:</strong> ${data.medium || "Not specified"}</p>
-      <p><strong>Surface:</strong> ${data.surface || "Not specified"}</p>
-      <p><strong>Preferred Size:</strong> ${data.preferredSize || "Not specified"}</p>
-      <p><strong>Estimated Budget:</strong> ${data.budget || "Flexible"}</p>
-      <p><strong>Reference Link:</strong> ${
-        data.referenceLink ? `<a href="${data.referenceLink}">${data.referenceLink}</a>` : "None"
-      }</p>
+      <p><strong>Order Reference:</strong> ${safeOrderRef}</p>
+      ${safeArtworkId ? `<p><strong>Artwork ID:</strong> ${safeArtworkId}</p>` : ""}
+      <p><strong>Category:</strong> ${safeCategory}</p>
+      <p><strong>Medium:</strong> ${safeMedium}</p>
+      <p><strong>Surface:</strong> ${safeSurface}</p>
+      <p><strong>Preferred Size:</strong> ${safePreferredSize}</p>
+      <p><strong>Estimated Budget:</strong> ${safeBudget}</p>
+      <p><strong>Reference Link:</strong> ${refLinkHtml}</p>
       ${
-        data.referenceImages && data.referenceImages.length > 0
+        validReferenceImages.length > 0
           ? `<h3>Reference Images:</h3>
              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-               ${data.referenceImages
+               ${validReferenceImages
                  .map(
                    (url: string) =>
-                     `<a href="${url}" target="_blank"><img src="${url}" alt="Reference Image" style="max-height: 150px; max-width: 150px; object-fit: cover; border-radius: 8px;" /></a>`
+                     `<a href="${url}" target="_blank" rel="noopener noreferrer"><img src="${url}" alt="Reference Image" style="max-height: 150px; max-width: 150px; object-fit: cover; border-radius: 8px;" /></a>`
                  )
                  .join("")}
              </div>`
           : ""
       }
       <h3>Project Details:</h3>
-      <p style="white-space: pre-wrap;">${data.message}</p>
+      <p style="white-space: pre-wrap;">${safeMessage}</p>
     `;
   }
 
@@ -85,7 +146,7 @@ export async function sendNotificationEmail({ type, data }: SendInquiryEmailProp
       from: 'Anjori Arts <noreply@anjoriarts.com>',
       to: ['anjoriarts@gmail.com'],
       replyTo: data.email,
-      subject: subject,
+      subject: rawSubject,
       html: htmlBody,
     });
 
@@ -106,23 +167,31 @@ export async function sendCustomerConfirmationEmail(data: SendInquiryEmailProps[
     return { success: false, error: "Email configuration missing or no email provided." };
   }
 
-  const subject = `Your Custom Order Request Received - ${data.orderReference}`;
+  const rawSubject = `Your Custom Order Request Received - ${data.orderReference || ""}`.trim();
+  const safeFirstName = escapeHtml(data.firstName || "there");
+  const safeOrderReference = escapeHtml(data.orderReference || "N/A");
+  const safeCategory = escapeHtml(data.category || data.artworkType || "Custom");
+  const safeMedium = escapeHtml(data.medium || "Not specified");
+  const safeSurface = escapeHtml(data.surface || "Not specified");
+  const safePreferredSize = escapeHtml(data.preferredSize || "Not specified");
+  const safeBudget = escapeHtml(data.budget || "Flexible");
+  const safeMessage = escapeHtml(data.message || "");
 
   const htmlBody = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
       <h2 style="color: #222;">Thank you for your custom order request!</h2>
-      <p>Hi ${data.firstName},</p>
-      <p>We have successfully received your custom artwork inquiry. Your reference number is <strong>${data.orderReference}</strong>.</p>
+      <p>Hi ${safeFirstName},</p>
+      <p>We have successfully received your custom artwork inquiry. Your reference number is <strong>${safeOrderReference}</strong>.</p>
       <p>I am so thrilled you chose me to bring your vision to life. I will personally review your project details and get back to you within 48 hours to discuss the next steps and provide a quote.</p>
       
       <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #666;">
         <h3 style="margin-top: 0; color: #444;">Your Request Summary:</h3>
-        <p><strong>Category:</strong> ${data.category || data.artworkType || "Custom"}</p>
-        <p><strong>Medium:</strong> ${data.medium || "Not specified"}</p>
-        <p><strong>Surface:</strong> ${data.surface || "Not specified"}</p>
-        <p><strong>Preferred Size:</strong> ${data.preferredSize || "Not specified"}</p>
-        <p><strong>Estimated Budget:</strong> ${data.budget || "Flexible"}</p>
-        <p><strong>Project Details:</strong><br/>${data.message}</p>
+        <p><strong>Category:</strong> ${safeCategory}</p>
+        <p><strong>Medium:</strong> ${safeMedium}</p>
+        <p><strong>Surface:</strong> ${safeSurface}</p>
+        <p><strong>Preferred Size:</strong> ${safePreferredSize}</p>
+        <p><strong>Estimated Budget:</strong> ${safeBudget}</p>
+        <p><strong>Project Details:</strong><br/>${safeMessage}</p>
       </div>
 
       <p>If you have any additional reference images or thoughts to share in the meantime, simply reply directly to this email. I love seeing what inspires you!</p>
@@ -137,7 +206,7 @@ export async function sendCustomerConfirmationEmail(data: SendInquiryEmailProps[
       from: 'Anjori Arts <noreply@anjoriarts.com>',
       to: [data.email],
       replyTo: 'orders@anjoriarts.com',
-      subject: subject,
+      subject: rawSubject,
       html: htmlBody,
     });
 
@@ -184,22 +253,29 @@ export async function sendOrderPlacedEmail(order: {
     maximumFractionDigits: 0,
   });
 
+  const safeCustomerName = escapeHtml(order.customer_name);
+  const safeOrderNumber = escapeHtml(order.order_number);
+  const safeStreet = escapeHtml(order.shipping_address.street);
+  const safeCity = escapeHtml(order.shipping_address.city);
+  const safeState = escapeHtml(order.shipping_address.state);
+  const safePincode = escapeHtml(order.shipping_address.pincode);
+
   const itemsHtml = (order.items || [])
     .map(
       (item) => `
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 10px 0;">
-          <strong>${item.title}</strong><br/>
-          <span style="font-size: 12px; color: #666;">Size: ${item.size} • ${item.is_framed ? "Framed" : "Unframed"}</span>
+          <strong>${escapeHtml(item.title)}</strong><br/>
+          <span style="font-size: 12px; color: #666;">Size: ${escapeHtml(item.size)} • ${item.is_framed ? "Framed" : "Unframed"}</span>
         </td>
-        <td style="padding: 10px 0; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px 0; text-align: right;">₹${((item.unit_price * item.quantity) / 100).toLocaleString("en-IN")}</td>
+        <td style="padding: 10px 0; text-align: center;">${Number(item.quantity) || 1}</td>
+        <td style="padding: 10px 0; text-align: right;">₹${(((Number(item.unit_price) || 0) * (Number(item.quantity) || 1)) / 100).toLocaleString("en-IN")}</td>
       </tr>
     `
     )
     .join("");
 
-  const subject = `Order Confirmed: ${order.order_number} | Anjori Arts`;
+  const rawSubject = `Order Confirmed: ${order.order_number} | Anjori Arts`;
 
   const htmlBody = `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
@@ -209,9 +285,9 @@ export async function sendOrderPlacedEmail(order: {
       </div>
 
       <div style="padding: 24px 0;">
-        <h2 style="font-size: 20px; color: #111; margin-bottom: 8px;">Thank you for your order, ${order.customer_name}!</h2>
+        <h2 style="font-size: 20px; color: #111; margin-bottom: 8px;">Thank you for your order, ${safeCustomerName}!</h2>
         <p style="font-size: 14px; color: #555;">
-          We are delighted to receive your order <strong>#${order.order_number}</strong>. Each artwork is handcrafted with utmost care and crated in museum-grade packaging with complimentary transit insurance.
+          We are delighted to receive your order <strong>#${safeOrderNumber}</strong>. Each artwork is handcrafted with utmost care and crated in museum-grade packaging with complimentary transit insurance.
         </p>
 
         <div style="background-color: #fbfbfb; border: 1px solid #ececec; border-radius: 8px; padding: 18px; margin: 20px 0;">
@@ -239,7 +315,7 @@ export async function sendOrderPlacedEmail(order: {
         <div style="margin: 20px 0; padding: 16px; background-color: #f9f9f9; border-radius: 8px; font-size: 13px;">
           <p style="margin: 0 0 6px 0;"><strong>Shipping Destination:</strong></p>
           <p style="margin: 0; color: #555;">
-            ${order.shipping_address.street}, ${order.shipping_address.city}, ${order.shipping_address.state} - ${order.shipping_address.pincode}
+            ${safeStreet}, ${safeCity}, ${safeState} - ${safePincode}
           </p>
         </div>
 
@@ -260,7 +336,7 @@ export async function sendOrderPlacedEmail(order: {
       to: [order.customer_email],
       bcc: ['anjoriarts@gmail.com'],
       replyTo: 'orders@anjoriarts.com',
-      subject: subject,
+      subject: rawSubject,
       html: htmlBody,
     });
 
@@ -316,47 +392,72 @@ export async function sendAdminOrderAlertEmail(order: {
   });
 
   const cleanPhone = order.customer_phone.replace(/\D/g, "");
-  const whatsappUrl = `https://wa.me/${order.country_code.replace("+", "")}${cleanPhone}?text=${encodeURIComponent(
-    `Hello ${order.customer_name}, regards from Anjori Arts regarding your order #${order.order_number}.`
-  )}`;
+  const cleanCountryCode = order.country_code.replace(/\D/g, "");
+  const whatsappUrl = cleanPhone
+    ? `https://wa.me/${cleanCountryCode}${cleanPhone}?text=${encodeURIComponent(
+        `Hello ${order.customer_name}, regards from Anjori Arts regarding your order #${order.order_number}.`
+      )}`
+    : null;
+
+  const safeCustomerName = escapeHtml(order.customer_name);
+  const safeCustomerEmail = escapeHtml(order.customer_email);
+  const safeCustomerPhone = escapeHtml(order.customer_phone);
+  const safeCountryCode = escapeHtml(order.country_code);
+  const safeOrderNumber = escapeHtml(order.order_number);
+  const safeStreet = escapeHtml(order.shipping_address.street);
+  const safeLandmark = order.shipping_address.landmark ? escapeHtml(order.shipping_address.landmark) : null;
+  const safeCity = escapeHtml(order.shipping_address.city);
+  const safeState = escapeHtml(order.shipping_address.state);
+  const safePincode = escapeHtml(order.shipping_address.pincode);
+  const safeCountry = escapeHtml(order.shipping_address.country || "India");
+  const safePaymentMethod = escapeHtml(order.payment_method);
+  const safePaymentStatus = escapeHtml(order.payment_status);
+  const safePaymentReference = order.payment_reference ? escapeHtml(order.payment_reference) : null;
+  const safeDeliveryInstructions = order.delivery_instructions ? escapeHtml(order.delivery_instructions) : null;
+  const safeReceiptUrl = sanitizeUrl(order.receipt_url);
 
   const itemsHtml = (order.items || [])
     .map(
       (item) => `
       <tr style="border-bottom: 1px solid #e5e5e5;">
         <td style="padding: 10px 0;">
-          <strong>${item.title}</strong><br/>
-          <span style="font-size: 12px; color: #666;">Size: ${item.size} • ${item.is_framed ? "Custom Framed" : "Unframed"}</span>
+          <strong>${escapeHtml(item.title)}</strong><br/>
+          <span style="font-size: 12px; color: #666;">Size: ${escapeHtml(item.size)} • ${item.is_framed ? "Custom Framed" : "Unframed"}</span>
         </td>
-        <td style="padding: 10px 0; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px 0; text-align: right; font-weight: 500;">₹${((item.unit_price * item.quantity) / 100).toLocaleString("en-IN")}</td>
+        <td style="padding: 10px 0; text-align: center;">${Number(item.quantity) || 1}</td>
+        <td style="padding: 10px 0; text-align: right; font-weight: 500;">₹${(((Number(item.unit_price) || 0) * (Number(item.quantity) || 1)) / 100).toLocaleString("en-IN")}</td>
       </tr>
     `
     )
     .join("");
 
-  const adminOrderUrl = `https://www.anjoriarts.com/admin/orders/${order.order_id || order.order_number}`;
-  const subject = `🎉 [New Order] ${order.order_number} (${formattedTotal}) — ${order.customer_name}`;
+  const rawAdminOrderId = order.order_id || order.order_number;
+  const adminOrderUrl = `https://www.anjoriarts.com/admin/orders/${encodeURIComponent(rawAdminOrderId)}`;
+  const rawSubject = `🎉 [New Order] ${order.order_number} (${formattedTotal}) — ${order.customer_name}`;
 
   const htmlBody = `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.5;">
       <div style="background-color: #7c2d12; color: #fff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
         <h1 style="margin: 0; font-size: 20px; font-weight: 600;">New Artwork Order Received</h1>
-        <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Order Reference: <strong>#${order.order_number}</strong></p>
+        <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Order Reference: <strong>#${safeOrderNumber}</strong></p>
       </div>
 
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 24px; border-radius: 0 0 8px 8px; background-color: #ffffff;">
         <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 16px; margin-bottom: 16px;">
           <div>
             <span style="font-size: 11px; text-transform: uppercase; color: #888; font-weight: 600;">Collector</span>
-            <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: bold; color: #111;">${order.customer_name}</p>
+            <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: bold; color: #111;">${safeCustomerName}</p>
             <p style="margin: 2px 0 0 0; font-size: 13px; color: #555;">
-              <a href="mailto:${order.customer_email}" style="color: #7c2d12; text-decoration: none;">${order.customer_email}</a>
+              <a href="mailto:${safeCustomerEmail}" style="color: #7c2d12; text-decoration: none;">${safeCustomerEmail}</a>
             </p>
             <p style="margin: 2px 0 0 0; font-size: 13px; color: #555;">
-              Phone: <strong>${order.country_code} ${order.customer_phone}</strong> 
-              (<a href="${whatsappUrl}" target="_blank" style="color: #059669; font-weight: 600; text-decoration: none;">WhatsApp</a> • 
-               <a href="tel:${order.country_code}${cleanPhone}" style="color: #7c2d12; text-decoration: none;">Call</a>)
+              Phone: <strong>${safeCountryCode} ${safeCustomerPhone}</strong> 
+              ${
+                whatsappUrl
+                  ? `(<a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: 600; text-decoration: none;">WhatsApp</a> • `
+                  : "("
+              }
+               <a href="tel:${cleanCountryCode}${cleanPhone}" style="color: #7c2d12; text-decoration: none;">Call</a>)
             </p>
           </div>
         </div>
@@ -364,15 +465,15 @@ export async function sendAdminOrderAlertEmail(order: {
         <div style="margin-bottom: 20px; font-size: 13px; background-color: #fafafa; padding: 14px; border-radius: 6px; border: 1px solid #f0f0f0;">
           <strong style="color: #333; display: block; margin-bottom: 4px;">Delivery Destination:</strong>
           <span style="color: #555;">
-            ${order.shipping_address.street}
-            ${order.shipping_address.landmark ? `<br/>Landmark: ${order.shipping_address.landmark}` : ""}
-            <br/>${order.shipping_address.city}, ${order.shipping_address.state} - <strong>${order.shipping_address.pincode}</strong>
-            <br/>${order.shipping_address.country || "India"}
+            ${safeStreet}
+            ${safeLandmark ? `<br/>Landmark: ${safeLandmark}` : ""}
+            <br/>${safeCity}, ${safeState} - <strong>${safePincode}</strong>
+            <br/>${safeCountry}
           </span>
           ${
-            order.delivery_instructions
+            safeDeliveryInstructions
               ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ddd; color: #b45309;">
-                  <strong>Special Instructions:</strong> &ldquo;${order.delivery_instructions}&rdquo;
+                  <strong>Special Instructions:</strong> &ldquo;${safeDeliveryInstructions}&rdquo;
                  </div>`
               : ""
           }
@@ -381,9 +482,9 @@ export async function sendAdminOrderAlertEmail(order: {
         <div style="margin-bottom: 20px; font-size: 13px; background-color: #f8fafc; padding: 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
           <strong style="color: #333; display: block; margin-bottom: 4px;">Payment Selection:</strong>
           <span style="color: #555;">
-            Method: <strong>${order.payment_method}</strong> • Status: <strong>${order.payment_status}</strong>
-            ${order.payment_reference ? `<br/>UTR / Reference: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px;">${order.payment_reference}</code>` : ""}
-            ${order.receipt_url ? `<br/>Payment Receipt: <a href="${order.receipt_url}" target="_blank" style="color: #7c2d12; font-weight: bold;">View Attached Screenshot</a>` : ""}
+            Method: <strong>${safePaymentMethod}</strong> • Status: <strong>${safePaymentStatus}</strong>
+            ${safePaymentReference ? `<br/>UTR / Reference: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px;">${safePaymentReference}</code>` : ""}
+            ${safeReceiptUrl ? `<br/>Payment Receipt: <a href="${safeReceiptUrl}" target="_blank" rel="noopener noreferrer" style="color: #7c2d12; font-weight: bold;">View Attached Screenshot</a>` : ""}
           </span>
         </div>
 
@@ -408,7 +509,7 @@ export async function sendAdminOrderAlertEmail(order: {
         </table>
 
         <div style="text-align: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee;">
-          <a href="${adminOrderUrl}" target="_blank" style="display: inline-block; background-color: #7c2d12; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">
+          <a href="${escapeHtml(adminOrderUrl)}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #7c2d12; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">
             Open in Admin Dashboard ➔
           </a>
         </div>
@@ -421,7 +522,7 @@ export async function sendAdminOrderAlertEmail(order: {
       from: 'Anjori Arts <noreply@anjoriarts.com>',
       to: ['anjoriarts@gmail.com'],
       replyTo: order.customer_email,
-      subject: subject,
+      subject: rawSubject,
       html: htmlBody,
     });
 
@@ -451,14 +552,23 @@ export async function sendOrderFailureAlertEmail(data: {
     return { success: false, error: "Email configuration missing." };
   }
 
-  const subject = `⚠️ [Order Failed Alert] Checkout Issue for ${data.customer_name || "Guest Customer"}`;
+  const rawSubject = `⚠️ [Order Failed Alert] Checkout Issue for ${data.customer_name || "Guest Customer"}`;
 
   const cleanPhone = (data.customer_phone || "").replace(/\D/g, "");
+  const cleanCountryCode = (data.country_code || "+91").replace(/\D/g, "");
   const whatsappUrl = cleanPhone
-    ? `https://wa.me/${(data.country_code || "+91").replace("+", "")}${cleanPhone}?text=${encodeURIComponent(
+    ? `https://wa.me/${cleanCountryCode}${cleanPhone}?text=${encodeURIComponent(
         `Hello ${data.customer_name || "there"}, regards from Anjori Arts. We noticed you had an issue completing your order and wanted to assist you directly.`
       )}`
     : null;
+
+  const safeCustomerName = escapeHtml(data.customer_name || "Not provided");
+  const safeCustomerEmail = data.customer_email ? escapeHtml(data.customer_email) : null;
+  const safeCustomerPhone = data.customer_phone ? escapeHtml(data.customer_phone) : null;
+  const safeCountryCode = escapeHtml(data.country_code || "+91");
+  const safeErrorMessage = escapeHtml(data.error_message);
+  const safePaymentMethod = data.payment_method ? escapeHtml(data.payment_method) : null;
+  const safeItemsSummary = data.items_summary ? escapeHtml(data.items_summary) : null;
 
   const htmlBody = `
     <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.5;">
@@ -474,24 +584,24 @@ export async function sendOrderFailureAlertEmail(data: {
 
         <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 14px; margin-bottom: 16px; color: #991b1b;">
           <strong>Error Detail:</strong><br/>
-          <code style="font-size: 12px;">${data.error_message}</code>
+          <code style="font-size: 12px;">${safeErrorMessage}</code>
         </div>
 
         <div style="background-color: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 14px; margin-bottom: 16px;">
           <strong>Customer Contact Information:</strong>
-          <p style="margin: 6px 0 2px 0;"><strong>Name:</strong> ${data.customer_name || "Not provided"}</p>
-          <p style="margin: 2px 0;"><strong>Email:</strong> <a href="mailto:${data.customer_email}">${data.customer_email || "Not provided"}</a></p>
+          <p style="margin: 6px 0 2px 0;"><strong>Name:</strong> ${safeCustomerName}</p>
+          <p style="margin: 2px 0;"><strong>Email:</strong> ${safeCustomerEmail ? `<a href="mailto:${safeCustomerEmail}">${safeCustomerEmail}</a>` : "Not provided"}</p>
           <p style="margin: 2px 0;">
-            <strong>Phone:</strong> ${data.country_code || "+91"} ${data.customer_phone || "Not provided"}
+            <strong>Phone:</strong> ${safeCountryCode} ${safeCustomerPhone || "Not provided"}
             ${
               whatsappUrl
-                ? `— <a href="${whatsappUrl}" target="_blank" style="color: #059669; font-weight: bold; text-decoration: none;">Reach out on WhatsApp ➔</a>`
+                ? `— <a href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer" style="color: #059669; font-weight: bold; text-decoration: none;">Reach out on WhatsApp ➔</a>`
                 : ""
             }
           </p>
           ${data.total_amount ? `<p style="margin: 2px 0;"><strong>Attempted Amount:</strong> ₹${(data.total_amount / 100).toLocaleString("en-IN")}</p>` : ""}
-          ${data.payment_method ? `<p style="margin: 2px 0;"><strong>Attempted Payment:</strong> ${data.payment_method}</p>` : ""}
-          ${data.items_summary ? `<p style="margin: 2px 0;"><strong>Artworks:</strong> ${data.items_summary}</p>` : ""}
+          ${safePaymentMethod ? `<p style="margin: 2px 0;"><strong>Attempted Payment:</strong> ${safePaymentMethod}</p>` : ""}
+          ${safeItemsSummary ? `<p style="margin: 2px 0;"><strong>Artworks:</strong> ${safeItemsSummary}</p>` : ""}
         </div>
 
         <p style="font-size: 11px; color: #888; text-align: center; margin-bottom: 0;">
@@ -506,7 +616,7 @@ export async function sendOrderFailureAlertEmail(data: {
       from: 'Anjori Arts <noreply@anjoriarts.com>',
       to: ['anjoriarts@gmail.com'],
       replyTo: data.customer_email || 'orders@anjoriarts.com',
-      subject: subject,
+      subject: rawSubject,
       html: htmlBody,
     });
 
@@ -521,4 +631,3 @@ export async function sendOrderFailureAlertEmail(data: {
     return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
   }
 }
-

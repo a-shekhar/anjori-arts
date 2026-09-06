@@ -1,8 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { contactSchema } from "@/lib/validations/contact";
 import { sendNotificationEmail } from "@/lib/email";
+import { contactRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import crypto from "crypto";
 
 // Helper to generate references (6 alphanumeric characters, cryptographically secure)
@@ -17,6 +19,16 @@ function generateReference(prefix: string) {
 
 export async function submitInquiry(formData: FormData) {
   try {
+    // 0. Rate limiting by client IP
+    const reqHeaders = await headers();
+    const clientIp = getClientIp(reqHeaders);
+    const rateLimit = await checkRateLimit(contactRateLimiter, clientIp);
+    if (!rateLimit.success) {
+      return {
+        success: false,
+        error: "Too many inquiries sent from your device. Please wait a few minutes before trying again.",
+      };
+    }
     const rawData = {
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName"),
