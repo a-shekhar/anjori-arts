@@ -29,8 +29,6 @@ export interface CreateOrderResult {
 
 function generateOrderNumber(): string {
   const year = new Date().getFullYear();
-  const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-  return `AA-${year}-${randomSuffix}`;
   // 32 unambiguous characters (excludes 0, 1, I, O to prevent confusion on invoices)
   const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let suffix = "";
@@ -204,24 +202,10 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
       if (variant) {
         const art = Array.isArray(variant.artwork) ? variant.artwork[0] : variant.artwork;
 
-        if (variant.is_active === false) {
+        if (variant.is_active === false || art?.is_available === false) {
           return {
             success: false,
             error: `"${art?.title || item.title}" (${variant.label}) is currently unavailable.`,
-          };
-        }
-
-        if (variant.stock_quantity === 0) {
-          return {
-            success: false,
-            error: `"${art?.title || item.title}" (${variant.label}) is sold out.`,
-          };
-        }
-
-        if (variant.stock_quantity > 0 && quantity > variant.stock_quantity) {
-          return {
-            success: false,
-            error: `Only ${variant.stock_quantity} available for "${art?.title || item.title}" (${variant.label}).`,
           };
         }
 
@@ -318,8 +302,6 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
       paymentStatus = "receipt_uploaded";
     }
 
-    const orderNumber = generateOrderNumber();
-
     const shippingAddressJson = {
       street: validData.street,
       landmark: validData.landmark || "",
@@ -412,6 +394,22 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
     if (itemsError) {
       console.error("[createOrder] Error inserting order items:", itemsError);
       // Non-fatal if order succeeded, but log it
+    }
+
+    // Atomically decrement ready stock for ordered variants (down to 0, never negative)
+    for (const item of orderItemsToInsert) {
+      if (item.variant_id) {
+        supabase
+          .rpc("decrement_variant_stock", {
+            p_variant_id: item.variant_id,
+            p_quantity: item.quantity,
+          })
+          .then(({ error }: { error: any }) => {
+            if (error) {
+              console.error("[createOrder] Error decrementing stock for variant:", item.variant_id, error);
+            }
+          });
+      }
     }
 
     // 3. Dispatch emails asynchronously: Customer confirmation (BCC'd to Anjori Arts) + Dedicated Admin Alert

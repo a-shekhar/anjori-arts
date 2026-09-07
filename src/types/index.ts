@@ -5,6 +5,7 @@ export type Category = {
   description: string;
   cover_image?: string | null;
   alt_text?: string | null;
+  display_order?: number;
 };
 
 export type ArtworkVariant = {
@@ -69,14 +70,14 @@ export type CustomOrder = {
   email: string;
   country_code: string;
   phone?: string | null;
-  category: string;
+  category?: string | null;
   medium?: string | null;
   surface?: string | null;
   preferred_size?: string | null;
   budget?: string | null;
   reference_link?: string | null;
   reference_images: string[];
-  message: string;
+  message?: string | null;
   // Agreed / Admin-edited Specifications
   final_category?: string | null;
   final_medium?: string | null;
@@ -91,6 +92,39 @@ export type CustomOrder = {
   estimated_timeline?: string | null;
   admin_notes?: string | null;
 };
+
+export type InquiryStatus =
+  | "new"
+  | "reviewed"
+  | "in_progress"
+  | "resolved"
+  | "archived";
+
+export type InquiryCategory =
+  | "General Inquiry"
+  | "Order Status"
+  | "Custom Artwork"
+  | "Collaboration"
+  | "Feedback"
+  | "Other"
+  | string;
+
+export interface Inquiry {
+  id: string;
+  inquiry_reference: string;
+  status: InquiryStatus | string;
+  created_at: string;
+  updated_at?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  country_code: string;
+  phone?: string | null;
+  category: InquiryCategory;
+  subject: string;
+  message: string;
+  admin_notes?: string | null;
+}
 
 export type Testimonial = {
   id: string;
@@ -181,6 +215,11 @@ export interface Order {
   tracking_url?: string | null;
   estimated_delivery?: string | null;
   admin_notes?: string | null;
+  gateway_order_id?: string | null;
+  paid_at?: string | null;
+  cancellation_reason?: string | null;
+  refund_reference?: string | null;
+  refund_amount?: number; // in paise
   created_at: string;
   updated_at: string;
   items?: OrderItem[];

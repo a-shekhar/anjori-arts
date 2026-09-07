@@ -65,10 +65,20 @@ function getAnonClient() {
 export async function getAllCategories(): Promise<Category[]> {
   try {
     const supabase = getAnonClient();
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("categories")
       .select("*")
-      .order("name");
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error && error.code === "42703") {
+      const fallback = await supabase
+        .from("categories")
+        .select("*")
+        .order("name", { ascending: true });
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error || !data) {
       console.error("Error fetching categories:", error);

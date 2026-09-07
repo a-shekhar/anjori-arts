@@ -11,6 +11,7 @@ export type AdminCategory = {
   description: string;
   cover_image: string;
   alt_text?: string;
+  display_order: number;
   artworkCount: number;
 };
 
@@ -18,15 +19,23 @@ export const getAdminCategories = withAdminAuth(async (): Promise<AdminCategory[
   try {
     const supabase = createAdminClient();
 
-    const [categoriesRes, artworksRes] = await Promise.all([
+    let [categoriesRes, artworksRes] = await Promise.all([
       supabase
         .from("categories")
         .select("*")
+        .order("display_order", { ascending: true })
         .order("name", { ascending: true }),
       supabase
         .from("artworks")
         .select("category_id"),
     ]);
+
+    if (categoriesRes.error && categoriesRes.error.code === "42703") {
+      categoriesRes = await supabase
+        .from("categories")
+        .select("*")
+        .order("name", { ascending: true });
+    }
 
     if (categoriesRes.error || !categoriesRes.data) {
       console.error("Error fetching admin categories:", categoriesRes.error);
@@ -50,6 +59,7 @@ export const getAdminCategories = withAdminAuth(async (): Promise<AdminCategory[
       description: cat.description || "",
       cover_image: cat.cover_image || "",
       alt_text: cat.alt_text || "",
+      display_order: typeof cat.display_order === "number" ? cat.display_order : 0,
       artworkCount: countsMap.get(cat.id) || 0,
     }));
   } catch (err) {
@@ -64,6 +74,7 @@ export const createCategory = withAdminAuth(async (data: {
   description: string;
   cover_image?: string;
   alt_text?: string;
+  display_order?: number;
 }) => {
   try {
     const supabase = createAdminClient();
@@ -71,16 +82,25 @@ export const createCategory = withAdminAuth(async (data: {
     const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
     const id = `cat-${formattedSlug || Date.now()}`;
 
-    const { error } = await supabase
+    const insertPayload: any = {
+      id,
+      name: data.name.trim(),
+      slug: formattedSlug,
+      description: data.description.trim(),
+      cover_image: data.cover_image?.trim() || "",
+      alt_text: data.alt_text?.trim() || null,
+      display_order: Number.isFinite(data.display_order) ? Number(data.display_order) : 0,
+    };
+
+    let { error } = await supabase
       .from("categories")
-      .insert({
-        id,
-        name: data.name.trim(),
-        slug: formattedSlug,
-        description: data.description.trim(),
-        cover_image: data.cover_image?.trim() || "",
-        alt_text: data.alt_text?.trim() || null,
-      });
+      .insert(insertPayload);
+
+    if (error && error.code === "42703") {
+      delete insertPayload.display_order;
+      const retry = await supabase.from("categories").insert(insertPayload);
+      error = retry.error;
+    }
 
     if (error) {
       console.error("Error creating category:", error);
@@ -107,6 +127,7 @@ export const updateCategory = withAdminAuth(async (
     description: string;
     cover_image?: string;
     alt_text?: string;
+    display_order?: number;
   }
 ) => {
   try {
@@ -114,16 +135,28 @@ export const updateCategory = withAdminAuth(async (
 
     const formattedSlug = data.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
-    const { error } = await supabase
+    const updatePayload: any = {
+      name: data.name.trim(),
+      slug: formattedSlug,
+      description: data.description.trim(),
+      cover_image: data.cover_image?.trim() || "",
+      alt_text: data.alt_text?.trim() || null,
+    };
+
+    if (Number.isFinite(data.display_order)) {
+      updatePayload.display_order = Number(data.display_order);
+    }
+
+    let { error } = await supabase
       .from("categories")
-      .update({
-        name: data.name.trim(),
-        slug: formattedSlug,
-        description: data.description.trim(),
-        cover_image: data.cover_image?.trim() || "",
-        alt_text: data.alt_text?.trim() || null,
-      })
+      .update(updatePayload)
       .eq("id", id);
+
+    if (error && error.code === "42703") {
+      delete updatePayload.display_order;
+      const retry = await supabase.from("categories").update(updatePayload).eq("id", id);
+      error = retry.error;
+    }
 
     if (error) {
       console.error("Error updating category:", error);
@@ -140,6 +173,42 @@ export const updateCategory = withAdminAuth(async (
   } catch (err: any) {
     console.error("[updateCategory] Unexpected error:", err);
     return { success: false, message: err?.message || "An unexpected error occurred while updating the category." };
+  }
+});
+
+export const reorderCategories = withAdminAuth(async (orderedIds: string[]) => {
+  try {
+    const supabase = createAdminClient();
+
+    const updates = orderedIds.map((id, index) =>
+      supabase
+        .from("categories")
+        .update({ display_order: (index + 1) * 10 })
+        .eq("id", id)
+    );
+
+    const results = await Promise.all(updates);
+    const firstError = results.find((r) => r.error)?.error;
+    if (firstError) {
+      console.error("Error reordering categories:", firstError);
+      if (firstError.code === "42703") {
+        return {
+          success: false,
+          message: "The display_order column does not exist yet. Please run migration 20260906006000 in Supabase.",
+        };
+      }
+      return { success: false, message: firstError.message };
+    }
+
+    revalidatePath("/admin/categories");
+    revalidatePath("/categories");
+    revalidatePath("/shop");
+    revalidatePath("/");
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[reorderCategories] Unexpected error:", err);
+    return { success: false, message: err?.message || "An unexpected error occurred while reordering categories." };
   }
 });
 
@@ -196,6 +265,7 @@ export const deleteCategory = withAdminAuth(async (id: string) => {
       .eq("id", id);
 
     if (error) {
+      console.error("Error deleting category:", error);
       return { success: false, message: error.message };
     }
 
@@ -210,4 +280,3 @@ export const deleteCategory = withAdminAuth(async (id: string) => {
     return { success: false, message: err?.message || "An unexpected error occurred while deleting the category." };
   }
 });
-

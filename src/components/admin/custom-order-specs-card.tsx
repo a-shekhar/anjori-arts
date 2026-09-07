@@ -122,7 +122,7 @@ export function CustomOrderSpecsCard({
       order.final_budget
   );
 
-  const activeCategory = order.final_category || order.category;
+  const activeCategory = order.final_category || order.category || "Not specified";
   const activeMediumStr = order.final_medium || order.medium || "";
   const activeMediumsList = parseMediums(activeMediumStr);
   const activeSurface = order.final_surface || order.surface || "Open / Unspecified";
@@ -271,7 +271,7 @@ export function CustomOrderSpecsCard({
               <Badge variant="secondary" className="font-medium text-xs">
                 {activeCategory}
               </Badge>
-              {order.final_category && order.final_category !== order.category && (
+              {order.final_category && order.category && order.final_category !== order.category && (
                 <span className="text-[11px] text-muted-foreground line-through">
                   {order.category}
                 </span>
@@ -382,6 +382,7 @@ export function CustomOrderSpecsCard({
                 <div>
                   <span className="text-muted-foreground block">Requested Art:</span>
                   <span className="font-medium text-foreground">{order.category}</span>
+                  <span className="font-medium text-foreground">{order.category || "Not specified"}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground block">Requested Medium:</span>
@@ -455,8 +456,8 @@ export function CustomOrderSpecsCard({
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2.5 border-t border-border/60 text-xs">
                   <div className="space-y-0.5">
                     <span className="text-[11px] font-medium text-muted-foreground">Category</span>
-                    <p className="font-medium text-foreground truncate" title={order.category}>
-                      {order.category}
+                    <p className="font-medium text-foreground truncate" title={order.category || "Not specified"}>
+                      {order.category || "Not specified"}
                     </p>
                   </div>
                   <div className="space-y-0.5">

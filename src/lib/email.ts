@@ -97,7 +97,7 @@ export async function sendNotificationEmail({ type, data }: SendInquiryEmailProp
   } else {
     const safeOrderRef = escapeHtml(data.orderReference || "N/A");
     const safeArtworkId = data.artworkId ? escapeHtml(data.artworkId) : null;
-    const safeCategory = escapeHtml(data.category || data.artworkType || "Custom");
+    const safeCategory = escapeHtml(data.category || data.artworkType || "Not specified / Open to suggestions");
     const safeMedium = escapeHtml(data.medium || "Not specified");
     const safeSurface = escapeHtml(data.surface || "Not specified");
     const safePreferredSize = escapeHtml(data.preferredSize || "Not specified");
@@ -138,6 +138,7 @@ export async function sendNotificationEmail({ type, data }: SendInquiryEmailProp
       }
       <h3>Project Details:</h3>
       <p style="white-space: pre-wrap;">${safeMessage}</p>
+      <p style="white-space: pre-wrap;">${safeMessage || "<em>None provided (refer to attached photos/link or discuss during consultation)</em>"}</p>
     `;
   }
 
@@ -170,12 +171,12 @@ export async function sendCustomerConfirmationEmail(data: SendInquiryEmailProps[
   const rawSubject = `Your Custom Order Request Received - ${data.orderReference || ""}`.trim();
   const safeFirstName = escapeHtml(data.firstName || "there");
   const safeOrderReference = escapeHtml(data.orderReference || "N/A");
-  const safeCategory = escapeHtml(data.category || data.artworkType || "Custom");
+  const safeCategory = escapeHtml(data.category || data.artworkType || "Open to suggestions");
   const safeMedium = escapeHtml(data.medium || "Not specified");
   const safeSurface = escapeHtml(data.surface || "Not specified");
   const safePreferredSize = escapeHtml(data.preferredSize || "Not specified");
   const safeBudget = escapeHtml(data.budget || "Flexible");
-  const safeMessage = escapeHtml(data.message || "");
+  const safeMessage = data.message ? escapeHtml(data.message) : "<em>Shared via references / To be discussed during consultation</em>";
 
   const htmlBody = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">

@@ -11,8 +11,11 @@ export const ADMIN_NAV_LINKS = [
   { label: "Dashboard", href: "/admin" },
   { label: "Artworks", href: "/admin/artworks" },
   { label: "Categories", href: "/admin/categories" },
+  { label: "Surfaces", href: "/admin/surfaces" },
+  { label: "Mediums", href: "/admin/mediums" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Custom Orders", href: "/admin/custom-orders" },
+  { label: "Inquiries", href: "/admin/inquiries" },
   { label: "Testimonials", href: "/admin/testimonials" },
   { label: "Blog", href: "/admin/blog" },
 ] as const;

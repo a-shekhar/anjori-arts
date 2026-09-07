@@ -58,9 +58,24 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
         formData.set("category", customCat || "Other");
       } else if (selectedCategory) {
         formData.set("category", selectedCategory);
+      } else {
+        formData.set("category", "");
       }
       formData.delete("customCategory");
       formData.delete("categorySelect");
+
+      // Option A validation: Require at least some context (written message, photos, or link)
+      const rawMessage = (formData.get("message") as string)?.trim() || "";
+      const rawRefLink = (formData.get("referenceLink") as string)?.trim() || "";
+      const hasImages = selectedFiles.length > 0;
+      const hasRefLink = Boolean(rawRefLink);
+      const hasMessage = rawMessage.length > 0;
+
+      if (!hasMessage && !hasImages && !hasRefLink) {
+        toast.error("Please provide project details, upload reference photos, or add an inspiration link.");
+        setIsSubmitting(false);
+        return;
+      }
 
       // Handle Medium
       const customMed = (formData.get("customMedium") as string)?.trim();
@@ -188,6 +203,7 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
+          <Label htmlFor="category">Category (Optional)</Label>
           <div className="relative">
             <select
               id="category"
@@ -198,6 +214,8 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
               className="min-h-[44px] h-11 w-full min-w-0 appearance-none rounded-lg border border-input bg-transparent px-3 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80"
             >
               <option className="bg-background text-foreground" value="" disabled>Select category</option>
+              <option className="bg-background text-foreground" value="">Select category (optional)</option>
+              <option className="bg-background text-foreground" value="Not sure / Open to suggestions">Not sure / Open to suggestions</option>
               {categories.map((category) => (
                 <option className="bg-background text-foreground" key={category} value={category}>{category}</option>
               ))}
@@ -374,13 +392,17 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="message">Project Details</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="message">Project Details</Label>
+          <span className="text-xs text-muted-foreground">
+            Optional if photos or link provided
+          </span>
+        </div>
         <Textarea
           id="message"
           name="message"
-          required
           defaultValue={defaultDetails}
-          placeholder="Please describe what you have in mind for the commission in as much detail as possible..."
+          placeholder="Please describe what you have in mind for the commission (colors, subject, dimensions, or wall placement). Optional if reference photos or link are provided..."
           className="min-h-[150px] resize-none"
         />
       </div>

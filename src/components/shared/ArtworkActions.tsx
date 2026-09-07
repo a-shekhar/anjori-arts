@@ -57,8 +57,8 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
 
   const [isFramed, setIsFramed] = useState(false);
   const selectedVariant = variants.find(v => v.id === selectedVariantId) || variants[0];
-  const isMadeToOrder = selectedVariant.stockQuantity === -1;
-  const isOutOfStock = selectedVariant.stockQuantity === 0;
+  const isOutOfStock = !artwork.isAvailable || selectedVariant.isActive === false;
+  const isMadeToOrder = !isOutOfStock && selectedVariant.stockQuantity <= 0;
 
   const canBeFramed = selectedVariant.canBeFramed;
   const framingPrice = selectedVariant.framingPrice || 0;

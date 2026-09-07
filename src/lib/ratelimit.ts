@@ -42,7 +42,6 @@ export const contactRateLimiter = redis
       redis,
       limiter: Ratelimit.slidingWindow(5, "10 m"),
       analytics: true,
-      prefix: "ratelimit:contact",
       prefix: getPrefix("contact"),
     })
   : null;
@@ -52,7 +51,6 @@ export const customOrderRateLimiter = redis
       redis,
       limiter: Ratelimit.slidingWindow(3, "30 m"),
       analytics: true,
-      prefix: "ratelimit:custom-order",
       prefix: getPrefix("custom-order"),
     })
   : null;
@@ -62,7 +60,6 @@ export const checkoutRateLimiter = redis
       redis,
       limiter: Ratelimit.slidingWindow(5, "15 m"),
       analytics: true,
-      prefix: "ratelimit:checkout",
       prefix: getPrefix("checkout"),
     })
   : null;

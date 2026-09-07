@@ -26,8 +26,77 @@ import { useCartStore } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/helpers";
 import { BANK_DETAILS, PAYMENT_METHODS } from "@/config/constants";
 import { createOrder, uploadPaymentReceipt } from "@/actions/orders";
+import {
+  createRazorpayOrder,
+  verifyAndCompleteRazorpayOrder,
+} from "@/actions/razorpay";
 import { CountryCodeSelect } from "@/components/ui/country-code-select";
 import type { PaymentMethod } from "@/types";
+
+interface RazorpaySuccessResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  image?: string;
+  order_id: string;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
+  notes?: Record<string, string>;
+  theme?: {
+    color?: string;
+  };
+  handler: (response: RazorpaySuccessResponse) => void | Promise<void>;
+  modal?: {
+    ondismiss?: () => void;
+    escape?: boolean;
+    backdropclose?: boolean;
+  };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (event: string, callback: (response: { error?: { description?: string } }) => void) => void;
+}
+
+interface RazorpayConstructor {
+  new (options: RazorpayOptions): RazorpayInstance;
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(false);
+      return;
+    }
+    if ((window as unknown as { Razorpay?: RazorpayConstructor }).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
 
 const emptySubscribe = () => () => {};
 
@@ -60,7 +129,7 @@ export function CheckoutForm() {
   const [deliveryInstructions, setDeliveryInstructions] = useState("");
 
   // Payment State
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi_qr");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [paymentReference, setPaymentReference] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -217,6 +286,112 @@ export function CheckoutForm() {
     }
     if (!city.trim() || !stateName.trim()) {
       toast.error("Please provide both city and state.");
+      return;
+    }
+
+    if (paymentMethod === "razorpay") {
+      startTransition(async () => {
+        try {
+          const loaded = await loadRazorpayScript();
+          if (!loaded) {
+            toast.error("Unable to load secure Razorpay gateway. Please check your internet connection.");
+            return;
+          }
+
+          const baseFormData = {
+            customerName: customerName.trim(),
+            customerEmail: customerEmail.trim().toLowerCase(),
+            customerPhone: customerPhone.trim(),
+            countryCode,
+            street: street.trim(),
+            landmark: landmark.trim(),
+            city: city.trim(),
+            state: stateName.trim(),
+            pincode: pincode.trim(),
+            country: "India",
+            deliveryInstructions: deliveryInstructions.trim(),
+            paymentMethod: "razorpay" as const,
+            paymentReference: "",
+            receiptUrl: undefined,
+          };
+
+          const orderRes = await createRazorpayOrder({
+            formData: baseFormData,
+            items,
+          });
+
+          if (!orderRes.success || !orderRes.orderId || !orderRes.keyId) {
+            toast.error(orderRes.error || "Failed to initialize payment gateway.");
+            return;
+          }
+
+          const options: RazorpayOptions = {
+            key: orderRes.keyId,
+            amount: orderRes.amount || total,
+            currency: orderRes.currency || "INR",
+            name: "Anjori Arts",
+            description: "Authentic Handcrafted Artworks & Curated Prints",
+            image: "/logo.jpg",
+            order_id: orderRes.orderId,
+            prefill: {
+              name: customerName.trim(),
+              email: customerEmail.trim().toLowerCase(),
+              contact: `${countryCode}${customerPhone.trim()}`,
+            },
+            theme: {
+              color: "#8B2500",
+            },
+            handler: async function (response: RazorpaySuccessResponse) {
+              const verifyToastId = toast.loading("Verifying payment security signature...");
+              try {
+                const verifyRes = await verifyAndCompleteRazorpayOrder({
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                  formData: {
+                    ...baseFormData,
+                    paymentReference: response.razorpay_payment_id,
+                  },
+                  items,
+                });
+
+                toast.dismiss(verifyToastId);
+
+                if (verifyRes.success && verifyRes.orderNumber) {
+                  toast.success("Payment verified! Your order has been placed.");
+                  clearCart();
+                  router.push(`/order-success/${verifyRes.orderNumber}`);
+                } else {
+                  toast.error(
+                    verifyRes.error ||
+                      "We received your payment but encountered an error saving your order. Gallery support has been notified."
+                  );
+                }
+              } catch (verifyErr) {
+                toast.dismiss(verifyToastId);
+                console.error("[Razorpay Handler] Verification error:", verifyErr);
+                toast.error("Error verifying payment signature. Please contact gallery support.");
+              }
+            },
+            modal: {
+              ondismiss: function () {
+                toast.info("Payment was cancelled. Your artworks remain safe in your bag.");
+              },
+            },
+          };
+
+          const RazorpayWindow = (window as unknown as { Razorpay: RazorpayConstructor }).Razorpay;
+          const rzpInstance = new RazorpayWindow(options);
+          rzpInstance.on("payment.failed", function (failResponse) {
+            console.error("[Razorpay] Payment failed:", failResponse);
+            toast.error(failResponse.error?.description || "Payment failed. Please try another payment method.");
+          });
+          rzpInstance.open();
+        } catch (err: unknown) {
+          console.error("Razorpay initiation error:", err);
+          toast.error("Failed to start Razorpay payment. Please try again.");
+        }
+      });
       return;
     }
 
@@ -480,7 +655,50 @@ export function CheckoutForm() {
             </div>
 
             <div className="mt-6 space-y-4">
-              {/* OPTION 1: UPI / QR Code & Direct Bank Transfer (Default / Recommended) */}
+              {/* OPTION 1: Razorpay (Cards, NetBanking, UPI, Wallets) - PRIMARY / RECOMMENDED */}
+              <label
+                htmlFor="payment-razorpay"
+                className={`relative flex cursor-pointer flex-col rounded-2xl border p-4 sm:p-5 transition-all ${
+                  paymentMethod === "razorpay"
+                    ? "border-primary bg-primary/5 shadow-xs"
+                    : "border-border bg-background hover:bg-muted/40"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    id="payment-razorpay"
+                    name="paymentMethod"
+                    value="razorpay"
+                    checked={paymentMethod === "razorpay"}
+                    onChange={() => setPaymentMethod("razorpay")}
+                    className="mt-1 size-4 text-primary focus:ring-primary"
+                  />
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium text-foreground flex items-center gap-2">
+                        <CreditCard className="size-4 text-primary" aria-hidden="true" />
+                        Razorpay Gateway (Cards, UPI, NetBanking, Wallets)
+                      </span>
+                      <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                        Recommended • Instant Confirmation
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      Pay instantly with Google Pay, PhonePe, Paytm, UPI, Credit / Debit Cards (Visa, MasterCard, RuPay), or NetBanking via 256-bit encrypted checkout.
+                    </p>
+                  </div>
+                </div>
+
+                {paymentMethod === "razorpay" && (
+                  <div className="mt-4 border-t border-border/70 pt-3 text-xs text-muted-foreground flex items-center gap-2">
+                    <ShieldCheck className="size-4 text-emerald-600 shrink-0" />
+                    <span>Razorpay secure payment window will open when you click Pay.</span>
+                  </div>
+                )}
+              </label>
+
+              {/* OPTION 2: UPI / QR Code & Direct Bank Transfer */}
               <label
                 htmlFor="payment-upi"
                 className={`relative flex cursor-pointer flex-col rounded-2xl border p-4 sm:p-5 transition-all ${
@@ -503,14 +721,14 @@ export function CheckoutForm() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="font-medium text-foreground flex items-center gap-2">
                         <QrCode className="size-4 text-primary" aria-hidden="true" />
-                        UPI / QR Code &amp; Direct Bank Transfer (NEFT / IMPS)
+                        UPI QR &amp; Direct Bank Transfer (NEFT / IMPS / RTGS)
                       </span>
-                      <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-                        Zero Gateway Surcharge • Recommended
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        Direct Studio Account • High-Value Art
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                      Instant transfer via Google Pay, PhonePe, Paytm, BHIM, or your bank app. Eliminates card limits and gateway processing fees.
+                      Direct transfer to Anjori Arts official bank account. Ideal for high-ticket original artworks without card transaction limits.
                     </p>
                   </div>
                 </div>
@@ -539,89 +757,89 @@ export function CheckoutForm() {
                         </p>
                       </div>
 
-                        {/* Right: Bank & UPI Details */}
-                        <div className="space-y-3.5 md:col-span-7">
-                          {/* UPI Section */}
-                          <div>
-                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                              UPI ID
+                      {/* Right: Bank & UPI Details */}
+                      <div className="space-y-3.5 md:col-span-7">
+                        {/* UPI Section */}
+                        <div>
+                          <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                            UPI ID
+                          </span>
+                          <div className="mt-1 flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2 shadow-2xs">
+                            <span className="font-mono text-xs font-semibold text-foreground">
+                              {BANK_DETAILS.upiId}
                             </span>
-                            <div className="mt-1 flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2 shadow-2xs">
-                              <span className="font-mono text-xs font-semibold text-foreground">
-                                {BANK_DETAILS.upiId}
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(BANK_DETAILS.upiId, "UPI ID")}
+                              className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                            >
+                              {copiedKey === "UPI ID" ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                              <span>{copiedKey === "UPI ID" ? "Copied" : "Copy"}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Direct Bank Transfer Section */}
+                        <div>
+                          <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                            Direct Bank Transfer (IMPS / NEFT / RTGS)
+                          </span>
+                          <div className="mt-1 rounded-xl border border-border bg-muted/30 p-3 text-[11px] divide-y divide-border/60 shadow-2xs space-y-1.5">
+                            {/* Beneficiary */}
+                            <div className="flex items-center justify-between pt-0 pb-1.5">
+                              <span className="text-muted-foreground">Beneficiary Name</span>
+                              <span className="font-semibold text-foreground">{BANK_DETAILS.accountName}</span>
+                            </div>
+
+                            {/* Bank Name */}
+                            <div className="flex items-center justify-between py-1.5">
+                              <span className="text-muted-foreground">Bank</span>
+                              <span className="font-medium text-foreground">{BANK_DETAILS.bankName}</span>
+                            </div>
+
+                            {/* Account Number */}
+                            <div className="flex items-center justify-between py-1.5">
+                              <span className="text-muted-foreground">Account Number</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-foreground text-xs">{BANK_DETAILS.accountNumber}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(BANK_DETAILS.accountNumber, "Account No")}
+                                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                  aria-label="Copy Account Number"
+                                >
+                                  {copiedKey === "Account No" ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                                  <span>{copiedKey === "Account No" ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* IFSC Code */}
+                            <div className="flex items-center justify-between py-1.5">
+                              <span className="text-muted-foreground">IFSC Code</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-foreground text-xs">{BANK_DETAILS.ifscCode}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(BANK_DETAILS.ifscCode, "IFSC")}
+                                  className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                  aria-label="Copy IFSC Code"
+                                >
+                                  {copiedKey === "IFSC" ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                                  <span>{copiedKey === "IFSC" ? "Copied" : "Copy"}</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Branch */}
+                            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between py-1.5 gap-0.5">
+                              <span className="text-muted-foreground shrink-0">Branch</span>
+                              <span className="text-foreground sm:text-right font-medium leading-tight">
+                                {BANK_DETAILS.branch}
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => handleCopy(BANK_DETAILS.upiId, "UPI ID")}
-                                className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 text-[11px] font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                              >
-                                {copiedKey === "UPI ID" ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-                                <span>{copiedKey === "UPI ID" ? "Copied" : "Copy"}</span>
-                              </button>
                             </div>
                           </div>
-
-                          {/* Direct Bank Transfer Section */}
-                          <div>
-                            <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                              Direct Bank Transfer (IMPS / NEFT / RTGS)
-                            </span>
-                            <div className="mt-1 rounded-xl border border-border bg-muted/30 p-3 text-[11px] divide-y divide-border/60 shadow-2xs space-y-1.5">
-                              {/* Beneficiary */}
-                              <div className="flex items-center justify-between pt-0 pb-1.5">
-                                <span className="text-muted-foreground">Beneficiary Name</span>
-                                <span className="font-semibold text-foreground">{BANK_DETAILS.accountName}</span>
-                              </div>
-
-                              {/* Bank Name */}
-                              <div className="flex items-center justify-between py-1.5">
-                                <span className="text-muted-foreground">Bank</span>
-                                <span className="font-medium text-foreground">{BANK_DETAILS.bankName}</span>
-                              </div>
-
-                              {/* Account Number */}
-                              <div className="flex items-center justify-between py-1.5">
-                                <span className="text-muted-foreground">Account Number</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono font-bold text-foreground text-xs">{BANK_DETAILS.accountNumber}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCopy(BANK_DETAILS.accountNumber, "Account No")}
-                                    className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                                    aria-label="Copy Account Number"
-                                  >
-                                    {copiedKey === "Account No" ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-                                    <span>{copiedKey === "Account No" ? "Copied" : "Copy"}</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* IFSC Code */}
-                              <div className="flex items-center justify-between py-1.5">
-                                <span className="text-muted-foreground">IFSC Code</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono font-bold text-foreground text-xs">{BANK_DETAILS.ifscCode}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCopy(BANK_DETAILS.ifscCode, "IFSC")}
-                                    className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                                    aria-label="Copy IFSC Code"
-                                  >
-                                    {copiedKey === "IFSC" ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-                                    <span>{copiedKey === "IFSC" ? "Copied" : "Copy"}</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Branch */}
-                              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between py-1.5 gap-0.5">
-                                <span className="text-muted-foreground shrink-0">Branch</span>
-                                <span className="text-foreground sm:text-right font-medium leading-tight">
-                                  {BANK_DETAILS.branch}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                        </div>
 
                         {/* UTR Input & Receipt Upload */}
                         <div className="pt-2 border-t border-border/70 space-y-2">
@@ -682,7 +900,7 @@ export function CheckoutForm() {
                 )}
               </label>
 
-              {/* OPTION 2: Pay on Dispatch / Confirmation */}
+              {/* OPTION 3: Pay on Dispatch / Confirmation */}
               <label
                 htmlFor="payment-dispatch"
                 className={`relative flex cursor-pointer flex-col rounded-2xl border p-4 sm:p-5 transition-all ${
@@ -717,37 +935,6 @@ export function CheckoutForm() {
                   </div>
                 </div>
               </label>
-
-              {/* OPTION 3: Razorpay (Cards, NetBanking, UPI) - Coming Soon */}
-              <div
-                className="relative flex flex-col rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 sm:p-5 opacity-85 cursor-not-allowed"
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="radio"
-                    id="payment-razorpay"
-                    name="paymentMethod"
-                    value="razorpay"
-                    disabled
-                    aria-disabled="true"
-                    className="mt-1 size-4 text-muted-foreground/40 cursor-not-allowed"
-                  />
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium text-foreground/80 flex items-center gap-2">
-                        <CreditCard className="size-4 text-muted-foreground" aria-hidden="true" />
-                        Razorpay Gateway (Cards, NetBanking, UPI)
-                      </span>
-                      <span className="rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
-                        Integration Coming Soon
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                      Instant online checkout via Credit/Debit Cards (Visa, Mastercard, RuPay) and NetBanking is actively being integrated. In the meantime, please use <strong>UPI / QR Code</strong> or <strong>Pay on Dispatch</strong>.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </section>
         </div>
@@ -830,12 +1017,20 @@ export function CheckoutForm() {
                 {isPending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    <span>Confirming Order...</span>
+                    <span>
+                      {paymentMethod === "razorpay"
+                        ? "Opening Razorpay Gateway..."
+                        : "Confirming Order..."}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Lock className="size-4" aria-hidden="true" />
-                    <span>Place Order • {formatPrice(total)}</span>
+                    <span>
+                      {paymentMethod === "razorpay"
+                        ? `Pay with Razorpay • ${formatPrice(total)}`
+                        : `Place Order • ${formatPrice(total)}`}
+                    </span>
                   </>
                 )}
               </button>

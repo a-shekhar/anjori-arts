@@ -95,8 +95,8 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
       `${order.first_name} ${order.last_name}`.toLowerCase().includes(q) ||
       order.email.toLowerCase().includes(q) ||
       (order.phone && order.phone.toLowerCase().includes(q)) ||
-      order.category.toLowerCase().includes(q) ||
-      order.message.toLowerCase().includes(q);
+      (order.category || "").toLowerCase().includes(q) ||
+      (order.message || "").toLowerCase().includes(q);
 
     const matchesStatus =
       statusFilter === "all" ||
@@ -107,7 +107,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
 
     const matchesCategory =
       categoryFilter === "all" ||
-      order.category.toLowerCase() === categoryFilter.toLowerCase();
+      (order.category || "").toLowerCase() === categoryFilter.toLowerCase();
 
     return matchesSearch && matchesStatus && matchesCategory;
   });
@@ -378,6 +378,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <Badge variant="outline" className="text-[11px] font-normal py-0">
                             {order.category}
+                            {order.category || "Not specified"}
                           </Badge>
                           {order.surface && (
                             <span className="text-[11px] text-muted-foreground">
@@ -634,6 +635,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <Badge variant="secondary" className="font-normal text-[11px]">
                     {order.category}
+                    {order.category || "Not specified"}
                   </Badge>
                   {order.surface && (
                     <Badge variant="outline" className="font-normal text-[11px]">
@@ -861,6 +863,7 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                       <span className="text-xs text-muted-foreground block">Category</span>
                       <span className="font-medium text-foreground break-words block mt-0.5">
                         {selectedOrder.category}
+                        {selectedOrder.category || "Not specified"}
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -911,6 +914,13 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                   </h4>
                   <div className="p-4 rounded-lg bg-card border text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
                     {selectedOrder.message}
+                    {selectedOrder.message ? (
+                      selectedOrder.message
+                    ) : (
+                      <span className="text-muted-foreground italic">
+                        No written project details provided (refer to inspiration photos or link).
+                      </span>
+                    )}
                   </div>
                 </div>
 

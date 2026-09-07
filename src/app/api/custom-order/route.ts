@@ -61,7 +61,25 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Extract and validate files
-    const files = formData.getAll("images") as File[];
+    const files = (formData.getAll("images") as File[]).filter(
+      (f) => f && typeof f === "object" && "size" in f && f.size > 0
+    );
+
+    // Option A validation: Require at least some project context
+    const hasMessage = Boolean(rawData.message && rawData.message.trim().length > 0);
+    const hasImages = files.length > 0;
+    const hasRefLink = Boolean(rawData.referenceLink && rawData.referenceLink.trim().length > 0);
+
+    if (!hasMessage && !hasImages && !hasRefLink) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Please provide project details, upload reference photos, or share an inspiration link.",
+        },
+        { status: 400 }
+      );
+    }
+
     if (files.length > CUSTOM_ORDER_IMAGE_LIMITS.maxFiles) {
       return NextResponse.json({ success: false, error: `Maximum ${CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} images allowed.` }, { status: 400 });
     }
@@ -119,14 +137,14 @@ export async function POST(req: NextRequest) {
           email: validated.data.email,
           country_code: validated.data.countryCode,
           phone: validated.data.phone || null,
-          category: validated.data.category,
+          category: validated.data.category || "Not specified",
           medium: validated.data.medium || null,
           surface: validated.data.surface || null,
           preferred_size: validated.data.preferredSize || null,
           budget: validated.data.budget || null,
           reference_link: validated.data.referenceLink || null,
           reference_images: uploadedUrls,
-          message: validated.data.message,
+          message: validated.data.message || "",
         });
 
       if (!error) {
@@ -153,9 +171,11 @@ export async function POST(req: NextRequest) {
     // 6. Send notification emails
     const emailPayload = {
       ...validated.data,
-      artworkType: validated.data.category,
+      category: validated.data.category || "Not specified",
+      artworkType: validated.data.category || "Custom",
       artworkId: rawData.artworkId,
       referenceImages: uploadedUrls,
+      message: validated.data.message || "",
       orderReference,
     };
 

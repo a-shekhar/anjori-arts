@@ -115,6 +115,7 @@ export function CustomOrderDetailActions({ order }: CustomOrderDetailActionsProp
     `Dear ${order.first_name},\n\n` +
     `Thank you for reaching out to Anjori Arts regarding your custom commission inquiry (${order.order_reference}).\n\n` +
     `We have reviewed your request for the ${order.final_category || order.category} artwork` +
+    `We have reviewed your request for the ${order.final_category || order.category || "custom"} artwork` +
     (order.final_size || order.preferred_size
       ? ` (${order.final_size || order.preferred_size})`
       : "") +
@@ -136,15 +137,15 @@ export function CustomOrderDetailActions({ order }: CustomOrderDetailActionsProp
   const rawWaMessage =
     `Hi ${order.first_name}, thank you for contacting Anjori Arts regarding your custom order commission (${order.order_reference}). ` +
     (hasQuote
-      ? `We have prepared your quotation for ${order.final_category || order.category}:${quoteBreakdown}\n\nPlease let us know if you would like to proceed with this commission!`
-      : `We have reviewed your request for ${order.category} art and would love to discuss the details.`);
+      ? `We have prepared your quotation for ${order.final_category || order.category || "custom artwork"}:${quoteBreakdown}\n\nPlease let us know if you would like to proceed with this commission!`
+      : `We have reviewed your request for ${order.final_category || order.category || "custom"} art and would love to discuss the details.`);
 
   const waMessage = encodeURIComponent(rawWaMessage);
   const waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waMessage}` : null;
 
   const quoteDraftText =
     `Hi ${order.first_name},\n\n` +
-    `Thank you for your custom artwork request (${order.order_reference}) for ${order.final_category || order.category}.\n` +
+    `Thank you for your custom artwork request (${order.order_reference}) for ${order.final_category || order.category || "custom artwork"}.\n` +
     (hasQuote
       ? quoteBreakdown.replace(/\*/g, "") +
         `\n\nPlease let us know if you would like to proceed with the commission.`

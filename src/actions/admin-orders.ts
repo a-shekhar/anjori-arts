@@ -57,6 +57,11 @@ function mapOrder(order: any, items: OrderItem[] = []): Order {
     tracking_url: order.tracking_url ?? null,
     estimated_delivery: order.estimated_delivery ?? null,
     admin_notes: order.admin_notes ?? null,
+    gateway_order_id: order.gateway_order_id ?? null,
+    paid_at: order.paid_at ?? null,
+    cancellation_reason: order.cancellation_reason ?? null,
+    refund_reference: order.refund_reference ?? null,
+    refund_amount: Number(order.refund_amount) || 0,
     created_at: order.created_at,
     updated_at: order.updated_at,
     items,
@@ -163,7 +168,8 @@ export const updateAdminOrderStatus = withAdminAuth(
   async (
     orderId: string,
     status: OrderStatus,
-    adminNotes?: string
+    adminNotes?: string,
+    cancellationReason?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const supabase = createAdminClient();
@@ -175,6 +181,10 @@ export const updateAdminOrderStatus = withAdminAuth(
 
       if (adminNotes !== undefined) {
         updatePayload.admin_notes = adminNotes;
+      }
+
+      if (cancellationReason !== undefined) {
+        updatePayload.cancellation_reason = cancellationReason;
       }
 
       const { error } = await supabase
@@ -260,7 +270,11 @@ export const verifyAdminPayment = withAdminAuth(
   async (
     orderId: string,
     paymentStatus: PaymentStatus,
-    paymentReference?: string
+    paymentReference?: string,
+    refundDetails?: {
+      refundReference?: string;
+      refundAmount?: number;
+    }
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const supabase = createAdminClient();
@@ -274,8 +288,11 @@ export const verifyAdminPayment = withAdminAuth(
         updateData.payment_reference = paymentReference;
       }
 
-      // If payment is marked verified/paid and order is still 'received', advance to 'confirmed'
+      // If payment is marked verified/paid, set paid_at timestamp
       if (paymentStatus === "verified" || paymentStatus === "paid") {
+        updateData.paid_at = new Date().toISOString();
+
+        // Advance received order to confirmed
         const { data: currentOrder } = await supabase
           .from("orders")
           .select("order_status")
@@ -284,6 +301,16 @@ export const verifyAdminPayment = withAdminAuth(
 
         if (currentOrder && currentOrder.order_status === "received") {
           updateData.order_status = "confirmed";
+        }
+      }
+
+      // If refunded, store refund reference and refund amount
+      if (paymentStatus === "refunded" && refundDetails) {
+        if (refundDetails.refundReference !== undefined) {
+          updateData.refund_reference = refundDetails.refundReference;
+        }
+        if (refundDetails.refundAmount !== undefined) {
+          updateData.refund_amount = refundDetails.refundAmount;
         }
       }
 

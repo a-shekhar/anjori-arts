@@ -16,6 +16,8 @@ import {
   ImageIcon, 
   Check, 
   Sparkles,
+  ChevronUp,
+  ChevronDown,
   X 
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -43,7 +45,8 @@ import {
   createCategory, 
   updateCategory, 
   updateCategoryCoverImage, 
-  deleteCategory 
+  deleteCategory,
+  reorderCategories 
 } from "@/actions/admin-categories";
 import { toast } from "sonner";
 
@@ -66,6 +69,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [altText, setAltText] = useState("");
+  const [displayOrder, setDisplayOrder] = useState<number>(10);
   const [isSaving, setIsSaving] = useState(false);
   const [isModalUploading, setIsModalUploading] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -88,6 +92,8 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
     setDescription("");
     setCoverImage("");
     setAltText("");
+    const highest = categories.reduce((max, c) => Math.max(max, c.display_order || 0), 0);
+    setDisplayOrder(highest + 10);
     setDialogOpen(true);
   };
 
@@ -100,6 +106,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
     setDescription(cat.description);
     setCoverImage(cat.cover_image);
     setAltText(cat.alt_text || "");
+    setDisplayOrder(cat.display_order || 0);
     setDialogOpen(true);
   };
 
@@ -251,22 +258,26 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
           description,
           cover_image: coverImage,
           alt_text: altText,
+          display_order: Number(displayOrder) || 0,
         });
 
         if (res.success) {
           setCategories((prev) =>
-            prev.map((c) =>
-              c.id === editingId
-                ? {
-                    ...c,
-                    name: name.trim(),
-                    slug: slug.trim(),
-                    description: description.trim(),
-                    cover_image: coverImage,
-                    alt_text: altText.trim(),
-                  }
-                : c
-            )
+            prev
+              .map((c) =>
+                c.id === editingId
+                  ? {
+                      ...c,
+                      name: name.trim(),
+                      slug: slug.trim(),
+                      description: description.trim(),
+                      cover_image: coverImage,
+                      alt_text: altText.trim(),
+                      display_order: Number(displayOrder) || 0,
+                    }
+                  : c
+              )
+              .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
           );
           toast.success("Category updated successfully", { id: toastId });
           setDialogOpen(false);
@@ -281,21 +292,25 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
           description,
           cover_image: coverImage,
           alt_text: altText,
+          display_order: Number(displayOrder) || 0,
         });
 
         if (res.success && res.id) {
-          setCategories((prev) => [
-            ...prev,
-            {
-              id: res.id!,
-              name: name.trim(),
-              slug: slug.trim(),
-              description: description.trim(),
-              cover_image: coverImage,
-              alt_text: altText.trim(),
-              artworkCount: 0,
-            },
-          ]);
+          setCategories((prev) =>
+            [
+              ...prev,
+              {
+                id: res.id!,
+                name: name.trim(),
+                slug: slug.trim(),
+                description: description.trim(),
+                cover_image: coverImage,
+                alt_text: altText.trim(),
+                display_order: Number(displayOrder) || 0,
+                artworkCount: 0,
+              },
+            ].sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+          );
           toast.success("Category created successfully", { id: toastId });
           setDialogOpen(false);
           router.refresh();
@@ -307,6 +322,37 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
       toast.error(err.message || "Failed to save category", { id: toastId });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleMove = async (index: number, direction: "up" | "down") => {
+    if (search.trim()) {
+      toast.error("Clear search to reorder positions.");
+      return;
+    }
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+    const updated = [...categories];
+    const [movedItem] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, movedItem);
+
+    const reindexed = updated.map((c, idx) => ({
+      ...c,
+      display_order: (idx + 1) * 10,
+    }));
+
+    setCategories(reindexed);
+
+    try {
+      const res = await reorderCategories(reindexed.map((c) => c.id));
+      if (!res.success) {
+        setCategories(categories);
+        toast.error(res.message || "Failed to save reordering.");
+      }
+    } catch {
+      setCategories(categories);
+      toast.error("Failed to save reordering.");
     }
   };
 
@@ -356,23 +402,27 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Cover</TableHead>
-              <TableHead className="w-[200px]">Name & Slug</TableHead>
+              <TableHead className="w-[80px]">Cover</TableHead>
+              <TableHead className="w-[180px]">Name & Slug</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead className="w-[120px] text-center">Artworks</TableHead>
-              <TableHead className="w-[160px] text-right">Actions</TableHead>
+              <TableHead className="w-[130px] text-center">Position</TableHead>
+              <TableHead className="w-[100px] text-center">Artworks</TableHead>
+              <TableHead className="w-[140px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCategories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   No categories found matching your search.
                 </TableCell>
               </TableRow>
             ) : (
               filteredCategories.map((cat) => {
                 const isUploadingThis = uploadingId === cat.id;
+                const realIndex = categories.findIndex((c) => c.id === cat.id);
+                const isFirst = realIndex === 0;
+                const isLast = realIndex === categories.length - 1;
 
                 return (
                   <TableRow key={cat.id} className="group">
@@ -437,6 +487,37 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
                       <p className="line-clamp-2 text-sm text-muted-foreground">
                         {cat.description || <span className="italic text-muted-foreground/60">No description provided</span>}
                       </p>
+                    </TableCell>
+
+                    {/* Position */}
+                    <TableCell className="text-center">
+                      <div className="inline-flex items-center justify-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-muted-foreground w-6 text-right">
+                          #{realIndex + 1}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleMove(realIndex, "up")}
+                            disabled={isFirst || !!search.trim()}
+                            title={search.trim() ? "Clear search to reorder" : "Move up"}
+                            aria-label={`Move ${cat.name} up`}
+                            className="inline-flex size-7 items-center justify-center rounded border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                          >
+                            <ChevronUp className="size-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMove(realIndex, "down")}
+                            disabled={isLast || !!search.trim()}
+                            title={search.trim() ? "Clear search to reorder" : "Move down"}
+                            aria-label={`Move ${cat.name} down`}
+                            className="inline-flex size-7 items-center justify-center rounded border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                          >
+                            <ChevronDown className="size-4" />
+                          </button>
+                        </div>
+                      </div>
                     </TableCell>
 
                     {/* Artwork Count */}
@@ -545,6 +626,22 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
               />
               <p className="text-[11px] text-muted-foreground">
                 Will be accessible at: /categories/{slug || "your-slug"}
+              </p>
+            </div>
+
+            {/* Display Order */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Display Order
+              </label>
+              <Input
+                type="number"
+                placeholder="10"
+                value={displayOrder}
+                onChange={(e) => setDisplayOrder(parseInt(e.target.value, 10) || 0)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Lower numbers appear first in dropdowns and storefront filters. You can also reorder with arrows on the table.
               </p>
             </div>
 
@@ -682,7 +779,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
               </p>
             </div>
 
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 gap-3 sm:gap-3">
               <Button
                 type="button"
                 variant="outline"

@@ -58,6 +58,13 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
   // Payment verification state
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<PaymentStatus>(order.payment_status);
   const [utrReference, setUtrReference] = useState(order.payment_reference || "");
+  const [refundReference, setRefundReference] = useState(order.refund_reference || "");
+  const [refundAmount, setRefundAmount] = useState(
+    order.refund_amount ? (order.refund_amount / 100).toString() : ""
+  );
+
+  // Cancellation state
+  const [cancellationReason, setCancellationReason] = useState(order.cancellation_reason || "");
 
   // Notes state
   const [adminNotes, setAdminNotes] = useState(order.admin_notes || "");
@@ -65,12 +72,30 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
   // Receipt Modal state
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
+  // Copy helper
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(label);
+    toast.success(`Copied ${label} to clipboard!`);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
   // Status transitions
   const handleStatusChange = (newStatus: OrderStatus) => {
     startTransition(async () => {
-      const res = await updateAdminOrderStatus(order.id, newStatus, adminNotes);
+      const res = await updateAdminOrderStatus(
+        order.id,
+        newStatus,
+        adminNotes,
+        cancellationReason.trim() || undefined
+      );
       if (res.success) {
-        setOrder((prev) => ({ ...prev, order_status: newStatus }));
+        setOrder((prev) => ({
+          ...prev,
+          order_status: newStatus,
+          cancellation_reason: cancellationReason.trim() || prev.cancellation_reason,
+        }));
         toast.success(`Order moved to ${ORDER_STATUS_LABELS[newStatus]}`);
         router.refresh();
       } else {
@@ -82,16 +107,35 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
   // Payment verification
   const handleVerifyPayment = () => {
     startTransition(async () => {
+      const refundPaise = refundAmount ? Math.round(parseFloat(refundAmount) * 100) : undefined;
       const res = await verifyAdminPayment(
         order.id,
         selectedPaymentStatus,
-        utrReference.trim() || undefined
+        utrReference.trim() || undefined,
+        selectedPaymentStatus === "refunded"
+          ? {
+              refundReference: refundReference.trim() || undefined,
+              refundAmount: refundPaise,
+            }
+          : undefined
       );
       if (res.success) {
         setOrder((prev) => ({
           ...prev,
           payment_status: selectedPaymentStatus,
           payment_reference: utrReference.trim() || prev.payment_reference,
+          paid_at:
+            selectedPaymentStatus === "verified" || selectedPaymentStatus === "paid"
+              ? prev.paid_at || new Date().toISOString()
+              : prev.paid_at,
+          refund_reference:
+            selectedPaymentStatus === "refunded"
+              ? refundReference.trim() || prev.refund_reference
+              : prev.refund_reference,
+          refund_amount:
+            selectedPaymentStatus === "refunded" && refundPaise !== undefined
+              ? refundPaise
+              : prev.refund_amount,
           order_status:
             selectedPaymentStatus === "verified" || selectedPaymentStatus === "paid"
               ? prev.order_status === "received"
@@ -251,6 +295,39 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
             );
           })}
         </div>
+
+        {/* Cancellation Reason if Cancelled */}
+        {order.order_status === "cancelled" && (
+          <div className="mt-4 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-destructive">
+              <AlertTriangle className="size-4" />
+              <span>Order Cancelled</span>
+            </div>
+            {order.cancellation_reason ? (
+              <p className="mt-1 text-muted-foreground">
+                <span className="font-medium text-foreground">Reason: </span>
+                {order.cancellation_reason}
+              </p>
+            ) : null}
+            <div className="mt-2 flex gap-2">
+              <input
+                type="text"
+                placeholder="Specify or update cancellation reason..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                className="min-h-[36px] flex-1 rounded-lg border border-input bg-background px-3 py-1 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              />
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => handleStatusChange("cancelled")}
+                className="rounded-lg bg-destructive px-3 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+              >
+                Save Reason
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* MAIN TWO-COLUMN WORKBENCH */}
@@ -411,6 +488,48 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
             </div>
 
             <div className="mt-4 space-y-4 text-xs">
+              {/* Gateway Order ID if available */}
+              {order.gateway_order_id && (
+                <div className="rounded-xl border border-border/80 bg-muted/40 p-3">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground font-semibold uppercase tracking-wider">
+                      Gateway Order ID
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(order.gateway_order_id!, "Gateway Order ID")}
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                    >
+                      {copiedKey === "Gateway Order ID" ? (
+                        <Check className="size-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="size-3" />
+                      )}
+                      <span>{copiedKey === "Gateway Order ID" ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                  <p className="mt-1 font-mono text-xs font-semibold text-foreground">
+                    {order.gateway_order_id}
+                  </p>
+                </div>
+              )}
+
+              {/* Paid At Timestamp if available */}
+              {order.paid_at && (
+                <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-xs">
+                  <span className="text-muted-foreground font-medium">Payment Timestamp</span>
+                  <span className="font-semibold text-foreground">
+                    {new Date(order.paid_at).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Payment Status
@@ -430,9 +549,25 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Transaction Reference / UTR / Gateway ID
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Transaction Reference / UTR / Gateway ID
+                  </label>
+                  {utrReference && (
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(utrReference, "Transaction Reference")}
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+                    >
+                      {copiedKey === "Transaction Reference" ? (
+                        <Check className="size-3 text-emerald-600" />
+                      ) : (
+                        <Copy className="size-3" />
+                      )}
+                      <span>{copiedKey === "Transaction Reference" ? "Copied" : "Copy"}</span>
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="e.g. 423819028192 or Razorpay ID"
@@ -441,6 +576,57 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
                   className="mt-1 min-h-[38px] w-full rounded-xl border border-input bg-background px-3 py-1.5 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 />
               </div>
+
+              {/* Refund Details Panel when status is Refunded */}
+              {selectedPaymentStatus === "refunded" && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-3">
+                  <span className="block font-semibold text-[11px] text-amber-900 dark:text-amber-200 uppercase tracking-wider">
+                    Refund Audit Details
+                  </span>
+                  <div>
+                    <label className="block text-[11px] font-medium text-foreground">
+                      Refund Reference (Razorpay rfnd_... or bank UTR)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. rfnd_EKwxwAgItmmXdp"
+                      value={refundReference}
+                      onChange={(e) => setRefundReference(e.target.value)}
+                      className="mt-1 min-h-[36px] w-full rounded-lg border border-input bg-background px-3 py-1.5 font-mono text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-foreground">
+                      Refund Amount (in ₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder={`Max ${order.total_amount / 100}`}
+                      value={refundAmount}
+                      onChange={(e) => setRefundAmount(e.target.value)}
+                      className="mt-1 min-h-[36px] w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Display existing refund info if already refunded and viewing another status */}
+              {order.payment_status === "refunded" && selectedPaymentStatus !== "refunded" && order.refund_reference && (
+                <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs">
+                  <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+                    Recorded Refund
+                  </span>
+                  <p className="mt-1 text-muted-foreground">
+                    Ref: <span className="font-mono text-foreground font-medium">{order.refund_reference}</span>
+                  </p>
+                  {order.refund_amount ? (
+                    <p className="text-muted-foreground">
+                      Amount: <span className="font-semibold text-foreground">{formatPrice(order.refund_amount)}</span>
+                    </p>
+                  ) : null}
+                </div>
+              )}
 
               {/* Uploaded Receipt Preview */}
               {order.receipt_url ? (

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { Palette, PenTool, ShoppingBag, PlusCircle, ArrowRight } from "lucide-react";
+import { Palette, PenTool, Paintbrush, MessageSquare, PlusCircle, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | Anjori Arts",
@@ -13,7 +13,7 @@ export default async function AdminDashboard() {
   const supabase = createAdminClient();
 
   // Fetch quick metrics concurrently
-  const [artworksRes, blogRes, ordersRes, customOrdersRes] = await Promise.all([
+  const [artworksRes, blogRes, inquiriesRes, customOrdersRes] = await Promise.all([
     supabase.from("artworks").select("*", { count: "exact", head: true }),
     supabase.from("blog_posts").select("*", { count: "exact", head: true }),
     supabase.from("inquiries").select("*", { count: "exact", head: true }),
@@ -23,7 +23,7 @@ export default async function AdminDashboard() {
   const metrics = {
     artworks: artworksRes.count || 0,
     blogs: blogRes.count || 0,
-    inquiries: ordersRes.count || 0,
+    inquiries: inquiriesRes.count || 0,
     customOrders: customOrdersRes.count || 0,
   };
 
@@ -37,42 +37,50 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Artworks</CardTitle>
-            <Palette className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.artworks}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-            <PenTool className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.blogs}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Custom Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.customOrders}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inquiries</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.inquiries}</div>
-          </CardContent>
-        </Card>
+        <Link href="/admin/artworks" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Artworks</CardTitle>
+              <Palette className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.artworks}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/blog" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
+              <PenTool className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.blogs}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/custom-orders" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Custom Orders</CardTitle>
+              <Paintbrush className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.customOrders}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/inquiries" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Inquiries</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.inquiries}</div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -90,6 +98,9 @@ export default async function AdminDashboard() {
             </Link>
             <Link href="/admin/custom-orders" className={buttonVariants({ variant: "secondary" })}>
               View Custom Orders <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+            <Link href="/admin/inquiries" className={buttonVariants({ variant: "secondary" })}>
+              Manage Inquiries <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </CardContent>
         </Card>

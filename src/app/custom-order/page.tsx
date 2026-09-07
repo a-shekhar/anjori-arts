@@ -35,17 +35,21 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
 
   const supabase = await createClient();
 
-  const [{ data: categories }, { data: surfaces }, { data: mediums }] = await Promise.all([
-    supabase.from("categories").select("name").order("name"),
+  let [categoriesRes, surfacesRes, mediumsRes] = await Promise.all([
+    supabase.from("categories").select("name").order("display_order", { ascending: true }).order("name"),
     supabase.from("surfaces").select("name").order("display_order"),
-    supabase.from("mediums").select("name").order("name"),
+    supabase.from("mediums").select("name").order("name", { ascending: true }),
   ]);
 
-  const categoryOptions = categories?.map((c) => c.name) || [];
-  const surfaceOptions = surfaces?.map((s) => s.name) || [];
+  if (categoriesRes.error && categoriesRes.error.code === "42703") {
+    categoriesRes = await supabase.from("categories").select("name").order("name");
+  }
+
+  const categoryOptions = categoriesRes.data?.map((c) => c.name) || [];
+  const surfaceOptions = surfacesRes.data?.map((s) => s.name) || [];
   const mediumOptions =
-    mediums && mediums.length > 0
-      ? mediums.map((m) => m.name)
+    mediumsRes.data && mediumsRes.data.length > 0
+      ? mediumsRes.data.map((m) => m.name)
       : ["Acrylic", "Oil"];
 
   return (

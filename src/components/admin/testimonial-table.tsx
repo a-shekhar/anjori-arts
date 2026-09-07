@@ -632,7 +632,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
               <strong>{selectedItem?.author_name}</strong>? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-3 sm:gap-3">
             <Button
               variant="outline"
               disabled={isSubmitting}

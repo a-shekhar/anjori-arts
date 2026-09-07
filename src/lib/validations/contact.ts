@@ -19,13 +19,13 @@ export const customOrderSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   countryCode: z.string().default("+91"),
   phone: z.string().optional(),
-  category: z.string().min(2, "Please specify the category of artwork"),
+  category: z.string().optional().or(z.literal("")),
   medium: z.string().optional(),
   surface: z.string().optional(),
   preferredSize: z.string().optional(),
   budget: z.string().optional(),
   referenceLink: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  message: z.string().min(20, "Please provide more details about your project (minimum 20 characters)").max(5000),
+  message: z.string().max(5000).optional().or(z.literal("")),
 });
 
 export type CustomOrderFormData = z.infer<typeof customOrderSchema>;
