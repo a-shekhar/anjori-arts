@@ -1,7 +1,5 @@
 "use server";
 
- 
-import crypto from "crypto";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/validations/checkout";
@@ -14,6 +12,8 @@ import {
 import { checkoutRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import { DELIVERY_CHARGE } from "@/config/constants";
 import type { Order, OrderItem, CartItem } from "@/types";
+
+import { generateReferenceCode } from "@/lib/reference";
 
 export interface CreateOrderPayload {
   formData: CheckoutFormData;
@@ -28,14 +28,7 @@ export interface CreateOrderResult {
 }
 
 function generateOrderNumber(): string {
-  const year = new Date().getFullYear();
-  // 32 unambiguous characters (excludes 0, 1, I, O to prevent confusion on invoices)
-  const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let suffix = "";
-  for (let i = 0; i < 6; i++) {
-    suffix += characters.charAt(crypto.randomInt(0, characters.length));
-  }
-  return `AA-${year}-${suffix}`;
+  return generateReferenceCode("ART");
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<CreateOrderResult> {
@@ -313,7 +306,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
 
     // 1. Insert order (with automatic retry on unique constraint collision)
     let orderData: { id: string; order_number: string } | null = null;
-    let orderError: any = null;
+    let orderError: { code?: string; message?: string } | null = null;
     const maxAttempts = 5;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -404,7 +397,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
             p_variant_id: item.variant_id,
             p_quantity: item.quantity,
           })
-          .then(({ error }: { error: any }) => {
+          .then(({ error }: { error: unknown }) => {
             if (error) {
               console.error("[createOrder] Error decrementing stock for variant:", item.variant_id, error);
             }

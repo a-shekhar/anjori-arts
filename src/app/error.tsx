@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,9 @@ export default function ErrorPage({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
+    // Log the error to Sentry and developer console
     console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

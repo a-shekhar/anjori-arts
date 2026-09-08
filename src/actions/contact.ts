@@ -5,16 +5,11 @@ import { headers } from "next/headers";
 import { contactSchema } from "@/lib/validations/contact";
 import { sendNotificationEmail } from "@/lib/email";
 import { contactRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
-import crypto from "crypto";
+import { generateReferenceCode } from "@/lib/reference";
 
-// Helper to generate references (6 alphanumeric characters, cryptographically secure)
-function generateReference(prefix: string) {
-  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 characters without ambiguous I, O, 1, 0
-  let result = prefix + '-';
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(crypto.randomInt(0, characters.length));
-  }
-  return result;
+// Helper to generate references (e.g. INQ-2026-9K2MPX)
+function generateReference(prefix: "INQ" = "INQ") {
+  return generateReferenceCode(prefix);
 }
 
 export async function submitInquiry(formData: FormData) {
@@ -48,7 +43,7 @@ export async function submitInquiry(formData: FormData) {
     // 1. Insert into Supabase with collision retry
     const supabase = await createClient();
     let inquiryReference = "";
-    let dbError: any = null;
+    let dbError: { message: string; code: string; details: string; hint: string } | null = null;
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -96,7 +91,7 @@ export async function submitInquiry(formData: FormData) {
     }
 
     return { success: true, inquiryReference };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Submit Inquiry Error:", err);
     return { success: false, error: "An unexpected error occurred." };
   }

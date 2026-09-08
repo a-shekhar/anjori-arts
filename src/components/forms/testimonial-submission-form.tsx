@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { submitCustomerTestimonial } from "@/actions/testimonials";
-import { TESTIMONIAL_IMAGE_LIMITS } from "@/lib/validations/testimonial";
+import { compressImage } from "@/lib/image-compression";
 
 export function TestimonialSubmissionForm() {
   const [rating, setRating] = React.useState<number>(5);
   const [hoverRating, setHoverRating] = React.useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [isOptimizingPhoto, setIsOptimizingPhoto] = React.useState<boolean>(false);
   const [isSuccess, setIsSuccess] = React.useState<boolean>(false);
   const [submittedName, setSubmittedName] = React.useState<string>("");
 
@@ -33,26 +34,52 @@ export function TestimonialSubmissionForm() {
     };
   }, [previewUrl]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > TESTIMONIAL_IMAGE_LIMITS.maxFileSizeBytes) {
-      toast.error("Image file size must be 5MB or smaller.");
+    // Reject non-image files early (support standard web images and mobile camera formats like HEIC)
+    const isLikelyImage =
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
+
+    if (!isLikelyImage) {
+      toast.error("Please upload a photograph (JPG, PNG, WebP, or HEIC).");
       return;
     }
 
-    if (!TESTIMONIAL_IMAGE_LIMITS.allowedTypes.includes(file.type as any)) {
-      toast.error("Only JPG, PNG, and WebP images are supported.");
+    // Safety guard against massive corrupt files (e.g. > 35MB)
+    if (file.size > 35 * 1024 * 1024) {
+      toast.error("The selected file is unusually large (>35MB). Please select a standard photograph.");
       return;
     }
 
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    setIsOptimizingPhoto(true);
 
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    try {
+      // Compress to 2048px (2K) at 88% quality, preserving artwork details while dropping size to ~800KB-1.2MB
+      const optimizedFile = await compressImage(file, {
+        maxDimension: 2048,
+        quality: 0.88,
+        mimeType: "image/jpeg",
+      });
+
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      setSelectedFile(optimizedFile);
+      setPreviewUrl(URL.createObjectURL(optimizedFile));
+      toast.success("Photo optimized for gallery display!");
+    } catch (err) {
+      console.error("Image optimization failed:", err);
+      toast.error("Failed to process photo. Please try a different image.");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } finally {
+      setIsOptimizingPhoto(false);
+    }
   };
 
   const removePhoto = () => {
@@ -90,7 +117,7 @@ export function TestimonialSubmissionForm() {
       setSubmittedName(name);
       setIsSuccess(true);
       toast.success("Thank you for sharing your collector story!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Testimonial submission error:", err);
       toast.error("Something went wrong. Please check your network and try again.");
     } finally {
@@ -244,7 +271,7 @@ export function TestimonialSubmissionForm() {
         {/* Room / Wall Photo Upload */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
-            Photo of the Artwork in Your Space <span className="text-xs text-muted-foreground">(Optional, max 5MB)</span>
+            Photo of the Artwork in Your Space <span className="text-xs text-muted-foreground">(Optional — automatically optimized for gallery display)</span>
           </Label>
           <p className="text-xs text-muted-foreground">
             We love seeing how our paintings find a place in your home, living room, pooja space, or study.
@@ -253,13 +280,26 @@ export function TestimonialSubmissionForm() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
             onChange={handleFileChange}
+            disabled={isOptimizingPhoto || isSubmitting}
             className="sr-only"
             id="room-photo-input"
           />
 
-          {!previewUrl ? (
+          {isOptimizingPhoto ? (
+            <div className="flex min-h-[140px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-6 text-center animate-pulse">
+              <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
+              <p className="mt-3 text-sm font-medium text-foreground">
+                Optimizing photograph for gallery display...
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Preserving crisp brushwork & artwork details
+              </p>
+            </div>
+          ) : !previewUrl ? (
             <label
               htmlFor="room-photo-input"
               className="group flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 bg-muted/20 p-6 text-center transition-colors hover:border-primary/60 hover:bg-muted/40"
@@ -271,7 +311,7 @@ export function TestimonialSubmissionForm() {
                 Click or tap to upload a room photograph
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                JPG, PNG, or WebP up to 5MB
+                JPG, PNG, or WebP (smartphone photos automatically optimized)
               </p>
             </label>
           ) : (
@@ -300,7 +340,7 @@ export function TestimonialSubmissionForm() {
         <div className="pt-2">
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isOptimizingPhoto}
             size="lg"
             className="w-full sm:w-auto h-12 rounded-full px-8 text-sm"
           >
@@ -308,6 +348,11 @@ export function TestimonialSubmissionForm() {
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 Sharing your story...
+              </>
+            ) : isOptimizingPhoto ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Optimizing photo...
               </>
             ) : (
               <>

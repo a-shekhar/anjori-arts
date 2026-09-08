@@ -37,6 +37,8 @@ export interface VerifyRazorpayOrderPayload {
   items: CartItem[];
 }
 
+import { generateReferenceCode } from "@/lib/reference";
+
 export interface VerifyRazorpayOrderResult {
   success: boolean;
   orderNumber?: string;
@@ -45,14 +47,7 @@ export interface VerifyRazorpayOrderResult {
 }
 
 function generateOrderNumber(): string {
-  const year = new Date().getFullYear();
-  // 32 unambiguous characters (excludes 0, 1, I, O to prevent confusion on invoices)
-  const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let suffix = "";
-  for (let i = 0; i < 6; i++) {
-    suffix += characters.charAt(crypto.randomInt(0, characters.length));
-  }
-  return `AA-${year}-${suffix}`;
+  return generateReferenceCode("ART");
 }
 
 /**
@@ -127,7 +122,7 @@ export async function createRazorpayOrder(
 
     // 5. Insert pending order record so webhooks and redirect callbacks have a shared safety net
     let orderData: { id: string; order_number: string } | null = null;
-    let orderError: any = null;
+    let orderError: { code?: string; message?: string } | null = null;
     const maxAttempts = 5;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -303,7 +298,7 @@ export async function verifyAndCompleteRazorpayOrder(
       }
     } else {
       // Fallback: If no pending order exists (edge case resilience), insert new order
-      let orderError: any = null;
+      let orderError: { code?: string; message?: string } | null = null;
       const maxAttempts = 5;
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -391,7 +386,7 @@ export async function verifyAndCompleteRazorpayOrder(
             p_variant_id: item.variant_id,
             p_quantity: item.quantity,
           })
-          .then(({ error }: { error: any }) => {
+          .then(({ error }: { error: unknown }) => {
             if (error) {
               console.error("[verifyAndCompleteRazorpayOrder] Error decrementing stock for variant:", item.variant_id, error);
             }

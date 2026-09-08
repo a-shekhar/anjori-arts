@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import {
   AlertCircle,
   RefreshCw,
@@ -139,7 +140,13 @@ export default function AdminError({
 
   useEffect(() => {
     console.error(`[AdminError at ${pathname || "unknown route"}]:`, error);
-  }, [error, pathname]);
+    Sentry.captureException(error, {
+      extra: {
+        pathname,
+        sectionName: routeContext?.sectionName,
+      },
+    });
+  }, [error, pathname, routeContext]);
 
   const title = routeContext?.title || "Section Failed to Load";
   const eyebrow = routeContext?.sectionName

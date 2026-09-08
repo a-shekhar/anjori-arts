@@ -87,11 +87,12 @@ export function BlogForm({ initialData }: BlogFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="cover_image">Cover Image URL</Label>
+          <Label htmlFor="cover_image">Cover Image Path or URL</Label>
           <Input 
             id="cover_image" 
             name="cover_image" 
-            type="url"
+            type="text"
+            placeholder="/images/categories/madhubani.jpg or https://..."
             defaultValue={initialData?.cover_image as string} 
             required 
           />

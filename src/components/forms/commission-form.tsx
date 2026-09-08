@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CountryCodeSelect } from "@/components/ui/country-code-select";
 import { toast } from "sonner";
-import { Send, Image as ImageIcon, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { Send, Image as ImageIcon, ChevronDown, ChevronUp, Plus, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { CUSTOM_ORDER_IMAGE_LIMITS } from "@/lib/validations/contact";
+import { compressImage } from "@/lib/image-compression";
 
 interface CommissionFormProps {
   categories: string[];
@@ -22,6 +23,7 @@ interface CommissionFormProps {
 
 export function CommissionForm({ categories, mediums, surfaces, defaultCategory, defaultDetails, artworkId }: CommissionFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isOptimizing, setIsOptimizing] = React.useState(false);
   const [isImagesExpanded, setIsImagesExpanded] = React.useState(true);
   const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
   const [previews, setPreviews] = React.useState<string[]>([]);
@@ -130,36 +132,87 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
     }
   }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const filesArray = Array.from(event.target.files);
-      
-      // Limit to max files
-      if (filesArray.length > CUSTOM_ORDER_IMAGE_LIMITS.maxFiles) {
-        toast.error(`You can only upload up to ${CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} images.`);
-        return;
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputFiles = event.target.files ? Array.from(event.target.files) : [];
+    if (inputFiles.length === 0) return;
+
+    // Calculate how many more files can be added
+    const availableSlots = CUSTOM_ORDER_IMAGE_LIMITS.maxFiles - selectedFiles.length;
+    if (availableSlots <= 0) {
+      toast.error(`You have already selected the maximum of ${CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} images.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const filesToAdd = inputFiles.slice(0, availableSlots);
+    if (inputFiles.length > availableSlots) {
+      toast.info(`Only ${availableSlots} more image(s) could be added (max ${CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} total).`);
+    }
+
+    // Validate formats (standard web images + HEIC/HEIF)
+    const validFiles: File[] = [];
+    for (const file of filesToAdd) {
+      const isLikelyImage =
+        file.type.startsWith("image/") ||
+        /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
+
+      if (!isLikelyImage) {
+        toast.error(`Skipped "${file.name}": Please upload a valid photograph (JPG, PNG, WebP, or HEIC).`);
+        continue;
       }
-      
-      // Validate file size
-      for (const file of filesArray) {
-        if (file.size > CUSTOM_ORDER_IMAGE_LIMITS.maxFileSizeBytes) {
-          toast.error(`File too large: ${file.name}. Max size is 5MB.`);
-          return;
-        }
+
+      if (file.size > 35 * 1024 * 1024) {
+        toast.error(`Skipped "${file.name}": File is unusually large (>35MB).`);
+        continue;
       }
-      
-      setSelectedFiles(filesArray);
-      
-      // Create preview URLs
-      const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setIsOptimizing(true);
+
+    try {
+      // Compress all valid files concurrently to 2048px (2K) at 85% JPEG quality (~500-700KB per image)
+      const optimizedBatch = await Promise.all(
+        validFiles.map((file) =>
+          compressImage(file, {
+            maxDimension: 2048,
+            quality: 0.85,
+            mimeType: "image/jpeg",
+          })
+        )
+      );
+
+      const newSelectedFiles = [...selectedFiles, ...optimizedBatch];
+      const newPreviews = [...previews, ...optimizedBatch.map((f) => URL.createObjectURL(f))];
+
+      setSelectedFiles(newSelectedFiles);
       setPreviews(newPreviews);
-    } else {
-      setSelectedFiles([]);
-      setPreviews([]);
+      toast.success(
+        optimizedBatch.length === 1
+          ? "Photo optimized for studio review!"
+          : `${optimizedBatch.length} photos optimized for studio review!`
+      );
+    } catch (err) {
+      console.error("Error optimizing commission photos:", err);
+      toast.error("Failed to process one or more images. Please try again.");
+    } finally {
+      setIsOptimizing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
   const removeFile = (indexToRemove: number) => {
+    if (previews[indexToRemove]) {
+      URL.revokeObjectURL(previews[indexToRemove]);
+    }
     const newFiles = selectedFiles.filter((_, index) => index !== indexToRemove);
     const newPreviews = previews.filter((_, index) => index !== indexToRemove);
     
@@ -339,10 +392,20 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
                 type="button" 
                 variant="outline" 
                 className="gap-2 shrink-0 bg-background hover:bg-muted"
+                disabled={isSubmitting || isOptimizing || selectedFiles.length >= CUSTOM_ORDER_IMAGE_LIMITS.maxFiles}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Plus className="size-4" />
-                Add Photo
+                {isOptimizing ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Optimizing...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="size-4" />
+                    Add Photo
+                  </>
+                )}
               </Button>
               <span className="text-sm text-muted-foreground">
                 {selectedFiles.length}/{CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} selected
@@ -353,14 +416,15 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
               ref={fileInputRef}
               id="reference-images" 
               type="file" 
-              accept={CUSTOM_ORDER_IMAGE_LIMITS.allowedTypes.join(",")} 
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" 
               multiple 
+              disabled={isSubmitting || isOptimizing}
               onChange={handleFileChange}
               className="hidden"
             />
             
             <p className="text-xs text-muted-foreground">
-              Add up to {CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} images. Max 5MB each.
+              Add up to {CUSTOM_ORDER_IMAGE_LIMITS.maxFiles} images (smartphone photos are automatically optimized for studio review).
             </p>
 
             {/* Image Previews */}
@@ -407,9 +471,14 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full" disabled={isSubmitting || isOptimizing}>
         {isSubmitting ? (
           "Submitting Request..."
+        ) : isOptimizing ? (
+          <>
+            Optimizing Photos...
+            <Loader2 className="ml-2 size-4 animate-spin" />
+          </>
         ) : (
           <>
             Submit Request

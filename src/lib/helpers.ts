@@ -32,15 +32,14 @@ export function generateSlug(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+import { generateReferenceCode, type ReferencePrefix } from "./reference";
+
 /**
- * Generate a human-readable order number.
- * e.g. "AA-20260827-001"
+ * Generate a standardized human-readable order number.
+ * e.g. "ART-2026-9K2MPX"
  */
-export function generateOrderNumber(prefix: string = "AA"): string {
-  const date = new Date();
-  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.floor(Math.random() * 900 + 100).toString();
-  return `${prefix}-${dateStr}-${random}`;
+export function generateOrderNumber(prefix: ReferencePrefix = "ART"): string {
+  return generateReferenceCode(prefix);
 }
 
 /**

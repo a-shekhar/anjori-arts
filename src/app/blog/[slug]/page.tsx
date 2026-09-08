@@ -30,6 +30,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
+  const coverImageUrl = post.cover_image?.startsWith("/")
+    ? `${siteConfig.url}${post.cover_image}`
+    : post.cover_image;
+
   return {
     title: `${post.title} | Anjori Arts`,
     description: post.excerpt,
@@ -40,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description: post.excerpt,
       url: `${siteConfig.url}/blog/${post.slug}`,
-      images: [post.cover_image],
+      images: [coverImageUrl],
       type: "article",
     },
   };
@@ -72,12 +76,16 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const coverImageUrl = post.cover_image?.startsWith("/")
+    ? `${siteConfig.url}${post.cover_image}`
+    : post.cover_image;
+
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
-    image: [post.cover_image],
+    image: [coverImageUrl],
     author: {
       "@type": "Person",
       name: post.author,

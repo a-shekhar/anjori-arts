@@ -4,16 +4,12 @@ import { customOrderSchema, CUSTOM_ORDER_IMAGE_LIMITS } from "@/lib/validations/
 import { uploadStream } from "@/lib/cloudinary-server";
 import { sendNotificationEmail, sendCustomerConfirmationEmail } from "@/lib/email";
 import { customOrderRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
+import { generateReferenceCode } from "@/lib/reference";
 import crypto from "crypto";
 
-// Helper to generate a short human-readable order reference like CUS-9K2MPX
+// Helper to generate a standardized human-readable order reference like CUS-2026-9K2MPX
 function generateOrderReference() {
-  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 characters without ambiguous I, O, 1, 0
-  let result = 'CUS-';
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(crypto.randomInt(0, characters.length));
-  }
-  return result;
+  return generateReferenceCode("CUS");
 }
 
 export async function POST(req: NextRequest) {
@@ -122,7 +118,7 @@ export async function POST(req: NextRequest) {
     // 5. Insert into DB with images already included (with retry on collision)
     const supabase = createAdminClient();
     let orderReference = "";
-    let dbError: any = null;
+    let dbError: { code?: string; message?: string } | null = null;
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {

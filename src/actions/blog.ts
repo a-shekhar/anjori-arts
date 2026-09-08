@@ -12,7 +12,13 @@ const blogSchema = z.object({
   slug: z.string().min(1, "Slug is required"),
   excerpt: z.string().min(1, "Excerpt is required"),
   content: z.string().min(1, "Content is required"),
-  cover_image: z.string().url("Must be a valid URL"),
+  cover_image: z
+    .string()
+    .min(1, "Cover image is required")
+    .refine(
+      (val) => val.startsWith("/") || /^https?:\/\//i.test(val),
+      "Must be a valid URL or local path starting with /"
+    ),
   author: z.string().min(1, "Author is required"),
   tags: z.string(), // comma separated
   is_published: z.boolean().default(false),
@@ -58,20 +64,21 @@ export const createBlogPost = withAdminAuth(async (prevState: unknown, formData:
 
     revalidatePath("/blog");
     revalidatePath("/admin/blog");
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; digest?: string };
     if (
-      error &&
-      typeof error === "object" &&
-      "digest" in error &&
-      typeof error.digest === "string" &&
-      (error.digest.startsWith("DYNAMIC_SERVER_USAGE") ||
-       error.digest.startsWith("NEXT_"))
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof err.digest === "string" &&
+      (err.digest.startsWith("DYNAMIC_SERVER_USAGE") ||
+       err.digest.startsWith("NEXT_"))
     ) {
       throw error;
     }
     console.error("[createBlogPost] Unexpected error:", error);
     return {
-      message: error?.message || "An unexpected error occurred while creating the blog post.",
+      message: err?.message || "An unexpected error occurred while creating the blog post.",
     };
   }
 
@@ -131,20 +138,21 @@ export const updateBlogPost = withAdminAuth(async (id: string, prevState: unknow
     revalidatePath("/blog");
     revalidatePath(`/blog/${validatedFields.data.slug}`);
     revalidatePath("/admin/blog");
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; digest?: string };
     if (
-      error &&
-      typeof error === "object" &&
-      "digest" in error &&
-      typeof error.digest === "string" &&
-      (error.digest.startsWith("DYNAMIC_SERVER_USAGE") ||
-       error.digest.startsWith("NEXT_"))
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof err.digest === "string" &&
+      (err.digest.startsWith("DYNAMIC_SERVER_USAGE") ||
+       err.digest.startsWith("NEXT_"))
     ) {
       throw error;
     }
     console.error("[updateBlogPost] Unexpected error:", error);
     return {
-      message: error?.message || "An unexpected error occurred while updating the blog post.",
+      message: err?.message || "An unexpected error occurred while updating the blog post.",
     };
   }
 
@@ -161,9 +169,10 @@ export const deleteBlogPost = withAdminAuth(async (id: string) => {
     revalidatePath("/blog");
     revalidatePath("/admin/blog");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string };
     console.error("[deleteBlogPost] Unexpected error:", error);
-    return { success: false, message: error?.message || "An unexpected error occurred while deleting the blog post." };
+    return { success: false, message: err?.message || "An unexpected error occurred while deleting the blog post." };
   }
 });
 
@@ -203,7 +212,7 @@ export async function fetchBlogPosts(options: {
     }
 
     return { posts: data || [], count: count || 0 };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[fetchBlogPosts] Unexpected error:", error);
     return { posts: [], count: 0 };
   }
