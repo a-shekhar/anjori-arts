@@ -1,38 +1,34 @@
-# Anjori Arts - Technical Document
+# Anjori Arts - Technical Reference & Architecture Guide
 
-> **Version:** 1.0.0  
-> **Last Updated:** March 1, 2026  
-> **API Base URL:** `/api/v1`  
-> **Audience:** Developers
+> **Version:** 2.0.0  
+> **Last Updated:** September 2026  
+> **Active Architecture:** Next.js 16 App Router + Supabase PostgreSQL & Auth + Vercel Edge  
+> **Audience:** Developers, Technical Maintainers  
 
----
-
-## Table of Contents
-
-1. [API Overview](#1-api-overview)
-2. [Authentication](#2-authentication)
-3. [Endpoints by Feature](#3-endpoints-by-feature)
-4. [Common Patterns](#4-common-patterns)
-5. [Error Handling](#5-error-handling)
-6. [Code Structure](#6-code-structure)
-7. [Best Practices](#7-best-practices)
+> [!NOTE] Architecture Evolution & Status
+> The live Anjori Arts platform runs entirely on a unified **Next.js 16 (App Router) + Supabase** stack deployed to the Vercel Global Edge Network. Application operations and business logic are executed through type-safe **Next.js Server Actions** (`src/actions/*`) and Next.js Route Handlers (`/api/*`, `/auth/*`), eliminating the need for an external microservice backend. The legacy Spring Boot 3 API design (`/api/v1` on port 8080) previously documented here has been superseded by this unified architecture.
 
 ---
 
-## 1. API Overview
+## 1. Unified Next.js 16 & Supabase Architecture
 
-### Base URLs
+### Backend Operations: Server Actions & Route Handlers
 
-| Environment | URL |
-|-------------|-----|
-| Development | `http://localhost:8080/api/v1` |
-| Production | `https://api.anjoriarts.com/api/v1` |
+Instead of legacy REST microservices on port 8080, server-side logic is organized into type-safe modules:
 
-### Content Type
+| Module | Location | Purpose | Key Functions / Endpoints |
+| :--- | :--- | :--- | :--- |
+| **Payments** | `src/actions/razorpay.ts` | Authoritative order pricing, Razorpay order generation & signature verification | `createRazorpayOrder`, `verifyRazorpayPayment` |
+| **Webhooks** | `src/app/api/webhooks/razorpay/route.ts` | Idempotent payment capture webhook processing | `POST /api/webhooks/razorpay` |
+| **Authentication** | `src/actions/auth.ts`<br>`src/app/auth/callback/route.ts` | Supabase Auth sessions, token exchange, recovery OTPs | `forgotPassword`, `verifyRecoveryOtp`, `/auth/callback` |
+| **Orders & Commerce** | `src/actions/cart.ts`<br>`src/actions/account.ts` | Cart persistence, user addresses, collector profile data | `syncCart`, `saveAddress`, `getUserAddresses` |
+| **Admin Operations** | `src/actions/admin-*.ts` | Protected CRUD operations guarded by `withAdminAuth` & RLS | `updateOrderStatus`, `upsertArtwork`, `deleteAsset` |
+| **Email Dispatch** | `src/lib/email.ts` | Transactional emails dispatched via Resend SDK | `sendOrderPlacedEmail`, `sendCustomerInquiryConfirmation` |
+| **AI Assistant** | `src/app/api/chat/route.ts` | Google Gemini AI art curation recommendations | `POST /api/chat` |
 
-```
-Content-Type: application/json
-```
+---
+
+## 2. Legacy API Reference (Historical Spring Boot Planning)
 
 ### Standard Response Format
 

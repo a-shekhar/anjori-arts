@@ -1,15 +1,16 @@
 # Anjori Arts - Infrastructure Guide
 
-> **Version:** 1.0.0  
-> **Last Updated:** March 1, 2026  
-> **Audience:** DevOps, Self-deployment
+> **Version:** 2.0.0  
+> **Last Updated:** September 2026  
+> **Architecture:** Next.js 16 (App Router) on Vercel + Supabase (PostgreSQL / Auth) + Cloudflare DNS & Email Routing + Resend  
+> **Audience:** DevOps, Self-deployment, Project Operations
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#1-overview)
-2. [Docker Setup](#2-docker-setup)
+2. [DNS & Domain Configuration](#2-dns--domain-configuration)
 3. [Environment Variables](#3-environment-variables)
 4. [Service Configuration](#4-service-configuration)
 5. [Deployment](#5-deployment)
@@ -25,250 +26,145 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      CLOUDFLARE                              │
-│                  (CDN, Security, SSL)                        │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    GOOGLE CLOUD RUN                          │
-│              (Container hosting, auto-scaling)               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │              Docker Container                          │  │
-│  │  ┌─────────────────┐    ┌─────────────────────────┐   │  │
-│  │  │  React (static) │    │  Spring Boot (API)      │   │  │
-│  │  │       :80       │◄───│       :8080             │   │  │
-│  │  └─────────────────┘    └─────────────────────────┘   │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-          │                    │                    │
-          ▼                    ▼                    ▼
-   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-   │  Neon        │    │  Cloudinary  │    │  Zoho Mail   │
-   │ (PostgreSQL) │    │  (Images)    │    │  (Email)     │
-   └──────────────┘    └──────────────┘    └──────────────┘
-          │                    │                    │
-          ▼                    ▼                    ▼
-   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-   │   2Factor    │    │   Razorpay   │    │  WhatsApp    │
-   │  (SMS OTP)   │    │  (Payments)  │    │  (Notifs)    │
-   └──────────────┘    └──────────────┘    └──────────────┘
+│         (DNS, Security, Email Routing to Gmail)             │
+│   Nameservers: imani.ns.cloudflare.com, valentin...         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+               ┌───────────────┴───────────────┐
+               ▼                               ▼
+    [ WEB TRAFFIC (DNS ONLY) ]     [ INBOUND EMAIL ROUTING ]
+               │                               │
+               ▼                               ▼
+┌─────────────────────────────┐   ┌───────────────────────────┐
+│     VERCEL GLOBAL EDGE      │   │   anjoriarts@gmail.com    │
+│  (Next.js 16 App Router)    │   │  (Unified Support Inbox)  │
+│  • React Server Components  │   └───────────────────────────┘
+│  • Server Actions & API     │
+│  • Global Edge CDN          │
+└──────────────┬──────────────┘
+               │
+      ┌────────┴────────┬────────────────┬──────────────┐
+      ▼                 ▼                ▼              ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│   Supabase   │ │  Cloudinary  │ │    Resend    │ │   Razorpay   │
+│ (PostgreSQL, │ │ (Art Images, │ │(Transactional│ │ (Payments &  │
+│  Auth, RLS)  │ │ CDN Delivery)│ │ Email & SMTP)│ │  Webhooks)   │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
 ```
 
 ### Services Summary
 
-| Service | Purpose | Cost |
-|---------|---------|------|
-| Cloud Run | Container hosting | ~₹500/mo |
-| Neon | PostgreSQL database | Free (0.5GB) |
-| Cloudinary | Image CDN + Invoices | Free (25 credits) |
-| Cloudflare | CDN, Security, Email Routing | Free |
-| Resend | Transactional email | Free (3,000/mo) |
-| 2Factor | Phone OTP verification | ₹0.165/SMS |
-| WhatsApp Business App | Order notifications (manual) | Free |
-| Razorpay | Payments | 2% all methods |
+| Service | Purpose | Plan / Cost |
+|---|---|---|
+| **Vercel** | Next.js 16 Hosting & Edge Network | Hobby / Pro ($0–$20/mo) |
+| **Supabase** | Managed PostgreSQL, Row Level Security, Auth | Free Tier (500MB DB, 50k MAU) |
+| **Cloudflare** | DNS Management & Inbound Email Routing (`*@anjoriarts.com` $\rightarrow$ `anjoriarts@gmail.com`) | Free ($0/mo) |
+| **Resend** | Outbound Transactional Emails & SMTP Relay | Free (3,000 emails/mo) |
+| **Cloudinary** | Responsive Art Imagery, Auto-Format & Cloud Storage | Free (25 Monthly Credits) |
+| **Razorpay** | UPI, Cards, NetBanking payment gateway | 2% per successful transaction |
+| **Upstash Redis** | Server Action Rate Limiting | Free (10,000 requests/day) |
+| **Sentry** | Full-stack Error Monitoring & Performance Tracing | Free Tier |
 
 ---
 
-## 2. Docker Setup
+## 2. DNS & Domain Configuration
 
-### Dockerfile
+The domain `anjoriarts.com` is registered on **GoDaddy**, with DNS authority managed on **Cloudflare (Free Plan)**.
 
-```dockerfile
-# Multi-stage build: Frontend → Backend → Production
+### Nameservers
+Configured in GoDaddy domain settings:
+* `imani.ns.cloudflare.com`
+* `valentin.ns.cloudflare.com`
 
-# Stage 1: Build Frontend
-FROM node:20-alpine AS frontend-build
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm ci
-COPY frontend/ ./
-RUN npm run build
+### Active DNS Records Table (Cloudflare)
 
-# Stage 2: Build Backend
-FROM eclipse-temurin:21-jdk-alpine AS backend-build
-WORKDIR /app/backend
-COPY backend/pom.xml ./
-COPY backend/src ./src
-COPY backend/.mvn ./.mvn
-COPY backend/mvnw ./
-RUN chmod +x mvnw && ./mvnw package -DskipTests
+| Type | Name / Host | Target / Value | Proxy Status | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **A** | `@` *(anjoriarts.com)* | `76.76.21.21` | **DNS Only** | Vercel Global Edge IP |
+| **CNAME** | `www` | `9e592364e2a787a1.vercel-dns-017.com` | **DNS Only** | Vercel WWW CNAME |
+| **MX** | `@` | `route1.mx.cloudflare.net` (9)<br>`route2.mx.cloudflare.net` (70)<br>`route3.mx.cloudflare.net` (53) | DNS Only | Cloudflare Inbound Email Routing |
+| **MX** | `send` | `feedback-smtp.us-east-1.amazonses.com` (10) | DNS Only | Resend Return-Path Mail Server |
+| **TXT** | `resend._domainkey` | `p=MIGfMA0GCSqGSIb3DQEBA...` | DNS Only | Resend DKIM Cryptographic Signature |
+| **TXT** | `_dmarc` | `v=DMARC1; p=none;` | DNS Only | Domain Email Authentication Policy |
+| **TXT** | `send` | `v=spf1 include:amazonses.com ~all` | DNS Only | Resend SPF Authorization |
+| **TXT** | `@` | Google Site Verification keys | DNS Only | Google Search Console Ownership |
 
-# Stage 3: Production Image
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
-
-# Copy backend JAR
-COPY --from=backend-build /app/backend/target/*.jar app.jar
-
-# Copy frontend build to static resources
-COPY --from=frontend-build /app/frontend/dist ./static
-
-# JVM options for containers
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
-
-EXPOSE 8080
-
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
-```
-
-### Docker Compose (Local Development)
-
-```yaml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=dev
-    env_file:
-      - ./backend/.env
-    depends_on:
-      - redis
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-
-volumes:
-  redis-data:
-```
-
-### Docker Commands
-
-```bash
-# Build image
-docker build -t anjoriarts/app:latest .
-
-# Run with env file
-docker run -p 8080:8080 --env-file backend/.env anjoriarts/app:latest
-
-# Run with docker-compose
-docker-compose up -d
-
-# View logs
-docker-compose logs -f app
-
-# Stop
-docker-compose down
-
-# Push to Docker Hub
-docker login
-docker push anjoriarts/app:latest
-```
+> **Crucial Rule for Vercel Hosting:** Keep the apex `A` and `www` `CNAME` records set to **DNS Only (Grey Cloud)**. This allows Vercel to issue and auto-renew Let's Encrypt SSL certificates without proxy interference.
 
 ---
 
 ## 3. Environment Variables
 
-### Complete Reference
+### Complete Production Reference
 
 ```bash
 # ============================================
-# DATABASE (Neon PostgreSQL)
+# SUPABASE (PostgreSQL, Auth & Storage)
 # ============================================
-DB_URL=jdbc:postgresql://ep-xxx.us-east-2.aws.neon.tech/anjori_prod?sslmode=require
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi... # Server-side only (never expose to client)
 
 # ============================================
-# JWT AUTHENTICATION
+# RESEND (Transactional Email & SMTP)
 # ============================================
-JWT_SECRET=your-super-secret-key-at-least-32-characters-long
-JWT_ACCESS_EXPIRATION=900000          # 15 minutes
-JWT_REFRESH_EXPIRATION=2592000000     # 30 days
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
+# SMTP Host: smtp.resend.com | Port: 465 (SSL) | User: resend | Pass: $RESEND_API_KEY
 
 # ============================================
-# REDIS (Optional - for distributed caching)
+# CLOUDINARY (Media Asset Delivery & Optimization)
 # ============================================
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-# ============================================
-# CLOUDINARY (Image CDN)
-# ============================================
-CLOUDINARY_CLOUD_NAME=your_cloud_name
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
 # ============================================
-# EMAIL (Zoho Mail)
+# RAZORPAY (Payments Gateway)
 # ============================================
-MAIL_HOST=smtp.zoho.in
-MAIL_PORT=587
-MAIL_USERNAME=orders@anjoriarts.com
-MAIL_PASSWORD=your_app_password
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
+RAZORPAY_WEBHOOK_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
 
 # ============================================
-# OAUTH2 (Google Login)
+# UPSTASH REDIS (Rate Limiting)
 # ============================================
-GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxx
+UPSTASH_REDIS_REST_URL=https://your-endpoint.upstash.io
+UPSTASH_REDIS_REST_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxx
 
 # ============================================
-# RAZORPAY (Payments)
+# SITE & SEO
 # ============================================
-RAZORPAY_KEY_ID=rzp_live_xxx
-RAZORPAY_KEY_SECRET=xxx
+NEXT_PUBLIC_SITE_URL=https://www.anjoriarts.com
 
 # ============================================
-# 2FACTOR (Phone OTP)
+# GOOGLE GEMINI AI (Art Assistant)
 # ============================================
-TWOFACTOR_API_KEY=your_api_key
-TWOFACTOR_OTP_LENGTH=6
-TWOFACTOR_OTP_EXPIRY=300
+GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # ============================================
-# WHATSAPP (Phase 1: Manual via Business App)
+# SENTRY (Error Telemetry & Monitoring)
 # ============================================
-# No API keys needed for Phase 1 (manual sending)
-# When scaling, use Interakt or AiSensy:
-# INTERAKT_API_KEY=your_api_key
-# INTERAKT_PHONE_NUMBER=your_verified_number
-
-# ============================================
-# GST INVOICE
-# ============================================
-INVOICE_SELLER_NAME=Anjori Arts
-INVOICE_SELLER_ADDRESS=Your Address, City, State - PIN
-INVOICE_SELLER_GSTIN=YOUR_GSTIN_NUMBER
-INVOICE_HSN_CODE=9701
-
-# ============================================
-# APPLICATION
-# ============================================
-SPRING_PROFILES_ACTIVE=prod
-FRONTEND_URL=https://anjoriarts.com
-CORS_ORIGINS=https://anjoriarts.com
+NEXT_PUBLIC_SENTRY_DSN=https://xxxxxxxx@o0.ingest.sentry.io/0
+SENTRY_ORG=anjori-arts
+SENTRY_PROJECT=storefront
+SENTRY_AUTH_TOKEN=sntrys_xxxxxxxxxxxxxxxxxxxx
 ```
 
 ---
 
 ## 4. Service Configuration
 
-### 4.1 Neon (PostgreSQL)
+### 4.1 Supabase (PostgreSQL, Auth & Storage)
 
 **Setup:**
-1. Create account at [neon.tech](https://neon.tech)
-2. Create project "anjori-arts"
-3. Create branches: `main` (prod), `dev`
-4. Copy connection string
-
-**Connection String Format:**
-```
-jdbc:postgresql://ep-xxx.region.aws.neon.tech/anjori_prod?sslmode=require
-```
-
-**Best Practices:**
-- Use connection pooling (Neon has built-in PgBouncer)
-- Enable auto-suspend for dev branch
-- Set up daily backups (automatic)
+1. Log in to [supabase.com](https://supabase.com)
+2. Project: `anjori-arts`
+3. Retrieve API keys from **Project Settings ➔ API**:
+   - Project URL (`NEXT_PUBLIC_SUPABASE_URL`)
+   - Anon Public Key (`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+   - Service Role Secret (`SUPABASE_SERVICE_ROLE_KEY` - kept server-side only)
+4. Enable Row Level Security (RLS) across all production tables (`artworks`, `orders`, `profiles`, `custom_orders`).
+5. Configure Custom SMTP in **Project Settings ➔ Authentication ➔ SMTP Settings** using Resend credentials (`smtp.resend.com:465`).
 
 ---
 
@@ -298,41 +194,24 @@ https://res.cloudinary.com/xxx/image/upload/w_800,q_auto,f_auto/artworks/image.j
 
 ---
 
-### 4.3 Zoho Mail
+### 4.3 Cloudflare Email Routing & Resend SMTP
 
-**Setup:**
+**Inbound Email Architecture (Cloudflare Email Routing):**
+1. Domain DNS points to Cloudflare (`imani.ns.cloudflare.com`, `valentin.ns.cloudflare.com`).
+2. Cloudflare Email Routing is enabled with global MX records (`route1.mx.cloudflare.net`).
+3. Verified destination address: `anjoriarts@gmail.com`.
+4. **Catch-All Rule:** `*@anjoriarts.com` $\rightarrow$ `anjoriarts@gmail.com`.
+   - Inbound messages to `support@`, `orders@`, `admin@`, `hello@`, `legal@` land directly in `anjoriarts@gmail.com`.
 
-1. **Sign up** at [zoho.com/mail](https://www.zoho.com/mail)
-2. **Add domain:** anjoriarts.com
-3. **Verify domain** with TXT record
-
-**DNS Records:**
-
-| Type | Host | Value |
-|------|------|-------|
-| TXT | @ | zoho-verification=xxx |
-| MX | @ | mx.zoho.in (Priority: 10) |
-| MX | @ | mx2.zoho.in (Priority: 20) |
-| TXT | @ | v=spf1 include:zoho.in ~all |
-
-**DKIM Setup:**
-1. Go to Email Authentication in Zoho admin
-2. Add DKIM TXT record provided
-3. Verify DKIM status
-
-**Create Email Addresses:**
-- orders@anjoriarts.com (order notifications)
-- support@anjoriarts.com (customer support)
-- noreply@anjoriarts.com (automated emails)
-
-**SMTP Settings:**
-```
-Host: smtp.zoho.in
-Port: 587
-Security: TLS
-Username: orders@anjoriarts.com
-Password: (app-specific password)
-```
+**Outbound Transactional Email (Resend):**
+1. Domain verified in Resend via DKIM (`resend._domainkey.anjoriarts.com`) and SPF.
+2. Next.js server actions send emails using `resend.emails.send(...)` (`src/lib/email.ts`).
+3. SMTP Relay configured for Supabase Auth:
+   - **Host:** `smtp.resend.com`
+   - **Port:** `465` (SSL) or `587` (TLS)
+   - **Username:** `resend`
+   - **Password:** `<RESEND_API_KEY>`
+4. Gmail "Send mail as" configured with `smtp.resend.com` so the owner can reply directly from `support@anjoriarts.com` or `orders@anjoriarts.com` inside Gmail.
 
 ---
 

@@ -1,9 +1,8 @@
-# Anjori Arts - Email Templates
+# Anjori Arts - Email Architecture & Templates Guide
 
-> **Version:** 1.0.0  
-> **Version:** 1.1.0  
-> **Last Updated:** March 2026  
-> **Email Services:** Resend (application transactional emails) + Supabase Auth SMTP (via Resend) + Cloudflare Email Routing (receiving)  
+> **Version:** 2.0.0  
+> **Last Updated:** September 2026  
+> **Architecture:** Next.js 16 Server Actions (`src/lib/email.ts`) + Resend API / SMTP + Cloudflare Email Routing + Supabase Auth  
 > **Supabase Auth Templates Guide:** See [SUPABASE_EMAIL_TEMPLATES.md](./SUPABASE_EMAIL_TEMPLATES.md) for ready-to-paste authentication email templates.
 
 ---
@@ -28,42 +27,49 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    INCOMING EMAILS                               │
-│         (Customer → Anjori Arts)                                │
+│                 (Customer → Anjori Arts)                        │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   Customer sends to:          Cloudflare Routes to:             │
-│   hello@anjoriarts.com   ───► your-gmail@gmail.com              │
-│   orders@anjoriarts.com  ───► your-gmail@gmail.com              │
-│   legal@anjoriarts.com   ───► your-gmail@gmail.com              │
-│                                                                  │
-│   Cost: FREE (Cloudflare Email Routing)                         │
+│                                                                 │
+│   Customer sends to:               Cloudflare Routes to:        │
+│   • support@anjoriarts.com   ───► anjoriarts@gmail.com          │
+│   • orders@anjoriarts.com    ───► anjoriarts@gmail.com          │
+│   • admin@anjoriarts.com     ───► anjoriarts@gmail.com          │
+│   • hello@anjoriarts.com     ───► anjoriarts@gmail.com          │
+│   • legal@anjoriarts.com     ───► anjoriarts@gmail.com          │
+│   • * (Catch-All)            ───► anjoriarts@gmail.com          │
+│                                                                 │
+│   Cost: FREE ($0 / Cloudflare Email Routing)                    │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                    OUTGOING EMAILS                               │
-│         (Anjori Arts → Customer)                                │
+│                 (Anjori Arts → Customer)                        │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   Spring Boot Backend                                           │
-│         │                                                        │
-│         ▼                                                        │
+│                                                                 │
+│   Next.js 16 Server Actions / Supabase Auth                      │
+│         │                                                       │
+│         ▼                                                       │
 │   ┌─────────────┐                                               │
 │   │   RESEND    │──► Customer receives email from:              │
-│   │    API      │    • noreply@anjoriarts.com (OTP, alerts)     │
-│   └─────────────┘    • orders@anjoriarts.com (order updates)    │
-│                      • hello@anjoriarts.com (newsletter)        │
-│                                                                  │
-│   Cost: FREE (3,000 emails/month)                               │
+│   │  API & SMTP │    • noreply@anjoriarts.com (auth, orders)    │
+│   └─────────────┘    • Reply-To: orders@anjoriarts.com          │
+│                      • Reply-To: support@anjoriarts.com         │
+│                                                                 │
+│   In-Email CTA: "✉️ Reply to Orders / Support" action buttons   │
+│   Cost: FREE (Resend 3,000 emails/month)                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Email Addresses & Purpose
 
-| From Address | Purpose | Trigger |
-|--------------|---------|---------|
-| `noreply@anjoriarts.com` | OTP, password reset, system alerts | Automatic |
-| `orders@anjoriarts.com` | Order confirmation, shipping, delivery | Automatic |
-| `hello@anjoriarts.com` | Newsletter, welcome email | Automatic/Manual |
+| Address | Role | Destination / Handling | Trigger |
+| :--- | :--- | :--- | :--- |
+| `noreply@anjoriarts.com` | Automated Outgoing Sender | Outbound only via Resend API (`src/lib/email.ts`) and Supabase SMTP | System / Order Placement / Auth |
+| `support@anjoriarts.com` | Customer Care & General Support | Forwarded via Cloudflare $\rightarrow$ `anjoriarts@gmail.com`. Available in Gmail "Send mail as" | Inbound Customer Inquiries |
+| `orders@anjoriarts.com` | Order Receipts & Tracking Replies | Forwarded via Cloudflare $\rightarrow$ `anjoriarts@gmail.com`. Configured as `replyTo` in transactional emails | Checkout & Order Inquiries |
+| `admin@anjoriarts.com` | Administrative Notifications | Forwarded via Cloudflare $\rightarrow$ `anjoriarts@gmail.com`. Defined in `siteConfig.email.admin` | Internal Admin System Alerts |
+| `hello@anjoriarts.com` | Newsletters & Studio Announcements | Forwarded via Cloudflare $\rightarrow$ `anjoriarts@gmail.com` | Marketing / Welcome Updates |
+| `legal@anjoriarts.com` | Legal, IP & Terms Correspondence | Forwarded via Cloudflare $\rightarrow$ `anjoriarts@gmail.com` | Legal & Compliance Inquiries |
 
 ### Email Categories
 

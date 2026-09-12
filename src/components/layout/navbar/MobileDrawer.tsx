@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { ChevronRight, MessageCircle, ShoppingBag, X, User, ShieldCheck, LogOut, Package, Heart, MapPin, Shield } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronRight, MessageCircle, ShoppingBag, X, User, ShieldCheck, LogOut, Package, Heart, MapPin, Shield, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { NAV_LINKS } from "@/config/navigation";
 import { hasWhatsApp, inquiryHref } from "@/config/site";
@@ -11,15 +11,13 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useUIStore } from "@/stores/ui-store";
 import { useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
-import { createClient } from "@/lib/supabase/client";
-import { logout } from "@/actions/auth";
+import { createClient, performSignOut, subscribeToAuthSync } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 export function MobileDrawer() {
   const isOpen = useUIStore((state) => state.isMobileMenuOpen);
   const close = useUIStore((state) => state.closeMobileMenu);
   const pathname = usePathname();
-  const router = useRouter();
   const itemCount = useCartStore((state) => state.getItemCount());
   const wishlistCount = useWishlistStore((state) => state.getItemCount());
   const mounted = React.useSyncExternalStore(
@@ -66,6 +64,14 @@ export function MobileDrawer() {
     initial: string;
     isAdmin: boolean;
   } | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeToAuthSync(() => {
+      setUserProfile(null);
+    });
+    return unsubscribe;
+  }, []);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -358,16 +364,21 @@ export function MobileDrawer() {
           {userProfile && (
             <button
               type="button"
+              disabled={isLoggingOut}
               onClick={async () => {
+                setIsLoggingOut(true);
+                setUserProfile(null);
                 close();
-                await logout();
-                router.push("/login");
-                router.refresh();
+                await performSignOut({ redirectTo: "/login" });
               }}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors py-2.5 cursor-pointer"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors py-2.5 cursor-pointer disabled:opacity-50"
             >
-              <LogOut className="size-4" />
-              <span>Sign Out</span>
+              {isLoggingOut ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <LogOut className="size-4" />
+              )}
+              <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
             </button>
           )}
           <a

@@ -29,6 +29,8 @@ export function CartIcon() {
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         syncWithCloud();
+      } else if (event === "SIGNED_OUT") {
+        useCartStore.getState().clearCart({ skipCloudSync: true });
       }
     });
 

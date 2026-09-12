@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -392,6 +393,30 @@ export async function logoutAllDevices(): Promise<AccountActionResult> {
     if (error) {
       return { error: error.message };
     }
+
+    try {
+      const cookieStore = await cookies();
+      const allCookies = cookieStore.getAll();
+      for (const c of allCookies) {
+        if (
+          c.name.startsWith("sb-") ||
+          c.name.includes("supabase") ||
+          c.name.includes("auth-token")
+        ) {
+          cookieStore.delete(c.name);
+          cookieStore.set(c.name, "", {
+            path: "/",
+            maxAge: 0,
+            expires: new Date(0),
+            sameSite: "lax",
+            httpOnly: false,
+          });
+        }
+      }
+    } catch (cookieErr) {
+      console.warn("[logoutAllDevices] Cookie delete notice:", cookieErr);
+    }
+
     revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {
@@ -429,8 +454,36 @@ export async function deleteUserAccount(confirmationWord: string): Promise<Accou
       return { error: deleteError.message || "Failed to delete account." };
     }
 
-    // Sign out local session
-    await supabase.auth.signOut();
+    // Sign out session globally
+    try {
+      await supabase.auth.signOut({ scope: "global" });
+    } catch {
+      // ignore
+    }
+
+    try {
+      const cookieStore = await cookies();
+      const allCookies = cookieStore.getAll();
+      for (const c of allCookies) {
+        if (
+          c.name.startsWith("sb-") ||
+          c.name.includes("supabase") ||
+          c.name.includes("auth-token")
+        ) {
+          cookieStore.delete(c.name);
+          cookieStore.set(c.name, "", {
+            path: "/",
+            maxAge: 0,
+            expires: new Date(0),
+            sameSite: "lax",
+            httpOnly: false,
+          });
+        }
+      }
+    } catch (cookieErr) {
+      console.warn("[deleteUserAccount] Cookie delete notice:", cookieErr);
+    }
+
     revalidatePath("/", "layout");
     return { success: true };
   } catch (err) {

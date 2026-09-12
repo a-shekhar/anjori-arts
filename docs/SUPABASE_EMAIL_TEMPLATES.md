@@ -114,7 +114,7 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 30px auto;">
                 <tr>
                   <td align="center" style="border-radius:10px; background-color:#5f9795; box-shadow:0 4px 12px rgba(95,151,149,0.28);">
-                    <a href="{{ .ConfirmationURL }}" target="_blank" rel="noopener noreferrer" style="display:inline-block; padding:15px 36px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px; letter-spacing:0.02em;">
+                    <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=signup" target="_blank" rel="noopener noreferrer" style="display:inline-block; padding:15px 36px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px; letter-spacing:0.02em;">
                       Confirm My Account &rarr;
                     </a>
                   </td>
@@ -125,7 +125,7 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
               {{ if .Token }}
               <div style="background-color:#e7efeb; border:1px solid #c8dbd4; border-radius:10px; padding:18px 20px; text-align:center; margin-bottom:28px;">
                 <p style="margin:0 0 6px 0; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#355f5d;">
-                  Or enter this 6-digit verification code:
+                  Or enter this verification code:
                 </p>
                 <div style="font-family:monospace; font-size:26px; font-weight:700; letter-spacing:6px; color:#2b2926;">
                   {{ .Token }}
@@ -139,14 +139,25 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
                   Button not clickable? Copy and paste this link into your browser:
                 </p>
                 <p style="margin:0; font-size:12px; color:#5f9795; word-break:break-all; line-height:1.4;">
-                  {{ .ConfirmationURL }}
+                  {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=signup
                 </p>
               </div>
 
               <!-- Security Notice -->
-              <p style="margin:0; font-size:12px; color:#8c887d; font-style:italic;">
+              <p style="margin:0 0 20px 0; font-size:12px; color:#8c887d; font-style:italic;">
                 If you did not request this account, you can safely ignore this email. No artwork or profile has been reserved.
               </p>
+
+              <!-- Contact Support Help Card -->
+              <div style="text-align:center; padding:16px 20px; background-color:#f7f9f8; border-radius:8px; border:1px solid #e4ded1;">
+                <p style="margin:0 0 10px 0; font-size:13px; color:#4a463f; font-weight:500;">
+                  Questions about your collector account?
+                </p>
+                <a href="mailto:support@anjoriarts.com?subject=Inquiry%20about%20Anjori%20Arts%20Account" 
+                   style="display:inline-block; background-color:#355f5d; color:#ffffff; padding:10px 22px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600; letter-spacing:0.02em;">
+                  ✉️ Contact Support (support@anjoriarts.com)
+                </a>
+              </div>
             </td>
           </tr>
 
@@ -162,7 +173,7 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
               <p style="margin:0; font-size:12px; color:#8c887d; line-height:1.6;">
                 Studio based in Puducherry, India<br>
                 <a href="https://www.anjoriarts.com" style="color:#355f5d; text-decoration:none; font-weight:500;">anjoriarts.com</a> &bull; 
-                <a href="mailto:hello@anjoriarts.com" style="color:#355f5d; text-decoration:none;">hello@anjoriarts.com</a> &bull; 
+                <a href="mailto:support@anjoriarts.com" style="color:#355f5d; text-decoration:none;">support@anjoriarts.com</a> &bull; 
                 <a href="https://wa.me/918051960916" style="color:#355f5d; text-decoration:none;">WhatsApp: +91 80519 60916</a>
               </p>
             </td>
@@ -208,12 +219,20 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
 
           <!-- Header -->
           <tr>
-            <td style="background-color:#355f5d; padding:32px 28px 26px 28px; text-align:center; color:#ffffff;">
-              <h1 style="margin:0; font-family:'Playfair Display', Georgia, serif; font-size:26px; font-weight:600; letter-spacing:0.5px; color:#ffffff;">
-                Anjori Arts
+            <td style="background-color:#355f5d; padding:36px 28px 30px 28px; text-align:center; color:#ffffff;">
+              <p style="margin:0 0 6px 0; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#ecc16b; font-weight:600;">
+                Traditional Art &amp; Bespoke Design
+              </p>
+              <h1 style="margin:0; font-family:'Playfair Display', Georgia, serif; font-size:28px; font-weight:600; letter-spacing:0.5px; color:#ffffff;">
+                <a href="https://www.anjoriarts.com" style="color:#ffffff; text-decoration:none;">Anjori Arts</a>
               </h1>
-              <p style="margin:6px 0 0 0; font-size:12px; color:#e7efeb; text-transform:uppercase; letter-spacing:0.12em;">
-                Account Security
+              <p style="margin:8px 0 0 0; font-size:13px; color:#e7efeb; font-style:italic;">
+                &ldquo;Art that carries a little more meaning.&rdquo;
+              </p>
+              <p style="margin:12px 0 0 0; font-size:11px;">
+                <a href="https://www.anjoriarts.com" style="color:#ecc16b; text-decoration:none; font-weight:600; letter-spacing:0.05em;">
+                  Visit anjoriarts.com &rarr;
+                </a>
               </p>
             </td>
           </tr>
@@ -221,9 +240,13 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
           <!-- Main Letter Body -->
           <tr>
             <td style="padding:40px 36px 28px 36px;">
-              <h2 style="margin:0 0 16px 0; font-family:'Playfair Display', Georgia, serif; font-size:21px; font-weight:600; color:#2b2926; line-height:1.3;">
-                Password Reset Request
+              <h2 style="margin:0 0 16px 0; font-family:'Playfair Display', Georgia, serif; font-size:22px; font-weight:600; color:#2b2926; line-height:1.3;">
+                Password Reset Request 🔐
               </h2>
+
+              <p style="margin:0 0 16px 0; font-size:15px; color:#4a463f;">
+                Hello,
+              </p>
 
               <p style="margin:0 0 16px 0; font-size:15px; color:#4a463f;">
                 We received a request to reset the password for your Anjori Arts account associated with <strong style="color:#2b2926;">{{ .Email }}</strong>.
@@ -237,12 +260,24 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 30px auto;">
                 <tr>
                   <td align="center" style="border-radius:10px; background-color:#5f9795; box-shadow:0 4px 12px rgba(95,151,149,0.28);">
-                    <a href="{{ .ConfirmationURL }}" target="_blank" rel="noopener noreferrer" style="display:inline-block; padding:15px 36px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px; letter-spacing:0.02em;">
-                      Set New Password &rarr;
+                    <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password" target="_blank" rel="noopener noreferrer" style="display:inline-block; padding:15px 36px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px; letter-spacing:0.02em;">
+                      Reset My Password &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
+
+              <!-- Alternative Code Box (Cross-Device OTP) -->
+              {{ if .Token }}
+              <div style="background-color:#e7efeb; border:1px solid #c8dbd4; border-radius:10px; padding:18px 20px; text-align:center; margin-bottom:28px;">
+                <p style="margin:0 0 6px 0; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#355f5d;">
+                  Or enter this 6-digit reset code on your screen:
+                </p>
+                <div style="font-family:monospace; font-size:26px; font-weight:700; letter-spacing:6px; color:#2b2926;">
+                  {{ .Token }}
+                </div>
+              </div>
+              {{ end }}
 
               <!-- Fallback Link -->
               <div style="background-color:#faf7f0; border-radius:8px; padding:14px 18px; margin-bottom:24px; border:1px solid #e4ded1;">
@@ -250,27 +285,44 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
                   Button not working? Copy and paste this link into your browser:
                 </p>
                 <p style="margin:0; font-size:12px; color:#5f9795; word-break:break-all; line-height:1.4;">
-                  {{ .ConfirmationURL }}
+                  {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password
                 </p>
               </div>
 
               <!-- Reassurance / Anti-phishing -->
-              <div style="background-color:#fbf4e8; border-left:3px solid #ecc16b; padding:14px 16px; border-radius:4px;">
+              <div style="background-color:#fbf4e8; border-left:3px solid #ecc16b; padding:14px 16px; border-radius:4px; margin-bottom:20px;">
                 <p style="margin:0; font-size:13px; color:#78581e;">
                   <strong>Didn't request this?</strong> You can safely disregard this email. Your current password will remain completely secure and unchanged.
                 </p>
+              </div>
+
+              <!-- Contact Support Help Card -->
+              <div style="text-align:center; padding:16px 20px; background-color:#f7f9f8; border-radius:8px; border:1px solid #e4ded1;">
+                <p style="margin:0 0 10px 0; font-size:13px; color:#4a463f; font-weight:500;">
+                  Having trouble with your password or need assistance?
+                </p>
+                <a href="mailto:support@anjoriarts.com?subject=Need%20Help%20with%20Password%20Reset%20-%20Anjori%20Arts" 
+                   style="display:inline-block; background-color:#355f5d; color:#ffffff; padding:10px 22px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600; letter-spacing:0.02em;">
+                  ✉️ Contact Support (support@anjoriarts.com)
+                </a>
               </div>
             </td>
           </tr>
 
           <!-- Studio Sign-off & Footer -->
           <tr>
-            <td style="background-color:#f5f1e8; border-top:1px solid #e4ded1; padding:24px 36px; text-align:center;">
-              <p style="margin:0 0 8px 0; font-size:12px; color:#69655d;">
-                Anjori Arts Studio &bull; Puducherry, India
+            <td style="background-color:#f5f1e8; border-top:1px solid #e4ded1; padding:28px 36px; text-align:center;">
+              <p style="margin:0 0 4px 0; font-family:'Playfair Display', Georgia, serif; font-size:16px; font-weight:600; color:#2b2926;">
+                Jyotsna Sharma
               </p>
-              <p style="margin:0; font-size:12px; color:#8c887d;">
-                Need assistance? Reply directly to this email or reach us at <a href="mailto:hello@anjoriarts.com" style="color:#355f5d; text-decoration:none;">hello@anjoriarts.com</a>
+              <p style="margin:0 0 14px 0; font-size:12px; color:#69655d;">
+                Artist &amp; Founder &bull; Anjori Arts
+              </p>
+              <p style="margin:0; font-size:12px; color:#8c887d; line-height:1.6;">
+                Studio based in Puducherry, India<br>
+                <a href="https://www.anjoriarts.com" style="color:#355f5d; text-decoration:none; font-weight:500;">anjoriarts.com</a> &bull; 
+                <a href="mailto:support@anjoriarts.com" style="color:#355f5d; text-decoration:none;">support@anjoriarts.com</a> &bull; 
+                <a href="https://wa.me/918051960916" style="color:#355f5d; text-decoration:none;">WhatsApp: +91 80519 60916</a>
               </p>
             </td>
           </tr>
@@ -352,6 +404,7 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
               <div style="background-color:#e7efeb; border:1px solid #c8dbd4; border-radius:10px; padding:18px 20px; text-align:center; margin-bottom:28px;">
                 <p style="margin:0 0 6px 0; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:#355f5d;">
                   Or enter this 6-digit login code:
+                  Or enter this login code:
                 </p>
                 <div style="font-family:monospace; font-size:26px; font-weight:700; letter-spacing:6px; color:#2b2926;">
                   {{ .Token }}
@@ -370,9 +423,20 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
               </div>
 
               <!-- Security Notice -->
-              <p style="margin:0; font-size:12px; color:#8c887d; font-style:italic;">
+              <p style="margin:0 0 20px 0; font-size:12px; color:#8c887d; font-style:italic;">
                 If you did not request this sign-in link, please ignore this email.
               </p>
+
+              <!-- Contact Support Help Card -->
+              <div style="text-align:center; padding:16px 20px; background-color:#f7f9f8; border-radius:8px; border:1px solid #e4ded1;">
+                <p style="margin:0 0 10px 0; font-size:13px; color:#4a463f; font-weight:500;">
+                  Having trouble signing in to your account?
+                </p>
+                <a href="mailto:support@anjoriarts.com?subject=Login%20Help%20-%20Anjori%20Arts" 
+                   style="display:inline-block; background-color:#355f5d; color:#ffffff; padding:10px 22px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600; letter-spacing:0.02em;">
+                  ✉️ Contact Support (support@anjoriarts.com)
+                </a>
+              </div>
             </td>
           </tr>
 
@@ -383,7 +447,7 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
                 Anjori Arts Studio &bull; Puducherry, India
               </p>
               <p style="margin:0; font-size:12px; color:#8c887d;">
-                Questions? Write to us at <a href="mailto:hello@anjoriarts.com" style="color:#355f5d; text-decoration:none;">hello@anjoriarts.com</a>
+                Questions? Write to us at <a href="mailto:support@anjoriarts.com" style="color:#355f5d; text-decoration:none;">support@anjoriarts.com</a>
               </p>
             </td>
           </tr>
@@ -490,7 +554,7 @@ Navigate to **Authentication** ➔ **Email Templates** in your Supabase project.
                 Anjori Arts Studio &bull; Puducherry, India
               </p>
               <p style="margin:0; font-size:12px; color:#8c887d;">
-                Assistance: <a href="mailto:hello@anjoriarts.com" style="color:#355f5d; text-decoration:none;">hello@anjoriarts.com</a>
+                Assistance: <a href="mailto:support@anjoriarts.com" style="color:#355f5d; text-decoration:none;">support@anjoriarts.com</a>
               </p>
             </td>
           </tr>

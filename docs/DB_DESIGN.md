@@ -1,8 +1,10 @@
 # Anjori Arts - Database Design
 
-> **Version:** 1.0.0  
-> **Last Updated:** March 7, 2026  
-> **Database:** PostgreSQL (Neon hosted)
+> **Version:** 2.0.0  
+> **Last Updated:** September 2026  
+> **Database Provider:** Supabase Managed PostgreSQL  
+> **Primary Schema:** `arts`  
+> **Security Model:** Supabase Row Level Security (RLS) + Service Role Client
 
 ---
 
@@ -18,17 +20,15 @@
 
 ## 1. Overview
 
-### Database Structure
+### Database Structure (`arts` Schema)
 
 | Category | Tables |
 |----------|--------|
-| **User Management** | `users`, `user_addresses`, `user_sessions` |
-| **Product Catalog** | `artworks`, `artwork_images`, `categories`, `art_styles` |
-| **Orders & Payments** | `orders`, `order_items`, `payments`, `shipping_config` |
-| **Custom Orders** | `custom_orders`, `custom_order_images` |
-| **Marketing** | `coupons`, `coupon_usage`, `newsletter_subscribers` |
-| **Reviews & Support** | `reviews`, `review_images`, `testimonials`, `contact_submissions` |
-| **System** | `otp_verifications`, `audit_logs` |
+| **User & Access Management** | `profiles` (linked to `auth.users`), `user_addresses`, `wishlists`, `cart_items` |
+| **Product Catalog & Taxonomy** | `artworks`, `artwork_variants`, `artwork_mediums`, `categories`, `surfaces`, `mediums` |
+| **Orders & Commerce** | `orders`, `order_items` |
+| **Bespoke Commissions & CRM** | `custom_orders`, `custom_order_items`, `inquiries` |
+| **Content & Social Proof** | `testimonials`, `blog_posts` |
 
 ---
 

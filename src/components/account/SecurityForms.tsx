@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   KeyRound,
   LogOut,
@@ -17,6 +16,7 @@ import {
   logoutAllDevices,
   deleteUserAccount,
 } from "@/actions/account";
+import { performSignOut } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +33,6 @@ interface SecurityFormsProps {
 }
 
 export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
-  const router = useRouter();
-
   // Password update state
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -96,8 +94,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
         setLogoutLoading(false);
       } else {
         toast.success("Logged out from all active devices");
-        router.push("/login");
-        router.refresh();
+        await performSignOut({ redirectTo: "/login" });
       }
     } catch {
       toast.error("Failed to logout from all devices");
@@ -119,8 +116,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
         setDeleteLoading(false);
       } else {
         toast.success("Your collector account has been permanently deleted");
-        router.push("/");
-        router.refresh();
+        await performSignOut({ redirectTo: "/" });
       }
     } catch {
       toast.error("Failed to delete account");

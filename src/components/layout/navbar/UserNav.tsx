@@ -2,11 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { User, LogOut, Package, ShieldCheck, Heart, MapPin, Shield } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { logout } from "@/actions/auth";
-import { useCartStore } from "@/stores/cart-store";
+import { useRouter, usePathname } from "next/navigation";
+import { User, LogOut, Package, ShieldCheck, Heart, MapPin, Shield, Loader2 } from "lucide-react";
+import { createClient, performSignOut, subscribeToAuthSync } from "@/lib/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +24,10 @@ interface UserProfileState {
 
 export function UserNav() {
   const router = useRouter();
+  const pathname = usePathname();
   const [profile, setProfile] = React.useState<UserProfileState | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -90,17 +90,44 @@ export function UserNav() {
 
     loadUser();
 
+    // Cross-tab broadcast listener
+    const unsubscribeSync = subscribeToAuthSync(() => {
+      if (isMounted) {
+        setProfile(null);
+        setLoading(false);
+      }
+      if (
+        typeof window !== "undefined" &&
+        (window.location.pathname.startsWith("/account") ||
+          window.location.pathname.startsWith("/admin"))
+      ) {
+        window.location.replace("/login?reason=no_session");
+      }
+    });
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      loadUser();
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || !session) {
+        if (isMounted) {
+          setProfile(null);
+          setLoading(false);
+        }
+        if (typeof window !== "undefined" && window.location.pathname.startsWith("/account")) {
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.href = "/login?reason=no_session";
+        }
+      } else {
+        loadUser();
+      }
     });
 
     return () => {
       isMounted = false;
+      unsubscribeSync();
       subscription.unsubscribe();
     };
-  }, []);
+  }, [pathname]);
 
   if (loading) {
     return (
@@ -188,16 +215,20 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
+          disabled={isLoggingOut}
           onClick={async () => {
-            useCartStore.getState().clearCart({ skipCloudSync: true });
-            await logout();
-            router.push("/login");
-            router.refresh();
+            setIsLoggingOut(true);
+            setProfile(null);
+            await performSignOut({ redirectTo: "/login" });
           }}
           className="flex items-center gap-2 cursor-pointer py-2 rounded-xl"
         >
-          <LogOut className="size-4" />
-          <span>Sign Out</span>
+          {isLoggingOut ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <LogOut className="size-4" />
+          )}
+          <span>{isLoggingOut ? "Signing out..." : "Sign Out"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

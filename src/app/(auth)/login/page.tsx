@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, UserCheck } from "lucide-react";
 import { login } from "@/actions/auth";
+import { createClient, performSignOut } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +16,26 @@ function LoginForm() {
   const redirectUrl = searchParams.get("redirect");
   const reason = searchParams.get("reason");
   const errorParam = searchParams.get("error");
+  const emailParam = searchParams.get("email");
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ email?: string; name?: string } | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const meta = user.user_metadata || {};
+        const name =
+          meta.full_name ||
+          [meta.first_name, meta.last_name].filter(Boolean).join(" ") ||
+          user.email?.split("@")[0] ||
+          "Collector";
+        setCurrentUser({ email: user.email, name });
+      }
+    });
+  }, []);
   const [error, setError] = useState<string | null>(() => {
     if (reason === "not_admin") {
       return "Access restricted: Your account does not have administrator privileges.";
@@ -72,6 +90,54 @@ function LoginForm() {
     ? `/forgot-password?redirect=${encodeURIComponent(redirectUrl)}`
     : "/forgot-password";
 
+  if (currentUser) {
+    return (
+      <div className="flex min-h-[calc(100vh-4.5rem)] flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-background">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <Link href="/" className="inline-flex items-center gap-2 mb-6 group">
+            <div className="relative size-10 overflow-hidden rounded-full shadow-sm transition-transform duration-300 group-hover:scale-105">
+              <Image src="/logo.jpg" alt="Anjori Arts" fill className="object-cover scale-150" sizes="40px" />
+            </div>
+            <span className="font-serif text-2xl font-semibold tracking-[-0.03em] text-foreground">
+              Anjori Arts
+            </span>
+          </Link>
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+            <UserCheck className="size-7" />
+          </div>
+          <span className="aa-eyebrow inline-block mb-2">Active Session</span>
+          <h1 className="font-serif text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
+            Already Signed In
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            You are currently signed in as{" "}
+            <span className="font-semibold text-foreground">{currentUser.name}</span>
+            {currentUser.email ? ` (${currentUser.email})` : ""}.
+          </p>
+
+          <div className="mt-8 space-y-3">
+            <Link href={redirectUrl || "/account"} className="block">
+              <Button className="w-full h-11 rounded-xl font-medium shadow-sm gap-2">
+                <span>Continue to Account</span>
+                <ArrowRight className="size-4" />
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              className="w-full h-11 rounded-xl cursor-pointer"
+              onClick={async () => {
+                setCurrentUser(null);
+                await performSignOut({ redirectTo: "/login" });
+              }}
+            >
+              Sign Out to Switch Accounts
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-4.5rem)] flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 bg-background">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -119,6 +185,7 @@ function LoginForm() {
                 type="email"
                 required
                 autoComplete="email"
+                defaultValue={emailParam || ""}
                 placeholder="priya@example.com"
                 className="h-11 rounded-xl"
               />

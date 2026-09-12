@@ -195,8 +195,19 @@ export async function sendCustomerConfirmationEmail(data: SendInquiryEmailProps[
         <p><strong>Project Details:</strong><br/>${safeMessage}</p>
       </div>
 
-      <p>If you have any additional reference images or thoughts to share in the meantime, simply reply directly to this email. I love seeing what inspires you!</p>
-      <br/>
+      <div style="text-align: center; margin: 26px 0; padding: 20px; background-color: #f7f9f8; border-radius: 8px; border: 1px solid #e4ded1;">
+        <p style="margin: 0 0 12px 0; font-size: 13px; color: #4a463f; font-weight: 500;">
+          Have additional reference images or specific dimensions in mind?
+        </p>
+        <a href="mailto:orders@anjoriarts.com?subject=Regarding%20Inquiry%20%23${encodeURIComponent(safeOrderReference)}"
+           style="display: inline-block; background-color: #355f5d; color: #ffffff; padding: 11px 24px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+          ✉️ Reply to Orders Team
+        </a>
+        <p style="margin: 8px 0 0 0; font-size: 11px; color: #777;">
+          You can also simply hit <strong>Reply</strong> in your email app.
+        </p>
+      </div>
+
       <p>Warmest regards,</p>
       <p><strong>Anjori Arts</strong><br/><span style="color: #666; font-size: 0.9em;">Anjori Arts</span></p>
     </div>
@@ -323,6 +334,19 @@ export async function sendOrderPlacedEmail(order: {
         <p style="font-size: 13px; color: #666;">
           You will receive shipment updates and a courier tracking link (BlueDart, Delhivery, or India Post) as soon as your artwork is crated and dispatched.
         </p>
+
+        <div style="text-align: center; margin: 24px 0 10px 0; padding: 18px 20px; background-color: #f7f9f8; border-radius: 8px; border: 1px solid #e4ded1;">
+          <p style="margin: 0 0 10px 0; font-size: 13px; color: #4a463f; font-weight: 500;">
+            Need to update delivery instructions or have questions about your order?
+          </p>
+          <a href="mailto:orders@anjoriarts.com?subject=Regarding%20Order%20%23${encodeURIComponent(safeOrderNumber)}"
+             style="display: inline-block; background-color: #355f5d; color: #ffffff; padding: 11px 24px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+            ✉️ Reply to Orders Team
+          </a>
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #777;">
+            You can also simply hit <strong>Reply</strong> in your email app.
+          </p>
+        </div>
       </div>
 
       <div style="border-top: 1px solid #eaeaea; padding-top: 18px; text-align: center; font-size: 12px; color: #999;">
