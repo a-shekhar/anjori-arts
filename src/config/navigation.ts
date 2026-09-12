@@ -15,6 +15,7 @@ export const ADMIN_NAV_LINKS = [
   { label: "Mediums", href: "/admin/mediums" },
   { label: "Orders", href: "/admin/orders" },
   { label: "Custom Orders", href: "/admin/custom-orders" },
+  { label: "Customers", href: "/admin/customers" },
   { label: "Inquiries", href: "/admin/inquiries" },
   { label: "Testimonials", href: "/admin/testimonials" },
   { label: "Blog", href: "/admin/blog" },
@@ -25,6 +26,12 @@ export const USER_NAV_LINKS = [
   { label: "Addresses", href: "/user/addresses" },
   { label: "Orders", href: "/user/orders" },
   { label: "Wishlist", href: "/user/wishlist" },
+  { label: "Profile", href: "/account" },
+  { label: "Orders", href: "/account/orders" },
+  { label: "Addresses", href: "/account/addresses" },
+  { label: "Orders", href: "/account/orders" },
+  { label: "Wishlist", href: "/account/wishlist" },
+  { label: "Security", href: "/account/security" },
 ] as const;
 
 export const FOOTER_LINKS = {

@@ -112,7 +112,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <WhatsAppCTA />
             </div>
           </div>
-          <Toaster position="top-right" richColors />
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            visibleToasts={1}
+            duration={3500}
+            offset={{ top: "5.25rem", right: "1.5rem" }}
+            mobileOffset={{ top: "5rem", right: "1rem" }}
+          />
         </ThemeProvider>
         
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (

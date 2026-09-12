@@ -10,6 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -37,7 +38,6 @@ import {
 import {
   ALL_INQUIRY_STATUSES,
   formatInquiryStatus,
-  formatInquiryCategory,
   getInquiryStatusBadgeVariant,
   buildInquiryWhatsAppUrl,
   buildInquiryMailtoUrl,
@@ -100,7 +100,8 @@ export function InquiryDetailDialog({
     }
   };
 
-  const handleStatusSelect = async (newStatus: string) => {
+  const handleStatusSelect = async (newStatus: string | null) => {
+    if (!newStatus) return;
     try {
       setIsChangingStatus(true);
       await onStatusChange(inquiry.id, newStatus);
@@ -154,9 +155,7 @@ export function InquiryDetailDialog({
               <span className="text-xs text-muted-foreground hidden sm:inline">Status:</span>
               <Select
                 value={inquiry.status}
-                onValueChange={(val) => {
-                  if (val) handleStatusSelect(val);
-                }}
+                onValueChange={handleStatusSelect}
                 disabled={isChangingStatus}
               >
                 <SelectTrigger className="h-8 w-[130px] text-xs">
@@ -190,7 +189,7 @@ export function InquiryDetailDialog({
                 <User className="h-3.5 w-3.5" /> Customer Details
               </h3>
               <Badge variant="outline" className="text-xs font-normal">
-                <Tag className="mr-1 h-3 w-3" /> {formatInquiryCategory(inquiry.category)}
+                <Tag className="mr-1 h-3 w-3" /> {inquiry.category}
               </Badge>
             </div>
 
@@ -266,7 +265,7 @@ export function InquiryDetailDialog({
               </div>
               <Link
                 href="/admin/custom-orders"
-                className={buttonVariants({ variant: "outline", size: "xs", className: "shrink-0 text-xs" })}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0 text-xs h-7")}
               >
                 Go to Custom Orders
               </Link>
@@ -366,14 +365,14 @@ export function InquiryDetailDialog({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={buttonVariants({ variant: "outline", size: "sm", className: "text-xs gap-1.5 h-8" })}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs gap-1.5 h-8")}
               >
                 <MessageCircle className="h-3.5 w-3.5 text-emerald-600" /> WhatsApp
               </a>
             )}
             <a
               href={mailtoUrl}
-              className={buttonVariants({ variant: "default", size: "sm", className: "text-xs gap-1.5 h-8" })}
+              className={cn(buttonVariants({ variant: "default", size: "sm" }), "text-xs gap-1.5 h-8")}
             >
               <Mail className="h-3.5 w-3.5" /> Reply by Email
             </a>
@@ -383,3 +382,4 @@ export function InquiryDetailDialog({
     </Dialog>
   );
 }
+

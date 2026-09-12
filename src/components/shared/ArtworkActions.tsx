@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/stores/cart-store";
 import { inquiryHref } from "@/config/site";
 import { PriceDisplay } from "@/components/shared/PriceDisplay";
+import { WishlistButton } from "@/components/shared/WishlistButton";
 import { type Artwork, type Category } from "@/types";
 
 interface ArtworkActionsProps {
@@ -298,6 +299,24 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
         <MessageCircle className="size-4 text-whatsapp" />
         Ask About This Artwork
       </a>
+      {/* Secondary Actions: Wishlist & WhatsApp */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <WishlistButton
+          artworkId={artwork.id}
+          artworkTitle={artwork.title}
+          variant="full"
+          className="flex-1"
+        />
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <MessageCircle className="size-4 text-whatsapp" />
+          <span>Ask About Artwork</span>
+        </a>
+      </div>
     </div>
   );
 }

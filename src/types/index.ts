@@ -62,6 +62,7 @@ export interface CustomOrderItem {
 
 export type CustomOrder = {
   id: string;
+  user_id?: string | null;
   order_reference: string;
   status: CustomOrderStatus | string;
   created_at: string;
@@ -226,3 +227,64 @@ export interface Order {
 }
 
 export type { CartItem } from "@/stores/cart-store";
+
+export type AddressType = "home" | "work" | "other";
+
+export interface UserAddress {
+  id: string;
+  user_id: string;
+  recipient_name: string;
+  phone: string;
+  street: string;
+  landmark?: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  address_type: AddressType;
+  is_default: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  userId?: string | null;
+  artworkId: string;
+  createdAt: string;
+  artwork?: Artwork;
+}
+
+export type CustomerType = "registered" | "guest";
+
+export interface AdminCustomerSummary {
+  id: string;
+  userId?: string | null;
+  name: string;
+  email: string;
+  phone?: string | null;
+  type: CustomerType;
+  role: "USER" | "ADMIN";
+  createdAt: string;
+  lastSignInAt?: string | null;
+  totalOrders: number;
+  totalSpent: number; // in paise
+  lastOrderDate?: string | null;
+  authProvider?: string;
+  hasActiveCommission?: boolean;
+}
+
+export interface AdminCustomerDetail extends AdminCustomerSummary {
+  addresses: UserAddress[];
+  orders: Order[];
+  customOrders: CustomOrder[];
+}
+
+export interface AdminCustomersStats {
+  totalCustomers: number;
+  registeredCollectors: number;
+  guestBuyers: number;
+  totalRepeatCollectors: number;
+  totalCustomerRevenue: number; // in paise
+}
+
+

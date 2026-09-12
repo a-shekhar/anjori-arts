@@ -86,6 +86,26 @@ export async function POST(req: NextRequest) {
           }
 
           await supabase.from("orders").update(updateData).eq("id", order.id);
+          const { data: updatedOrder, error: updateError } = await supabase
+            .from("orders")
+            .update(updateData)
+            .eq("id", order.id)
+            .neq("payment_status", "paid")
+            .select("id")
+            .maybeSingle();
+
+          if (updateError) {
+            console.error("[Razorpay Webhook] Error updating order:", updateError);
+            return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
+          }
+
+          if (!updatedOrder) {
+            console.log(
+              `[Razorpay Webhook] Order ${order.id} (${order.order_number}) was already marked as paid. Skipping fulfillment to prevent double decrement.`
+            );
+            return NextResponse.json({ status: "success", received: true, already_processed: true });
+          }
+
           console.log(`[Razorpay Webhook] Order ${order.id} (${order.order_number}) marked as paid via webhook.`);
 
           // Fetch items for email dispatch and stock decrement

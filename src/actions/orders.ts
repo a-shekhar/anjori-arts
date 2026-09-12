@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/validations/checkout";
 import { uploadStream } from "@/lib/cloudinary-server";
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/lib/email";
 import { checkoutRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import { DELIVERY_CHARGE } from "@/config/constants";
-import type { Order, OrderItem, CartItem } from "@/types";
+import type { Order, OrderItem, CartItem, CustomOrder } from "@/types";
 
 import { generateReferenceCode } from "@/lib/reference";
 
@@ -304,6 +305,18 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
       country: validData.country || "India",
     };
 
+    // Optional: Attach user_id if customer is logged in
+    let authUserId: string | null = null;
+    try {
+      const userSupabase = await createClient();
+      const { data: { user } } = await userSupabase.auth.getUser();
+      if (user) {
+        authUserId = user.id;
+      }
+    } catch {
+      // Guest order
+    }
+
     // 1. Insert order (with automatic retry on unique constraint collision)
     let orderData: { id: string; order_number: string } | null = null;
     let orderError: { code?: string; message?: string } | null = null;
@@ -316,6 +329,7 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
         .from("orders")
         .insert({
           order_number: orderNumber,
+          user_id: authUserId,
           customer_name: validData.customerName,
           customer_email: validData.customerEmail,
           customer_phone: validData.customerPhone,
@@ -403,6 +417,19 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
             }
           });
       }
+    }
+
+    // 2b. Clear cloud cart if user was authenticated
+    if (authUserId) {
+      supabase
+        .from("cart_items")
+        .delete()
+        .eq("user_id", authUserId)
+        .then(({ error }: { error: unknown }) => {
+          if (error) {
+            console.warn("[createOrder] Notice clearing cloud cart for user:", authUserId, error);
+          }
+        });
     }
 
     // 3. Dispatch emails asynchronously: Customer confirmation (BCC'd to Anjori Arts) + Dedicated Admin Alert
@@ -542,6 +569,90 @@ export async function uploadPaymentReceipt(
       success: false,
       error: err instanceof Error ? err.message : "Error uploading receipt.",
     };
+  }
+}
+
+export async function getUserOrders(): Promise<Order[]> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return [];
+    }
+
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (ordersError || !orders) {
+      console.error("[getUserOrders] Error fetching user orders:", ordersError);
+      return [];
+    }
+
+    if (orders.length === 0) {
+      return [];
+    }
+
+    const orderIds = orders.map((o) => o.id);
+    const { data: items, error: itemsError } = await supabase
+      .from("order_items")
+      .select("*")
+      .in("order_id", orderIds);
+
+    if (itemsError) {
+      console.error("[getUserOrders] Error fetching user order items:", itemsError);
+    }
+
+    const itemsByOrder = new Map<string, OrderItem[]>();
+    for (const item of (items || []) as OrderItem[]) {
+      const list = itemsByOrder.get(item.order_id) || [];
+      list.push(item);
+      itemsByOrder.set(item.order_id, list);
+    }
+
+    return orders.map((order) => ({
+      ...order,
+      items: itemsByOrder.get(order.id) || [],
+    })) as Order[];
+  } catch (err) {
+    console.error("[getUserOrders] Unexpected error:", err);
+    return [];
+  }
+}
+
+export async function getUserCustomOrders(): Promise<CustomOrder[]> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return [];
+    }
+
+    const { data: customOrders, error: customOrdersError } = await supabase
+      .from("custom_orders")
+      .select("*")
+      .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+      .order("created_at", { ascending: false });
+
+    if (customOrdersError || !customOrders) {
+      console.error("[getUserCustomOrders] Error fetching custom orders:", customOrdersError);
+      return [];
+    }
+
+    return customOrders as CustomOrder[];
+  } catch (err) {
+    console.error("[getUserCustomOrders] Unexpected error:", err);
+    return [];
   }
 }
 

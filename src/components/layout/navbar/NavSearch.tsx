@@ -27,6 +27,7 @@ export function NavSearch() {
         placeholder="Search artworks..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        aria-label="Search artworks"
         className="min-h-[44px] h-11 w-40 md:w-44 lg:w-52 transition-all duration-300 focus:w-48 lg:focus:w-64 rounded-full border border-input bg-transparent pl-4 pr-11 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
       <button 

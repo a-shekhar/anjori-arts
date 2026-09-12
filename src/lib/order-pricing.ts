@@ -199,6 +199,18 @@ export async function calculateAuthoritativeOrder(
         };
       }
 
+      if (variant.stock_quantity !== null && variant.stock_quantity < quantity) {
+        return {
+          success: false,
+          error: `"${art?.title || item.title}" (${variant.label}) has only ${variant.stock_quantity} in stock.`,
+          subtotal: 0,
+          deliveryCharge: 0,
+          discountAmount: 0,
+          totalAmount: 0,
+          orderItemsToInsert: [],
+        };
+      }
+
       unitPrice = Number(variant.selling_price);
       if (item.isFramed && variant.can_be_framed) {
         isFramed = true;

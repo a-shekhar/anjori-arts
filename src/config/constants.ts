@@ -31,14 +31,14 @@ export const BLOG_PAGE_SIZE = 9;
 // ---------- Limits ----------
 export const MAX_CART_QUANTITY = 5;
 export const MAX_ADDRESSES = 3;
+export const MAX_WISHLIST_ITEMS = 20;
 export const MAX_CUSTOM_ORDER_IMAGES = 10;
 export const MAX_REVIEW_IMAGES = 5;
 
 // ---------- Image ----------
 export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const MAX_IMAGE_SIZE_MB = 5;
-export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
-export const FALLBACK_ARTWORK_IMAGE = "/images/og-default.jpg";
+export const FALLBACK_ARTWORK_IMAGE = "/images/artwork-placeholder.jpg";
 
 // ---------- Art Enums ----------
 export const ART_CATEGORIES = [
@@ -135,7 +135,7 @@ export const PAYMENT_METHODS = [
 ] as const;
 
 export const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
-  upi_qr: "UPI / QR Code",
+  upi_qr: "Instant UPI / Dynamic QR Code",
   bank_transfer: "Direct Bank Transfer (NEFT/IMPS)",
   pay_on_dispatch: "Pay on Dispatch (Advance Verification)",
   razorpay: "Razorpay (Cards, NetBanking, UPI)",
@@ -167,16 +167,11 @@ export const COURIER_PARTNERS = [
   { name: "Other", urlPrefix: "" },
 ] as const;
 
-export const BANK_DETAILS = {
-  accountName: siteConfig.payment.bankDetails.beneficiaryName,
-  bankName: siteConfig.payment.bankDetails.bankName,
-  accountNumber: siteConfig.payment.bankDetails.accountNumber,
-  ifscCode: siteConfig.payment.bankDetails.ifscCode,
-  branch: siteConfig.payment.bankDetails.branch,
-  address: siteConfig.payment.bankDetails.address,
+export const UPI_CONFIG = {
   upiId: siteConfig.payment.upiId,
+  payeeName: "Anjori Arts",
   upiPhone: siteConfig.phone,
-};
+} as const;
 
 // ---------- Type Exports ----------
 export type ArtCategory = (typeof ART_CATEGORIES)[number];

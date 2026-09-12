@@ -3,7 +3,6 @@ import { siteConfig } from "@/config/site";
 import { CommissionForm } from "@/components/forms/commission-form";
 import { Paintbrush, Clock, CheckCircle2, HeartHandshake } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { MEDIUMS } from "@/config/constants";
 
 export const metadata: Metadata = {
   title: "Custom Orders & Commissions",
@@ -29,17 +28,22 @@ interface CustomOrderPageProps {
 
 export default async function CustomOrderPage({ searchParams }: CustomOrderPageProps) {
   const resolvedParams = await searchParams;
-  const prefillTitle = typeof resolvedParams.title === 'string' ? resolvedParams.title : undefined;
-  const prefillType = typeof resolvedParams.type === 'string' ? resolvedParams.type : undefined;
-  const artworkId = typeof resolvedParams.artworkId === 'string' ? resolvedParams.artworkId : undefined;
+  const prefillTitle = typeof resolvedParams.title === "string" ? resolvedParams.title : undefined;
+  const prefillType = typeof resolvedParams.type === "string" ? resolvedParams.type : undefined;
+  const artworkId = typeof resolvedParams.artworkId === "string" ? resolvedParams.artworkId : undefined;
 
   const supabase = await createClient();
 
-  let [categoriesRes, surfacesRes, mediumsRes] = await Promise.all([
-    supabase.from("categories").select("name").order("display_order", { ascending: true }).order("name"),
+  const [surfacesRes, mediumsRes] = await Promise.all([
     supabase.from("surfaces").select("name").order("display_order"),
     supabase.from("mediums").select("name").order("name", { ascending: true }),
   ]);
+
+  let categoriesRes = await supabase
+    .from("categories")
+    .select("name")
+    .order("display_order", { ascending: true })
+    .order("name");
 
   if (categoriesRes.error && categoriesRes.error.code === "42703") {
     categoriesRes = await supabase.from("categories").select("name").order("name");
@@ -51,6 +55,20 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
     mediumsRes.data && mediumsRes.data.length > 0
       ? mediumsRes.data.map((m) => m.name)
       : ["Acrylic", "Oil"];
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const initialUser = user
+    ? {
+        firstName: user.user_metadata?.first_name || "",
+        lastName: user.user_metadata?.last_name || "",
+        email: user.email || "",
+        phone: user.user_metadata?.phone || "",
+        countryCode: user.user_metadata?.country_code || "+91",
+      }
+    : undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,6 +162,7 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
               defaultCategory={prefillType}
               defaultDetails={prefillTitle ? `I am interested in a custom size for "${prefillTitle}".\n\n` : undefined}
               artworkId={artworkId}
+              initialUser={initialUser}
             />
           </div>
         </div>

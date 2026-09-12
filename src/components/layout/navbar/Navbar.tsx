@@ -5,6 +5,8 @@ import { MobileNav } from "./MobileNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { NavSearch } from "./NavSearch";
 import { CartIcon } from "./CartIcon";
+import { WishlistIcon } from "./WishlistIcon";
+import { UserNav } from "./UserNav";
 
 
 export function Navbar() {
@@ -29,7 +31,11 @@ export function Navbar() {
 
         <div className="flex items-center gap-1.5 sm:gap-3">
           <NavSearch />
+          <WishlistIcon />
           <CartIcon />
+          <div className="hidden sm:block">
+            <UserNav />
+          </div>
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>

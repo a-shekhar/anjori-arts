@@ -1,13 +1,16 @@
 # Anjori Arts - Email Templates
 
 > **Version:** 1.0.0  
-> **Last Updated:** March 7, 2026  
-> **Email Service:** Resend (sending) + Cloudflare Email Routing (receiving)
+> **Version:** 1.1.0  
+> **Last Updated:** March 2026  
+> **Email Services:** Resend (application transactional emails) + Supabase Auth SMTP (via Resend) + Cloudflare Email Routing (receiving)  
+> **Supabase Auth Templates Guide:** See [SUPABASE_EMAIL_TEMPLATES.md](./SUPABASE_EMAIL_TEMPLATES.md) for ready-to-paste authentication email templates.
 
 ---
 
 ## Table of Contents
 
+0. [Supabase Authentication Email Templates](./SUPABASE_EMAIL_TEMPLATES.md)
 1. [Email Architecture](#1-email-architecture)
 2. [Transactional Emails](#2-transactional-emails)
 3. [Order Emails](#3-order-emails)

@@ -22,14 +22,15 @@ export function Footer() {
               target={hasWhatsApp ? "_blank" : undefined}
               rel={hasWhatsApp ? "noopener noreferrer" : undefined}
               className="inline-flex items-center gap-2 hover:underline"
+              aria-label={hasWhatsApp ? "WhatsApp: +91 80519 60916 (opens in a new tab)" : "Send an email inquiry"}
             >
-              <MessageCircle className="size-4 shrink-0" /> {hasWhatsApp ? "WhatsApp: +91 80519 60916" : "WhatsApp Inquiry"}
+              <MessageCircle className="size-4 shrink-0" aria-hidden="true" /> {hasWhatsApp ? "WhatsApp: +91 80519 60916" : "WhatsApp Inquiry"}
             </a>
-            <a href={phoneHref} className="inline-flex items-center gap-2 hover:underline">
-              <PhoneCall className="size-4 shrink-0" /> Call: {siteConfig.phone}
+            <a href={phoneHref} className="inline-flex items-center gap-2 hover:underline" aria-label={`Call us at ${siteConfig.phone}`}>
+              <PhoneCall className="size-4 shrink-0" aria-hidden="true" /> Call: {siteConfig.phone}
             </a>
-            <a href={`mailto:${siteConfig.email.support}`} className="inline-flex items-center gap-2 hover:underline">
-              <Mail className="size-4 shrink-0" /> {siteConfig.email.support}
+            <a href={`mailto:${siteConfig.email.support}`} className="inline-flex items-center gap-2 hover:underline" aria-label={`Email support at ${siteConfig.email.support}`}>
+              <Mail className="size-4 shrink-0" aria-hidden="true" /> {siteConfig.email.support}
             </a>
           </div>
 
@@ -80,14 +81,32 @@ export function Footer() {
         <div>
           <p className="aa-eyebrow">Follow Along</p>
           <div className="mt-4 flex flex-col gap-2.5 text-sm text-muted-foreground">
-            <a href={siteConfig.social.instagram} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
-              Instagram <ArrowUpRight className="size-3.5" />
+            <a
+              href={siteConfig.social.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram (opens in a new tab)"
+              className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+            >
+              Instagram <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </a>
-            <a href={siteConfig.social.facebook} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
-              Facebook <ArrowUpRight className="size-3.5" />
+            <a
+              href={siteConfig.social.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook (opens in a new tab)"
+              className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+            >
+              Facebook <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </a>
-            <a href={siteConfig.social.youtube} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
-              YouTube <ArrowUpRight className="size-3.5" />
+            <a
+              href={siteConfig.social.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube (opens in a new tab)"
+              className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+            >
+              YouTube <ArrowUpRight className="size-3.5" aria-hidden="true" />
             </a>
           </div>
         </div>

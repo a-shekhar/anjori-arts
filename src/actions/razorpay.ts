@@ -7,6 +7,7 @@ import { calculateAuthoritativeOrder } from "@/lib/order-pricing";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/validations/checkout";
 import { checkoutRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import {
   sendOrderPlacedEmail,
   sendAdminOrderAlertEmail,
@@ -120,9 +121,21 @@ export async function createRazorpayOrder(
 
     const supabase = createAdminClient();
 
+    // Optional: Attach user_id if customer is logged in
+    let authUserId: string | null = null;
+    try {
+      const userSupabase = await createClient();
+      const { data: { user } } = await userSupabase.auth.getUser();
+      if (user) {
+        authUserId = user.id;
+      }
+    } catch {
+      // Guest order
+    }
+
     // 5. Insert pending order record so webhooks and redirect callbacks have a shared safety net
     let orderData: { id: string; order_number: string } | null = null;
-    let orderError: { code?: string; message?: string } | null = null;
+    let orderError: any = null;
     const maxAttempts = 5;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -132,6 +145,7 @@ export async function createRazorpayOrder(
         .from("orders")
         .insert({
           order_number: orderNumber,
+          user_id: authUserId,
           customer_name: validData.customerName,
           customer_email: validData.customerEmail,
           customer_phone: validData.customerPhone,
@@ -281,8 +295,8 @@ export async function verifyAndCompleteRazorpayOrder(
         };
       }
 
-      // Update existing pending order to paid
-      const { error: updateError } = await supabase
+      // Update existing pending order to paid atomically
+      const { data: updatedOrder, error: updateError } = await supabase
         .from("orders")
         .update({
           payment_status: "paid",
@@ -291,15 +305,38 @@ export async function verifyAndCompleteRazorpayOrder(
           order_status: "confirmed",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", existingOrder.id);
+        .eq("id", existingOrder.id)
+        .neq("payment_status", "paid")
+        .select("id")
+        .maybeSingle();
 
       if (updateError) {
         console.error("[verifyAndCompleteRazorpayOrder] Error updating existing order:", updateError);
       }
+
+      // If webhook already claimed fulfillment in a concurrent race, return early
+      if (!updatedOrder) {
+        return {
+          success: true,
+          orderNumber: existingOrder.order_number,
+          orderId: existingOrder.id,
+        };
+      }
     } else {
       // Fallback: If no pending order exists (edge case resilience), insert new order
-      let orderError: { code?: string; message?: string } | null = null;
+      let orderError: any = null;
       const maxAttempts = 5;
+
+      let authUserId: string | null = null;
+      try {
+        const userSupabase = await createClient();
+        const { data: { user } } = await userSupabase.auth.getUser();
+        if (user) {
+          authUserId = user.id;
+        }
+      } catch {
+        // Guest order
+      }
 
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const orderNumber = generateOrderNumber();
@@ -308,6 +345,7 @@ export async function verifyAndCompleteRazorpayOrder(
           .from("orders")
           .insert({
             order_number: orderNumber,
+            user_id: authUserId,
             customer_name: validData.customerName,
             customer_email: validData.customerEmail,
             customer_phone: validData.customerPhone,
@@ -386,7 +424,7 @@ export async function verifyAndCompleteRazorpayOrder(
             p_variant_id: item.variant_id,
             p_quantity: item.quantity,
           })
-          .then(({ error }: { error: unknown }) => {
+          .then(({ error }: { error: any }) => {
             if (error) {
               console.error("[verifyAndCompleteRazorpayOrder] Error decrementing stock for variant:", item.variant_id, error);
             }
@@ -422,6 +460,17 @@ export async function verifyAndCompleteRazorpayOrder(
       sendOrderPlacedEmail(emailOrderData),
       sendAdminOrderAlertEmail(emailOrderData),
     ]).catch((err) => console.error("[verifyAndCompleteRazorpayOrder] Email dispatch error:", err));
+
+    // Clear cloud cart if user was authenticated
+    try {
+      const userSupabase = await createClient();
+      const { data: { user: authUser } } = await userSupabase.auth.getUser();
+      if (authUser) {
+        await supabase.from("cart_items").delete().eq("user_id", authUser.id);
+      }
+    } catch {
+      // Non-fatal notice
+    }
 
     return {
       success: true,

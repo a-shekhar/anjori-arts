@@ -19,9 +19,24 @@ interface CommissionFormProps {
   defaultCategory?: string;
   defaultDetails?: string;
   artworkId?: string;
+  initialUser?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    countryCode?: string;
+  };
 }
 
-export function CommissionForm({ categories, mediums, surfaces, defaultCategory, defaultDetails, artworkId }: CommissionFormProps) {
+export function CommissionForm({
+  categories,
+  mediums,
+  surfaces,
+  defaultCategory,
+  defaultDetails,
+  artworkId,
+  initialUser,
+}: CommissionFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isOptimizing, setIsOptimizing] = React.useState(false);
   const [isImagesExpanded, setIsImagesExpanded] = React.useState(true);
@@ -230,26 +245,55 @@ export function CommissionForm({ categories, mediums, surfaces, defaultCategory,
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="firstName">First name</Label>
-          <Input id="firstName" name="firstName" required placeholder="John" />
+          <Input
+            id="firstName"
+            name="firstName"
+            required
+            defaultValue={initialUser?.firstName || ""}
+            placeholder="John"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="lastName">Last name</Label>
-          <Input id="lastName" name="lastName" required placeholder="Doe" />
+          <Input
+            id="lastName"
+            name="lastName"
+            required
+            defaultValue={initialUser?.lastName || ""}
+            placeholder="Doe"
+          />
         </div>
       </div>
       
       <div className="space-y-2">
         <Label htmlFor="email">Email address</Label>
-        <Input id="email" name="email" type="email" required placeholder="john@example.com" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          defaultValue={initialUser?.email || ""}
+          placeholder="john@example.com"
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="phone">Phone number (optional)</Label>
         <div className="flex gap-2">
           <div className="w-[110px] shrink-0">
-            <CountryCodeSelect name="countryCode" defaultValue="+91" />
+            <CountryCodeSelect
+              name="countryCode"
+              defaultValue={initialUser?.countryCode || "+91"}
+            />
           </div>
-          <Input id="phone" name="phone" type="tel" placeholder="98765 43210" className="flex-1" />
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            defaultValue={initialUser?.phone || ""}
+            placeholder="98765 43210"
+            className="flex-1"
+          />
         </div>
       </div>
       

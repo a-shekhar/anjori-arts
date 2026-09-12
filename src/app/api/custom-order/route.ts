@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { customOrderSchema, CUSTOM_ORDER_IMAGE_LIMITS } from "@/lib/validations/contact";
 import { uploadStream } from "@/lib/cloudinary-server";
 import { sendNotificationEmail, sendCustomerConfirmationEmail } from "@/lib/email";
@@ -116,6 +117,19 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Insert into DB with images already included (with retry on collision)
+    let userId: string | null = null;
+    try {
+      const serverClient = await createClient();
+      const {
+        data: { user },
+      } = await serverClient.auth.getUser();
+      if (user) {
+        userId = user.id;
+      }
+    } catch {
+      // Unauthenticated guest inquiry
+    }
+
     const supabase = createAdminClient();
     let orderReference = "";
     let dbError: { code?: string; message?: string } | null = null;
@@ -127,6 +141,7 @@ export async function POST(req: NextRequest) {
         .from("custom_orders")
         .insert({
           id: orderId,
+          user_id: userId,
           order_reference: orderReference,
           first_name: validated.data.firstName,
           last_name: validated.data.lastName,

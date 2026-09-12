@@ -11,10 +11,10 @@ export function WhatsAppCTA() {
         href={inquiryHref}
         target={hasWhatsApp ? "_blank" : undefined}
         rel={hasWhatsApp ? "noopener noreferrer" : undefined}
-        aria-label={hasWhatsApp ? "Start a WhatsApp inquiry" : "Email the artist"}
-        className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95"
+        aria-label={hasWhatsApp ? "Chat with the artist on WhatsApp (opens in a new tab)" : "Email the artist"}
+        className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <MessageCircle className="size-5" />
+        <MessageCircle className="size-5" aria-hidden="true" />
       </a>
     </aside>
   );

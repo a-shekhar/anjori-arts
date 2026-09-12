@@ -43,7 +43,7 @@ export async function submitInquiry(formData: FormData) {
     // 1. Insert into Supabase with collision retry
     const supabase = await createClient();
     let inquiryReference = "";
-    let dbError: { message: string; code: string; details: string; hint: string } | null = null;
+    let dbError: any = null;
     const maxAttempts = 3;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -91,7 +91,7 @@ export async function submitInquiry(formData: FormData) {
     }
 
     return { success: true, inquiryReference };
-  } catch (err: unknown) {
+  } catch (err: any) {
     console.error("Submit Inquiry Error:", err);
     return { success: false, error: "An unexpected error occurred." };
   }

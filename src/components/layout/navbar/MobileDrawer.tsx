@@ -2,21 +2,26 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ChevronRight, MessageCircle, ShoppingBag, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronRight, MessageCircle, ShoppingBag, X, User, ShieldCheck, LogOut, Package, Heart, MapPin, Shield } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { NAV_LINKS } from "@/config/navigation";
 import { hasWhatsApp, inquiryHref } from "@/config/site";
 import { ThemeToggle } from "./ThemeToggle";
 import { useUIStore } from "@/stores/ui-store";
 import { useCartStore } from "@/stores/cart-store";
+import { useWishlistStore } from "@/stores/wishlist-store";
+import { createClient } from "@/lib/supabase/client";
+import { logout } from "@/actions/auth";
 import { cn } from "@/lib/utils";
 
 export function MobileDrawer() {
   const isOpen = useUIStore((state) => state.isMobileMenuOpen);
   const close = useUIStore((state) => state.closeMobileMenu);
   const pathname = usePathname();
+  const router = useRouter();
   const itemCount = useCartStore((state) => state.getItemCount());
+  const wishlistCount = useWishlistStore((state) => state.getItemCount());
   const mounted = React.useSyncExternalStore(
     () => () => {},
     () => true,
@@ -54,6 +59,50 @@ export function MobileDrawer() {
   React.useEffect(() => {
     close();
   }, [pathname, close]);
+
+  const [userProfile, setUserProfile] = React.useState<{
+    email?: string;
+    fullName: string;
+    initial: string;
+    isAdmin: boolean;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) {
+        setUserProfile(null);
+        return;
+      }
+      const meta = user.user_metadata || {};
+      const fullName =
+        [meta.first_name, meta.last_name].filter(Boolean).join(" ") ||
+        meta.full_name ||
+        user.email?.split("@")[0] ||
+        "Collector";
+      const initial = fullName.charAt(0).toUpperCase() || "A";
+
+      let isAdmin = false;
+      try {
+        const { data: profileRow } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (profileRow?.role === "ADMIN") isAdmin = true;
+      } catch {
+        // default false
+      }
+
+      setUserProfile({
+        email: user.email,
+        fullName,
+        initial,
+        isAdmin,
+      });
+    });
+  }, [isOpen]);
 
   if (!mounted || !isOpen) return null;
 
@@ -102,6 +151,136 @@ export function MobileDrawer() {
 
           {/* Navigation links */}
           <nav className="flex flex-col gap-1.5" aria-label="Mobile navigation links">
+            {userProfile ? (
+              <div className="rounded-2xl border border-border bg-muted/40 p-3 mb-1 space-y-2">
+                <div className="flex items-center gap-2.5 px-1">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-xs font-serif font-bold text-primary">
+                    {userProfile.initial}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground truncate">{userProfile.fullName}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{userProfile.email}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1 pt-1 border-t border-border/60">
+                  <Link
+                    href="/account"
+                    onClick={close}
+                    className="flex min-h-[38px] items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="size-3.5" />
+                      <span>Personal Profile</span>
+                    </div>
+                    <ChevronRight className="size-3.5 opacity-40" />
+                  </Link>
+                  <Link
+                    href="/account/orders"
+                    onClick={close}
+                    className="flex min-h-[38px] items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Package className="size-3.5" />
+                      <span>My Orders</span>
+                    </div>
+                    <ChevronRight className="size-3.5 opacity-40" />
+                  </Link>
+                  <Link
+                    href="/account/addresses"
+                    onClick={close}
+                    className="flex min-h-[38px] items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <MapPin className="size-3.5" />
+                      <span>Saved Addresses</span>
+                    </div>
+                    <ChevronRight className="size-3.5 opacity-40" />
+                  </Link>
+                  <Link
+                    href="/account/wishlist"
+                    onClick={close}
+                    className="flex min-h-[38px] items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Heart className="size-3.5 text-rose-500" />
+                      <span>Collector Wishlist</span>
+                    </div>
+                    {mounted && wishlistCount > 0 ? (
+                      <span className="flex size-4.5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                        {wishlistCount > 9 ? "9+" : wishlistCount}
+                      </span>
+                    ) : (
+                      <ChevronRight className="size-3.5 opacity-40" />
+                    )}
+                  </Link>
+                  <Link
+                    href="/account/security"
+                    onClick={close}
+                    className="flex min-h-[38px] items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Shield className="size-3.5" />
+                      <span>Security & Settings</span>
+                    </div>
+                    <ChevronRight className="size-3.5 opacity-40" />
+                  </Link>
+                  {userProfile.isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={close}
+                      className="flex min-h-[38px] items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="size-3.5" />
+                        <span>Admin Dashboard</span>
+                      </div>
+                      <ChevronRight className="size-3.5 opacity-40" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={close}
+                className={cn(
+                  "flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                  pathname === "/login"
+                    ? "bg-muted text-primary font-semibold"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <User className="size-4" />
+                  <span>Sign In / Register</span>
+                </div>
+                <ChevronRight className="size-4 opacity-40" />
+              </Link>
+            )}
+
+            <Link
+              href="/wishlist"
+              onClick={close}
+              className={cn(
+                "flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                pathname === "/wishlist" || pathname === "/account/wishlist"
+                  ? "bg-muted text-primary font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Heart className="size-4 text-rose-500" aria-hidden="true" />
+                <span>Collector Wishlist</span>
+              </div>
+              {mounted && wishlistCount > 0 ? (
+                <span className="flex size-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                  {wishlistCount > 9 ? "9+" : wishlistCount}
+                </span>
+              ) : (
+                <ChevronRight className="size-4 opacity-40" aria-hidden="true" />
+              )}
+            </Link>
+
             <Link
               href="/cart"
               onClick={close}
@@ -176,6 +355,21 @@ export function MobileDrawer() {
             <span className="text-xs text-muted-foreground">Appearance</span>
             <ThemeToggle />
           </div>
+          {userProfile && (
+            <button
+              type="button"
+              onClick={async () => {
+                close();
+                await logout();
+                router.push("/login");
+                router.refresh();
+              }}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-destructive/20 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors py-2.5 cursor-pointer"
+            >
+              <LogOut className="size-4" />
+              <span>Sign Out</span>
+            </button>
+          )}
           <a
             href={inquiryHref}
             target={hasWhatsApp ? "_blank" : undefined}

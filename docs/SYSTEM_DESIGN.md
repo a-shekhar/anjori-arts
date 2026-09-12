@@ -1,739 +1,416 @@
-# Anjori Arts - System Design
+# 🏗️ Anjori Arts — Comprehensive System Design
 
-> **Version:** 1.7.0  
-> **Last Updated:** March 8, 2026  
-> **Status:** Development  
-> **Audience:** Managers, Stakeholders
+> **Version:** 2.0.0  
+> **Architecture:** Next.js 16 App Router + Supabase PostgreSQL + Vercel Edge  
+> **Last Updated:** September 2026  
+> **Status:** Production Ready  
 
 ---
 
 ## Table of Contents
 
-1. [Project Overview](#1-project-overview)
-2. [Goals & Metrics](#2-goals--metrics)
-3. [Architecture Overview](#3-architecture-overview)
-4. [Features & Status](#4-features--status)
-5. [User Flows](#5-user-flows)
-6. [Development Phases](#6-development-phases)
-7. [Cost Summary](#7-cost-summary)
-8. [Version History](#8-version-history)
-9. [Email System](#9-email-system)
+1. [Executive Overview & Business Mission](#1-executive-overview--business-mission)
+2. [Architecture Overview](#2-architecture-overview)
+3. [Technology Stack](#3-technology-stack)
+4. [Folder & Component Structure](#4-folder--component-structure)
+5. [Feature Matrix & Implementation Status](#5-feature-matrix--implementation-status)
+6. [Core User Journeys & Sequence Flows](#6-core-user-journeys--sequence-flows)
+7. [Database Architecture & Security Model](#7-database-architecture--security-model)
+8. [Performance, SEO & Accessibility Standards](#8-performance-seo--accessibility-standards)
+9. [Operational Cost Model](#9-operational-cost-model)
 10. [Future Roadmap](#10-future-roadmap)
 
 ---
 
-## 1. Project Overview
+## 1. Executive Overview & Business Mission
 
 ### What is Anjori Arts?
 
-Anjori Arts is a **handmade art e-commerce platform** for a single artist to:
-- Sell original Madhubani, Mandala, and custom paintings
-- Accept custom art commission requests
-- Showcase portfolio and build credibility
+Anjori Arts is a bespoke **direct-to-consumer (D2C) Indian art e-commerce platform** created for professional artist **Jyotsna Sharma**. The platform serves three fundamental purposes:
+1. **Curated Art E-Commerce**: Sell original handmade Indian folk paintings (Madhubani / Mithila, Tanjore gold leaf, Warli, Mandala, Contemporary, Cyanotype prints) and handcrafted artisanal jewelry.
+2. **Structured Custom Commissions**: Provide a frictionless digital consultation and custom order workflow for bespoke living room, corporate, or devotional pieces.
+3. **Storytelling & Credibility**: Showcase the artist's portfolio, exhibition history, customer living space testimonials, and art tradition educational content.
 
-### Why are we building this?
+### The Architectural Evolution
 
-| Problem | Solution |
-|---------|----------|
-| Artist sells via Instagram DMs | Professional website with cart & checkout |
-| No systematic order tracking | Order management dashboard |
-| Custom orders handled manually | Structured commission request form |
-| No credibility for new buyers | Portfolio, testimonials, about section |
+In earlier planning stages, the project evaluated a decoupled architecture (Vite React SPA + Spring Boot Java 21 on Google Cloud Run). An audit revealed that a pure client-rendered SPA severely hindered search engine crawlability for artwork catalog pages and incurred unnecessary cold-start latency. 
 
-### Who is this for?
-
-| User Type | Description |
-|-----------|-------------|
-| **Buyers** | Art lovers in India looking for handmade paintings |
-| **Artist** | Single artist managing inventory & orders |
-| **Admin** | Artist as admin managing the platform |
-
-### Artist Background (Jyotsna Sharma)
-
-| Aspect | Details |
-|--------|---------|
-| **Heritage** | Rooted in Mithila artistic traditions |
-| **Positioning** | Professional artist (avoid student/learning narrative for credibility) |
-| **Work Experience** | The Leth (hand-painted luxury clothing), Urban Pots (furniture painting) |
-| **Exhibitions** | VRIKSHAH Group Art Exhibition (Pondicherry, Aug 2025) |
-| **Notable Works** | "Vrikshangi" (Chipko Movement tribute), "Amariya" (Mango Tree in Madhubani) |
-| **Art Forms** | Madhubani, Tanjore, Warli, Mandala, Mythological, Contemporary, Portraiture, Figurative, Abstract |
-| **Services** | Art Branding, Logo Design, Poster Design, Photography, Cyanotype Prints, Custom Art |
-| **Links** | [The Leth](https://theleth.in/), [Urban Pots](https://instagram.com/urbanpots.in/) |
-
-**Note:** For sales credibility, avoid mentioning: student status, BFA degree, D Pharma background, grandmother stories, COVID discovery narrative.
+The application was strategically migrated to **Next.js 16 (App Router) + Supabase (PostgreSQL with Row Level Security)** deployed on the **Vercel Edge Network**:
+* **Server-Side Rendering (SSR) & ISR**: Crawlers (Google, Bing, Pinterest) receive 100% server-rendered HTML with full JSON-LD structured data and per-artwork Open Graph tags.
+* **Unified Type-Safe Backend**: Next.js Server Actions eliminate the need for a separate microservice API server, reducing cold starts to 0ms and sharing TypeScript interfaces end-to-end.
+* **Managed Database & Auth**: Supabase provides managed PostgreSQL with database-level security policies (RLS) and integrated session management.
 
 ---
 
-## 2. Goals & Metrics
+## 2. Architecture Overview
 
-### Business Goals
+### System Architecture Diagram
 
-- **Primary:** Generate revenue through artwork sales
-- **Secondary:** Accept custom art commissions
-- **Tertiary:** Build brand credibility and portfolio
+```mermaid
+graph TB
+    subgraph Clients["Clients & Crawlers"]
+        BROWSER["Desktop & Mobile Browsers"]
+        SCRAPERS["Search Engines & Social Crawlers (Google, WhatsApp, Meta)"]
+    end
 
-### Target Metrics (Year 1)
+    subgraph Edge["Vercel Global Edge Network"]
+        ROUTER["Next.js 16 App Router (proxy.ts)"]
+        RSC["React Server Components (SSR / ISR)"]
+        ACTIONS["Server Actions & Route Handlers"]
+        STATIC["Edge CDN Caching (Assets, Fonts, OG Banners)"]
+    end
 
-| Metric | Target |
-|--------|--------|
-| Monthly Visitors | 100 |
-| Monthly Orders | 10 |
-| Average Order Value | ₹2,000 |
-| Conversion Rate | 10% |
-| Return Customer Rate | 20% |
+    subgraph Supabase["Supabase Cloud (Puducherry / Mumbai Region)"]
+        AUTH["Supabase Auth (Session Cookies, Google OAuth)"]
+        DB[(PostgreSQL Database - schema: arts)]
+        RLS["Row Level Security Policies"]
+        REALTIME["Realtime Engine (Admin Updates)"]
+    end
 
-### Success Criteria
+    subgraph External["Third-Party Integration Services"]
+        CLOUDINARY["Cloudinary CDN (Artwork Transformation & Storage)"]
+        RAZORPAY["Razorpay Payment Gateway (UPI, Cards, Netbanking)"]
+        RESEND["Resend API (Transactional HTML Emails)"]
+        GA["Google Analytics 4 & Vercel Analytics"]
+        SENTRY["Sentry (Error Monitoring)"]
+    end
 
-- [ ] Website loads under 3 seconds
-- [ ] Complete purchase in under 5 minutes
-- [ ] Mobile-friendly on all pages
-- [ ] Zero downtime during business hours
-- [ ] Admin can manage artworks without developer help
+    BROWSER --> ROUTER
+    SCRAPERS --> ROUTER
+    ROUTER --> RSC
+    ROUTER --> ACTIONS
+    ROUTER --> STATIC
+    RSC --> DB
+    ACTIONS --> DB
+    ACTIONS --> AUTH
+    ACTIONS --> CLOUDINARY
+    ACTIONS --> RAZORPAY
+    ACTIONS --> RESEND
+    BROWSER --> GA
+    ROUTER --> SENTRY
+```
+
+### Architectural Principles
+
+| Decision | Implementation | Strategic Rationale |
+| :--- | :--- | :--- |
+| **Rendering Strategy** | Server Components + ISR + Client Islands | Critical e-commerce pages are server-rendered with zero client JS overhead; interactive elements (cart, lightbox, filters) load as client components. |
+| **Backend Logic** | Server Actions (`"use server"`) | Direct database operations with server-side validation using Zod; zero client exposure of credentials. |
+| **Security Layer** | Supabase Row Level Security (RLS) | Security enforced at database level. Public anonymous users can only select published art; only `arts.is_admin()` can perform mutations. |
+| **Image Pipeline** | Cloudinary CDN + Sharp Local Composite | Sharp generates 1200×630 Open Graph banners locally (<110KB); Cloudinary handles dynamic resizing, WebP conversion, and customer photo uploads. |
+| **Edge Interception** | `src/proxy.ts` | Next.js 16 convention intercepting requests to refresh Supabase session cookies and protect authenticated `/account` and `/admin` routes. |
+| **Client State** | Zustand with in-memory auth caching | Optimistic UI updates with offline persistence for Cart and Wishlist; 0 network calls for guest shoppers. |
 
 ---
 
-## 3. Architecture Overview
+## 3. Technology Stack
 
-### High-Level View
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                         USERS                                 │
-│    Buyers (Browse, Purchase) │ Admin (Manage Artworks)       │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    CLOUDFLARE CDN                            │
-│              (Security, Caching, Performance)                │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                      APPLICATION                             │
-│  ┌────────────────────┐    ┌────────────────────┐           │
-│  │   React Frontend   │    │  Spring Boot API   │           │
-│  │   (User Interface) │───►│  (Business Logic)  │           │
-│  └────────────────────┘    └────────────────────┘           │
-└──────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-       ┌──────────┐    ┌──────────┐    ┌──────────┐
-       │PostgreSQL│    │Cloudinary│    │ Razorpay │
-       │(Database)│    │ (Images) │    │(Payments)│
-       └──────────┘    └──────────┘    └──────────┘
-```
-
-### Technology Stack Summary
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 19, Vite 7, Tailwind CSS 4 |
-| Backend | Spring Boot 4.0.3, Java 21 |
-| Database | PostgreSQL (Neon hosted) |
-| Auth | JWT with Refresh Tokens |
-| Phone OTP | 2Factor (₹0.165/SMS) |
-| Images | Cloudinary CDN |
-| Payments | Razorpay (2% fee) |
-| Email Receiving | Cloudflare Email Routing (FREE) |
-| Email Sending | Resend (3,000/month FREE) |
-| WhatsApp | Business App (FREE) → Interakt when scaling |
-| Hosting | Google Cloud Run |
-| CDN | Cloudflare |
-
-> **Note:** Information in this document is based on pricing/features as of March 2026. Always verify current pricing before implementation as services frequently change their offerings (e.g., Zoho Mail removed free tier in 2024).
+| Layer | Technology | Version | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Framework** | Next.js (App Router) | `16.3.3` | Core full-stack framework (SSR, ISR, Server Actions, Route Handlers) |
+| **UI Library** | React | `19.2.8` | Component rendering & concurrent features |
+| **Language** | TypeScript | `5.x` | Strict end-to-end type safety |
+| **Database** | PostgreSQL via Supabase | `15+` | Relational database (schema `arts`) with RLS policies |
+| **Authentication** | Supabase SSR (`@supabase/ssr`) | `0.12.5` | Cookie-based session management, OAuth, Magic Links |
+| **Styling** | Tailwind CSS | `4.x` | Utility-first styling with custom theme tokens |
+| **UI Primitives** | Base UI (`@base-ui/react`) / Lucide | `1.7.0` | Accessible dialogs, drawers, dropdowns, and icon system |
+| **Client State** | Zustand | `5.0.15` | Cart and Wishlist stores with localStorage persistence |
+| **Payments** | Razorpay SDK | `2.9.8` | Indian payment gateway (UPI, Netbanking, Cards, Wallets) |
+| **Transactional Email** | Resend | `6.24.0` | High-deliverability order confirmations and receipts |
+| **Image Processing** | Sharp + Cloudinary | `2.11.0` | High-performance image optimization & transformations |
+| **Validation** | Zod | `4.4.3` | Schema validation across forms and Server Actions |
+| **Telemetry** | GA4 + Vercel Analytics + Sentry | Latest | Comprehensive traffic, web vitals, and error tracking |
 
 ---
 
-## 4. Features & Status
-
-### Status Legend
-- ✅ Complete
-- 🟡 In Progress
-- 🔴 Not Started
-
-### Public Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **Shop Page** | Browse artworks with filters | 🔴 |
-| **Product Detail** | View artwork, select size, add to cart | 🔴 |
-| **Shopping Cart** | Manage items, view total | 🔴 |
-| **Guest Checkout** | Buy without creating account | 🔴 |
-| **User Checkout** | Buy with saved addresses | 🔴 |
-| **Order Tracking** | Track order status | 🔴 |
-| **Custom Orders** | Request art commissions | 🔴 |
-| **Gallery** | Portfolio showcase | 🔴 |
-| **About Page** | Artist story | 🔴 |
-| **Newsletter** | Subscribe for new artwork updates | 🔴 |
-| **Reviews Display** | View customer reviews with photos | 🔴 |
-
-### User Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **Login/Signup** | Email + password authentication | 🔴 |
-| **Social Login** | Google OAuth2 | 🔴 |
-| **User Profile** | Manage account details | 🔴 |
-| **Address Book** | Save shipping addresses | 🔴 |
-| **Order History** | View past orders | 🔴 |
-| **Wishlist** | Save artworks for later | 🔴 |
-| **Submit Reviews** | Rate & review purchased artworks with photos | 🔴 |
-| **Request Returns** | Request return for eligible orders | 🔴 |
-| **Apply Coupons** | Use discount codes at checkout | 🔴 |
-
-### Admin Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **Dashboard** | Overview stats, recent orders | 🔴 |
-| **Artwork CRUD** | Create, edit, delete artworks | 🔴 |
-| **Order Management** | View & update order status | 🔴 |
-| **Custom Order Management** | Handle commission requests | 🔴 |
-| **Coupon Management** | Create & manage discount codes | 🔴 |
-| **Review Moderation** | Approve/reject customer reviews | 🔴 |
-| **Return Processing** | Handle return requests | 🔴 |
-| **GST Invoice** | Auto-generate GST invoices | 🔴 |
-| **Newsletter** | View subscribers (send via Resend) | 🔴 |
-
-### Integrations
-
-| Integration | Purpose | Status |
-|-------------|---------|--------|
-| Cloudinary | Image storage & CDN | 🔴 |
-| Razorpay | Payment processing (2% fee) | 🔴 |
-| Cloudflare Email Routing | Receive emails (FREE) | 🔴 |
-| Resend | Send transactional emails (FREE tier) | 🔴 |
-| 2Factor | Phone OTP verification (₹0.165/SMS) | 🔴 |
-| WhatsApp Business App | Manual order updates (FREE) | 🔴 |
-| Interakt/AiSensy | WhatsApp API (when scaling) | 🔴 |
-| Google Analytics | Visitor tracking | 🔴 |
-
----
-
-## 5. User Flows
-
-### Purchase Flow (Guest)
+## 4. Folder & Component Structure
 
 ```
-Home → Shop → Product → Add to Cart → Verify Phone (OTP) → Shipping Address 
-    → Select Payment Type → Pay → Confirmation
-```
-
-### Purchase Flow (Logged In)
-
-```
-Login → Shop → Product → Add to Cart → Verify Phone (if not verified)
-    → Select Address → Select Payment Type → Pay → Confirmation
-```
-
-### Payment Options by Order Type
-
-| Order Type | Payment Options |
-|------------|-----------------|
-| Regular artwork | Full Prepaid OR 30% Advance + COD |
-| Custom order | Full Prepaid only (no COD) |
-
-**Why no COD for custom orders?**
-Custom/personalized artworks cannot be resold if buyer refuses delivery.
-
-### Phone Verification Flow
-
-```
-Enter Phone (+91) → Send OTP → Enter 6-digit OTP → Verified ✓
-                      ↓
-              (Max 3 OTPs per 10 min)
-              (Max 5 verify attempts per OTP)
-              (OTP expires in 5 min)
-```
-
-### Custom Order Flow
-
-```
-Custom Order Page → Fill Form → Verify Phone (OTP) → Upload Reference 
-    → Submit → Email Confirmation
-            → Admin Reviews
-            → Quote Sent (email + SMS)
-            → Customer Accepts
-            → Full Payment Required (no COD)
-            → Work Begins
-```
-
-### Admin Order Flow
-
-```
-Dashboard → Orders List → View Order → Update Status → Customer Notified
-```
-
-### Review Flow
-
-```
-Order Delivered → Email: "Review your purchase" → User submits review + photos
-    → Admin approves → Review visible on product page
-```
-
-### Coupon Flow
-
-```
-Admin creates coupon (code, discount, validity) 
-    → User enters code at checkout → System validates → Discount applied
-```
-
-### Return Flow
-
-```
-Order Delivered → User requests return (within 5 days for regular)
-    → Admin reviews → Approved/Rejected
-    → If approved: User ships back → Admin receives → Refund processed
-```
-
-**Return Policy:**
-| Order Type | Damaged | Within 5 Days | After 5 Days |
-|------------|---------|---------------|--------------|
-| Regular | ✅ Return | ✅ Return | ❌ No return |
-| Custom | ✅ Return | ❌ No return | ❌ No return |
-
-### Newsletter Flow
-
-```
-User enters email → Subscribed → Receives updates on new artworks
-    → Can unsubscribe anytime via link in email OR in user settings
-```
-
-### Shipping & Discount Policy
-
-#### Shipping Rates
-
-| Order Value | Shipping | Delivery Time |
-|-------------|----------|---------------|
-| Below ₹1,999 | ₹99 flat | 5-7 business days |
-| ₹1,999 and above | **FREE** | 5-7 business days |
-| Express (any value) | +₹249 | 2-3 business days |
-
-**Shipping Partners:** India Post, DTDC, Delhivery, BlueDart (based on location and artwork size)
-
-#### GST & Pricing
-
-| Item | GST Rate | HSN Code | Notes |
-|------|----------|----------|-------|
-| Original Paintings | 12% | 9701 | Handmade artworks |
-| Art Prints | 12% | 4911 | Printed reproductions |
-| Custom Artworks | 12% | 9701 | Commission work |
-
-**GST Registration Strategy (Phased Approach):**
-
-| Phase | Turnover | GST Status | Invoice Type |
-|-------|----------|------------|--------------|
-| **Phase 1** | ₹0 - ₹30L | No GSTIN | Regular invoice (no GST breakup) |
-| **Phase 2** | ₹30L+ | Apply for GSTIN | Tax invoice with GST |
-| **Phase 3** | ₹40L+ | Mandatory | Monthly GST filing |
-
-**Phase 1 (Launch):**
-- Sell through own website without GSTIN (legal for own website, not marketplaces)
-- Price artworks inclusively (don't show GST breakup)
-- Keep sales records for future registration
-- Issue regular invoices (not tax invoices)
-
-**Phase 2 (Scale):**
-- Apply for GSTIN when approaching ₹30-40L turnover
-- Show GST breakup on invoices
-- Start monthly GSTR-1 and GSTR-3B filing
-
-**Pricing Example:**
-```
-Artwork cost + profit = ₹1,500
-Future GST (12%)     = ₹  180  ← Build into price now
-Rounded price        = ₹1,699  ← Display price
-```
-
-> **Note:** Even without GSTIN, price as if GST is included. This way, prices don't need to change when you register.
-
-#### Payment Terms
-
-| Payment Type | Options |
-|--------------|---------|
-| Regular Orders | Full Prepaid OR 30% Advance + COD |
-| Custom Orders | **Full Prepaid only** (no COD) |
-| Payment Mode | **Manual** (Razorpay checkout) |
-
-**Why no COD for custom orders?** Custom/personalized artworks cannot be resold if buyer refuses delivery.
-
-#### First Order Benefits
-
-| Benefit | Details |
-|---------|---------|
-| Discount Code | `WELCOME10` |
-| Discount | 10% off (max ₹500) |
-| Shipping | FREE (no minimum) |
-| Validity | First order only |
-
-#### Discount Rules
-
-- Only one coupon per order
-- Coupons cannot be combined
-- First order discount auto-applied for new customers
-- Admin can create time-limited promotional coupons
-
-#### Refund Policy
-
-**Regular Orders:**
-
-| Scenario | Refund |
-|----------|--------|
-| Cancelled before shipping | Full refund within 2-3 business days |
-| Cancelled after shipping initiated | Order Amount − Shipping Charge |
-| Damaged on arrival | Full refund OR replacement (customer choice) |
-| Return within 5 days of delivery | Full refund (artwork must be undamaged) |
-| Return after 5 days | No refund |
-
-**Custom Orders:**
-
-| Scenario | Refund |
-|----------|--------|
-| Cancelled before work starts | Full refund |
-| Cancelled after work starts | **Non-refundable** (cannot be resold) |
-| Damaged on arrival | Full refund OR replacement |
-
-**Refund Timeline:** 5-7 business days after approval (depends on payment method)
-
-#### Unsubscribe Options
-
-1. **Email link** (required by law) - One-click unsubscribe in every newsletter
-2. **User settings** (logged-in users) - Email Preferences toggle
-
-### Content Pages
-
-| Page | Purpose | Status |
-|------|---------|--------|
-| Home | Landing page with featured artworks | 🔴 |
-| Shop | Browse & filter artworks | 🔴 |
-| Gallery | Portfolio showcase | 🔴 |
-| About | Artist story | 🔴 |
-| Custom Orders | Commission request form | 🔴 |
-| Contact | Contact form | 🔴 |
-| **Artwork Care** | How to maintain & preserve artwork | 🔴 |
-| Privacy Policy | Data handling | 🔴 |
-| Terms of Service | Legal terms | 🔴 |
-| Refund Policy | Return & refund terms | 🔴 |
-| Shipping Info | Delivery information | 🔴 |
-
-### WhatsApp Notification Flow
-
-```
-Order Placed → WhatsApp: Order confirmation
-Order Shipped → WhatsApp: Tracking details
-Order Delivered → WhatsApp: Delivery confirmation + review request
-```
-
-### GST Invoice Flow
-
-```
-Order Paid → System generates invoice (PDF) → Attached to order
-    → User can download from Order History → Also sent via email
+anjori-arts/
+├── public/
+│   ├── images/                     # Static assets (categories, hero, 1200x630 OG banner, placeholder)
+│   ├── favicon.ico
+│   └── robots.txt
+│
+├── scripts/
+│   └── generate-og-image.js        # Reproducible sharp generator for 1200x630 OG banner & placeholder
+│
+├── supabase/
+│   ├── migrations/                 # Active SQL migrations (schema, RLS, indexes, tables)
+│   └── migrations_archive/         # Archive of initial schema iterations
+│
+└── src/
+    ├── actions/                    # Next.js Server Actions ("use server")
+    │   ├── account.ts              # Profile and address book actions
+    │   ├── admin-artworks.ts       # Admin artwork CRUD actions
+    │   ├── admin-testimonials.ts   # Testimonials moderation
+    │   ├── auth.ts                 # Login, signup, password reset
+    │   ├── cart.ts                 # Cloud cart persistence & merge actions
+    │   ├── contact.ts              # Customer contact inquiry submissions
+    │   ├── custom-orders.ts        # Custom commission submissions & quoting
+    │   ├── orders.ts               # Order queries & admin status updates
+    │   ├── razorpay.ts             # Razorpay order generation & signature verification
+    │   ├── shop.ts                 # Artwork catalog queries
+    │   └── wishlist.ts             # Cloud wishlist synchronization
+    │
+    ├── app/                        # Next.js App Router
+    │   ├── (auth)/                 # Route group for login, signup, forgot-password, reset-password
+    │   ├── (legal)/                # Route group for care, faq, privacy, returns, shipping, terms
+    │   ├── account/                # Protected user account routes (orders, addresses, wishlist, security)
+    │   ├── admin/                  # Protected admin CMS (artworks, custom-orders, orders, inquiries, testimonials)
+    │   ├── api/                    # Route handlers (Razorpay webhooks, custom order API)
+    │   ├── artworks/[slug]/        # Individual artwork landing pages (ISR)
+    │   ├── blog/                   # Blog index and dynamic [slug] articles
+    │   ├── cart/                   # Shopping cart page
+    │   ├── categories/[slug]/      # Art tradition category pages
+    │   ├── checkout/               # Razorpay checkout flow
+    │   ├── custom-order/           # Custom commission request form
+    │   ├── order-success/          # Order receipt & confirmation page
+    │   ├── share-story/            # Public customer testimonial submission
+    │   ├── shop/                   # Catalog browsing with search, sort, and filters
+    │   ├── stories/                # Public collector stories gallery
+    │   ├── layout.tsx              # Root HTML layout, font declarations, theme provider
+    │   ├── page.tsx                # High-converting homepage
+    │   ├── sitemap.ts              # Dynamic indexable XML sitemap
+    │   └── robots.ts               # Search engine directives
+    │
+    ├── components/                 # Component library
+    │   ├── account/                # Account management components
+    │   ├── admin/                  # Admin tables, forms, and quotation dialogs
+    │   ├── cart/                   # Cart item rows, summary sidebar, cart drawer
+    │   ├── checkout/               # Checkout form & address selector
+    │   ├── forms/                  # Reusable forms (commission, testimonial, artwork)
+    │   ├── layout/                 # Navbar, MobileDrawer, Footer, ThemeToggle
+    │   ├── shared/                 # ArtworkCard, ImageGallery, Breadcrumbs, WhatsAppCTA
+    │   └── ui/                     # Base UI wrappers (Button, Dialog, Dropdown, Input, Sonner)
+    │
+    ├── config/                     # Application configuration
+    │   ├── constants.ts            # Business constants (GST rate, delivery charge, pagination limits)
+    │   ├── navigation.ts           # Header, mobile drawer, and footer navigation links
+    │   └── site.ts                 # Global metadata, SEO defaults, social handles, banking details
+    │
+    ├── lib/                        # Utilities & server clients
+    │   ├── supabase/               # Browser, Server, Admin, and Middleware Supabase clients
+    │   ├── cloudinary.ts           # Image URL generation helpers
+    │   ├── cloudinary-server.ts    # Secure server-side stream uploaders
+    │   ├── helpers.ts              # Price formatting (paise to INR), date helpers
+    │   └── validations/            # Zod schemas for all forms & actions
+    │
+    ├── proxy.ts                    # Next.js 16 request interceptor (Session refresh, route guards)
+    └── stores/                     # Zustand state stores (cart-store, wishlist-store)
 ```
 
 ---
 
-## 6. Development Phases
+## 5. Feature Matrix & Implementation Status
 
-### Phase 1: Core E-commerce 🔴
-**Goal:** Working shop where someone can browse and buy
+### Public Consumer Features
 
-| Task | Status |
-|------|--------|
-| Project setup (frontend + backend) | 🔴 |
-| Database schema | 🔴 |
-| Artwork API | 🔴 |
-| Shop page with filters | 🔴 |
-| Product detail page | 🔴 |
-| Cart functionality | 🔴 |
-| Guest checkout | 🔴 |
-| Admin artwork CRUD | 🔴 |
-| Admin orders view | 🔴 |
-| Cloudinary integration | 🔴 |
+| Feature | Description | Implementation Details | Status |
+| :--- | :--- | :--- | :---: |
+| **Catalog Browsing** | Search, filter by category/medium/surface, sort by price/title | [`src/app/shop/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/shop/page.tsx), [`ShopGallery.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/shared/ShopGallery.tsx) | ✅ Complete |
+| **Artwork Detail Page** | High-res image gallery, zoom lightbox, size selector, framing toggle | [`src/app/artworks/[slug]/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/artworks/%5Bslug%5D/page.tsx), [`ImageGallery.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/shared/ImageGallery.tsx) | ✅ Complete |
+| **Shopping Cart** | Optimistic UI updates, variant framing options, subtotal calculation | [`src/stores/cart-store.ts`](file:///c:/Aditya/Work/Project/anjori-arts/src/stores/cart-store.ts), [`CartView.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/cart/CartView.tsx) | ✅ Complete |
+| **Guest & User Checkout** | Single-page checkout with Razorpay SDK integration | [`src/app/checkout/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/checkout/page.tsx), [`CheckoutForm.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/checkout/CheckoutForm.tsx) | ✅ Complete |
+| **Order Receipt & Tracking**| Printable receipt, order status badge, reference code copying | [`src/app/order-success/[orderNumber]/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/order-success/%5BorderNumber%5D/page.tsx) | ✅ Complete |
+| **Custom Commission Form** | Structured request form with multi-image upload & specs | [`src/app/custom-order/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/custom-order/page.tsx), [`commission-form.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/forms/commission-form.tsx) | ✅ Complete |
+| **Collector Stories Form** | Public review & room photo submission with image compression | [`src/app/share-story/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/share-story/page.tsx), [`TestimonialSubmissionForm.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/forms/testimonial-submission-form.tsx) | ✅ Complete |
+| **Stories Gallery** | Filtered showcase of customer installations & testimonials | [`src/app/stories/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/stories/page.tsx) | ✅ Complete |
+| **Collector Wishlist** | Instant save-for-later with cloud auto-sync on sign-in | [`src/stores/wishlist-store.ts`](file:///c:/Aditya/Work/Project/anjori-arts/src/stores/wishlist-store.ts), [`WishlistView.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/account/WishlistView.tsx) | ✅ Complete |
+| **WhatsApp Direct CTA** | Fixed floating action button with automated greeting | [`src/components/shared/WhatsAppCTA.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/shared/WhatsAppCTA.tsx) | ✅ Complete |
+| **Art Traditions Directory**| Curated category deep dives (Madhubani, Tanjore, Warli, Mandala) | [`src/app/categories/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/categories/page.tsx) | ✅ Complete |
+| **Responsive Theme** | Dark/Light modes with warm parchment (`#FAF7F0`) & teal (`#5F9795`) | [`globals.css`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/globals.css), [`ThemeToggle.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/layout/navbar/ThemeToggle.tsx) | ✅ Complete |
 
-### Phase 2: Authentication & User 🔴
-**Goal:** User accounts with saved data
+### Authenticated User Features
 
-| Task | Status |
-|------|--------|
-| JWT authentication | 🔴 |
-| Login/Signup | 🔴 |
-| Email verification | 🔴 |
-| Phone verification (2Factor OTP) | 🔴 |
-| Password reset | 🔴 |
-| User profile | 🔴 |
-| Address book | 🔴 |
-| Order history | 🔴 |
-| Wishlist | 🔴 |
-| Social login (Google) | 🔴 |
+| Feature | Description | Implementation Details | Status |
+| :--- | :--- | :--- | :---: |
+| **Authentication** | Email/password login, signup, password reset & Google OAuth | [`src/app/(auth)/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/(auth)/), [`src/actions/auth.ts`](file:///c:/Aditya/Work/Project/anjori-arts/src/actions/auth.ts) | ✅ Complete |
+| **Order History** | View historical acquisitions, tracking codes, and status | [`src/app/account/orders/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/account/orders/page.tsx) | ✅ Complete |
+| **Address Book** | Save, edit, and delete multiple shipping destinations | [`src/app/account/addresses/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/account/addresses/page.tsx) | ✅ Complete |
+| **Profile Settings** | Manage name, phone number, and security preferences | [`src/app/account/page.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/account/page.tsx) | ✅ Complete |
 
-### Phase 3: Content Pages 🔴
-**Goal:** Build trust and credibility
+### Admin Management CMS
 
-| Task | Status |
-|------|--------|
-| Home page (all sections) | 🔴 |
-| Gallery/portfolio | 🔴 |
-| About page | 🔴 |
-| Policies page | 🔴 |
-| Contact form | 🔴 |
-
-### Phase 4: Payments & Notifications 🔴
-**Goal:** Complete payment and notification system
-
-| Task | Status |
-|------|--------|
-| Custom order form | 🔴 |
-| Razorpay integration | 🔴 |
-| Order tracking | 🔴 |
-| Email notifications (Zoho) | 🔴 |
-| WhatsApp notifications | 🔴 |
-| GST Invoice generation | 🔴 |
-
-### Phase 5: Reviews, Coupons & Returns 🔴
-**Goal:** Build trust and incentivize purchases
-
-| Task | Status |
-|------|--------|
-| Customer reviews with photos | 🔴 |
-| Review moderation (admin) | 🔴 |
-| Coupon system | 🔴 |
-| Newsletter subscription | 🔴 |
-| Return request system | 🔴 |
-| Return processing (admin) | 🔴 |
-
-### Phase 6: Polish & Launch 🔴
-**Goal:** Production-ready quality
-
-| Task | Status |
-|------|--------|
-| Animations (Framer Motion) | 🔴 |
-| Skeleton loaders | 🔴 |
-| Error handling | 🔴 |
-| Mobile optimization | 🔴 |
-| Performance optimization | 🔴 |
-| SEO implementation | 🔴 |
-| Security headers | 🔴 |
-| Cookie consent | 🔴 |
-| Legal pages | 🔴 |
-| Final QA | 🔴 |
+| Feature | Description | Implementation Details | Status |
+| :--- | :--- | :--- | :---: |
+| **Artwork Management** | Create, edit, delete artworks, manage sizes, framing & stock | [`src/app/admin/artworks/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/artworks/), [`artwork-form.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/forms/artwork-form.tsx) | ✅ Complete |
+| **Order Fulfillment** | Update tracking status (Placed, Framing, Dispatched, Delivered) | [`src/app/admin/orders/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/orders/), [`src/actions/orders.ts`](file:///c:/Aditya/Work/Project/anjori-arts/src/actions/orders.ts) | ✅ Complete |
+| **Custom Order Quoting** | Review commission specs, generate PDF quotation & update pricing | [`src/app/admin/custom-orders/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/custom-orders/), [`custom-order-quotation-card.tsx`](file:///c:/Aditya/Work/Project/anjori-arts/src/components/admin/custom-order-quotation-card.tsx) | ✅ Complete |
+| **Inquiry Tracking** | Triage incoming customer inquiries and record admin notes | [`src/app/admin/inquiries/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/inquiries/) | ✅ Complete |
+| **Testimonial Moderation** | Approve, feature, reorder, or remove customer stories | [`src/app/admin/testimonials/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/testimonials/), [`admin-testimonials.ts`](file:///c:/Aditya/Work/Project/anjori-arts/src/actions/admin-testimonials.ts) | ✅ Complete |
+| **Taxonomy Management** | Manage categories, mediums, surfaces, and display order | [`src/app/admin/categories/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/categories/), [`src/app/admin/mediums/`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/admin/mediums/) | ✅ Complete |
 
 ---
 
-## 7. Cost Summary
+## 6. Core User Journeys & Sequence Flows
 
-### Monthly Operating Costs
+### 1. E-Commerce Checkout Flow (Razorpay + Server Action)
 
-| Service | Cost | Notes |
-|---------|------|-------|
-| Domain (anjoriarts.com) | ~₹100/mo | Annual payment |
-| Neon PostgreSQL | Free | 0.5GB storage |
-| Cloudinary | Free | 25 credits/month |
-| Cloud Run | ~₹500/mo | Pay per use (set min-instances: 0) |
-| Cloudflare | Free | CDN + Email Routing |
-| Resend | Free | 3,000 emails/month |
-| 2Factor (SMS OTP) | ~₹5/mo | ₹0.165/SMS (~20-30 OTPs/month) |
-| WhatsApp Business App | Free | Manual sending (Phase 1) |
-| **Total** | **~₹605/mo** | Extremely low cost for full e-commerce |
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Customer (Browser)
+    participant Cart as Zustand Cart Store
+    participant Server as Next.js Server Action (razorpay.ts)
+    participant Razorpay as Razorpay API
+    participant DB as Supabase PostgreSQL
+    participant Resend as Resend Email API
 
-### Transaction Costs
-
-| Service | Fee | Notes |
-|---------|-----|-------|
-| Razorpay UPI | 2% | Free UPI ended in 2024 |
-| Razorpay Cards | 2% | |
-| Razorpay Net Banking | 2% | |
-
-**Note:** Factor 2% transaction fee into artwork pricing.
-
-### Email Setup (Cloudflare + Resend)
-
-**4 Email Addresses:**
-
-| Email | Purpose | Used In |
-|-------|---------|---------|
-| `hello@anjoriarts.com` | General contact, newsletter, support | Contact page, general inquiries |
-| `orders@anjoriarts.com` | Order confirmations, shipping | Order emails, Shipping page |
-| `legal@anjoriarts.com` | Privacy, terms, refund policy | Privacy, Terms, Refund pages |
-| `no-reply@anjoriarts.com` | OTP, password reset, system alerts | System emails (sending only) |
-
-**Receiving (Cloudflare Email Routing - FREE):**
-All 4 addresses forward to your personal Gmail inbox.
-
-**Sending (Resend - FREE tier 3,000/month):**
-- `no-reply@` for transactional (OTP, password reset)
-- `orders@` for order-related
-- `hello@` for newsletter
-
-**Configuration Location:**
-- Frontend: `frontend/src/config/contact.js`
-- Backend: `backend/src/main/java/com/anjoriarts/constants/ContactConstants.java`
-
-### Contact Information
-
-| Field | Value |
-|-------|-------|
-| Phone | +91 80519 60916 |
-| Email | hello@anjoriarts.com |
-| WhatsApp | +91 80519 60916 |
-| Location | Puducherry, India |
-
----
-
-## 8. Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | Mar 2026 | Initial system design with all features defined |
-| 1.1.0 | Mar 7, 2026 | Added shipping/discount policy, email addresses, updated Razorpay fees |
-| 1.2.0 | Mar 7, 2026 | Replaced Zoho with Cloudflare+Resend, added GST info, refund policy, Artwork Care page |
-| 1.3.0 | Mar 7, 2026 | Simplified to 4 emails, updated all pages to use centralized config |
-| 1.4.0 | Mar 7, 2026 | Added Email System section, created EMAIL_TEMPLATES.md with all email content |
-| 1.5.0 | Mar 7, 2026 | Replaced MSG91 with 2Factor (₹0.165/SMS), added WhatsApp strategy (FREE app → Interakt) |
-| 1.6.0 | Mar 7, 2026 | Added phased GST registration strategy (launch without GSTIN, register at ₹30L+) |
-| 1.7.0 | Mar 8, 2026 | Added Future Roadmap section with phased feature planning (WhatsApp, View in Room, etc.) |
-
-### Version Numbering
-
-- **Major (1.0, 2.0):** Production releases
-- **Minor (1.1, 1.2):** Feature additions
-- **Patch (1.0.1):** Bug fixes
-
----
-
----
-
-## 9. Email System
-
-### Email Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    INCOMING EMAILS                               │
-│              (Customer → Anjori Arts)                           │
-│                                                                  │
-│   hello@anjoriarts.com  ───┐                                    │
-│   orders@anjoriarts.com ───┼──► Cloudflare ──► Your Gmail       │
-│   legal@anjoriarts.com  ───┘    (FREE)                          │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    OUTGOING EMAILS                               │
-│              (Anjori Arts → Customer)                           │
-│                                                                  │
-│   Spring Boot ──► Resend API ──► Customer inbox                 │
-│                   (FREE: 3k/month)                              │
-│                                                                  │
-│   From addresses:                                                │
-│   • noreply@anjoriarts.com (OTP, alerts)                        │
-│   • orders@anjoriarts.com (order updates)                       │
-│   • hello@anjoriarts.com (newsletter)                           │
-└─────────────────────────────────────────────────────────────────┘
+    Customer->>Cart: Add artwork variant (Framed/Unframed)
+    Customer->>Customer: Navigate to /checkout
+    Customer->>Server: submitOrderAction(shippingAddress, items)
+    Server->>DB: Validate stock & recalculate pricing
+    Server->>Razorpay: orders.create({ amount, currency: "INR" })
+    Razorpay-->>Server: Return { id: "order_xyz" }
+    Server->>DB: Insert into arts.orders (status: 'pending')
+    Server-->>Customer: Return Razorpay Order ID & Key
+    Customer->>Razorpay: Open Razorpay Modal & Complete Payment (UPI/Card)
+    Razorpay-->>Customer: Payment success with signature
+    Customer->>Server: verifyPaymentAction({ orderId, paymentId, signature })
+    Server->>Server: Verify HMAC-SHA256 signature
+    Server->>DB: Update order to 'confirmed', decrement variant stock
+    Server->>Resend: Send Order Confirmation Email with Invoice
+    Server-->>Customer: Redirect to /order-success/[orderNumber]
 ```
 
-### Email Types
+### 2. Custom Commission Lifecycle
 
-| Category | Emails | Trigger |
-|----------|--------|---------|
-| **Transactional** | Welcome, Email Verification, Password Reset, OTP | Automatic |
-| **Order** | Confirmation, Shipped, Delivered, Cancelled | Automatic |
-| **Custom Order** | Received, Quote, Work Started, Completed | Automatic |
-| **Marketing** | Newsletter, Promotions | Manual |
-| **Support** | Contact Acknowledgment, Review/Testimonial Approved | Automatic |
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer as Customer
+    participant Form as Custom Order Form
+    participant Cloudinary as Cloudinary Server Upload
+    participant DB as Supabase Database
+    participant Admin as Artist / Admin Dashboard
+    participant Resend as Resend Email
 
-### Email Flow Summary
+    Customer->>Form: Fill theme, dimensions, medium & upload inspiration photos
+    Form->>Cloudinary: Compress & stream photos to Cloudinary
+    Form->>DB: Insert into arts.custom_orders (status: 'received')
+    DB-->>Customer: Display acknowledgment & reference number
+    Admin->>DB: View inquiry & inspiration photos
+    Admin->>Admin: Calculate material, framing & labor cost
+    Admin->>DB: Update quotation (price, timeline, deposit)
+    Admin->>Resend: Email formal quotation to customer
+    Customer->>Customer: Approve quote & pay 50% advance via payment link
+    Admin->>DB: Mark status 'in_progress' -> 'completed' -> 'delivered'
+```
 
-| Event | Email Sent | From Address |
-|-------|------------|--------------|
-| User signs up | Welcome + 10% off code | hello@ |
-| User forgets password | Reset link | noreply@ |
-| Order placed | Confirmation + invoice | orders@ |
-| Order shipped | Tracking details | orders@ |
-| Order delivered | Care tips + review request | orders@ |
-| Custom order submitted | Acknowledgment | orders@ |
-| Quote sent | Quote details + pay button | orders@ |
-| Contact form submitted | Acknowledgment | hello@ |
-| Review approved | Notification | hello@ |
+---
 
-> **See [EMAIL_TEMPLATES.md](./EMAIL_TEMPLATES.md) for complete email content and HTML templates.**
+## 7. Database Architecture & Security Model
+
+### Database Schema (`arts`)
+
+All application data resides inside the dedicated PostgreSQL schema `arts`.
+
+```mermaid
+erDiagram
+    categories ||--o{ artworks : contains
+    mediums ||--o{ artworks : classifies
+    surfaces ||--o{ artworks : classifies
+    artworks ||--|{ artwork_variants : provides
+    artworks ||--o{ order_items : ordered_in
+    artwork_variants ||--o{ order_items : variant_selected
+    orders ||--|{ order_items : contains
+    profiles ||--o{ orders : places
+    profiles ||--o{ user_addresses : saves
+    profiles ||--o{ custom_orders : requests
+    artworks ||--o{ wishlists : saved_in
+    profiles ||--o{ wishlists : owns
+    artwork_variants ||--o{ cart_items : holds
+    profiles ||--o{ cart_items : owns
+
+    artworks {
+        uuid id PK
+        string title
+        string slug UK
+        text description
+        integer price
+        boolean is_available
+        jsonb images
+        uuid category_id FK
+        uuid medium_id FK
+        uuid surface_id FK
+    }
+
+    artwork_variants {
+        uuid id PK
+        uuid artwork_id FK
+        string label
+        integer mrp
+        integer selling_price
+        integer stock_quantity
+        boolean can_be_framed
+        integer framing_price
+    }
+
+    orders {
+        uuid id PK
+        string order_number UK
+        uuid user_id FK
+        integer total_amount
+        string order_status
+        string payment_status
+        string razorpay_order_id UK
+        string razorpay_payment_id
+        jsonb shipping_address
+    }
+```
+
+### Security & Row Level Security (RLS)
+
+1. **Strict Table Isolation**: Public anonymous visitors cannot perform mutations (`INSERT`, `UPDATE`, `DELETE`) on core catalog tables (`artworks`, `categories`, `artwork_variants`).
+2. **User Data Ownership**:
+   * Customers can only read and mutate their own `orders`, `user_addresses`, `cart_items`, and `wishlists` via `auth.uid() = user_id`.
+3. **Role-Based Admin Protection**:
+   * Admin mutations rely on the PostgreSQL helper function `arts.is_admin()`, which inspects the user's role in `arts.profiles`.
+4. **Proxy Route Interception (`src/proxy.ts`)**:
+   * Non-authenticated requests to `/account/*` or `/admin/*` are intercepted before route rendering and redirected to `/login`.
+
+---
+
+## 8. Performance, SEO & Accessibility Standards
+
+### SEO & Discoverability
+* **Per-Page Metadata**: Handled dynamically through the Next.js Metadata API with canonical URLs and Open Graph tags.
+* **1200×630 OG Banner**: An optimized, branded social sharing preview banner ([`public/images/og-default.jpg`](file:///c:/Aditya/Work/Project/anjori-arts/public/images/og-default.jpg)) compressed to ~110 KB.
+* **JSON-LD Structured Data**:
+  * Product schema on [`/artworks/[slug]`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/artworks/%5Bslug%5D/page.tsx) with live availability and pricing.
+  * WebPage and Organization schema on [`/about`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/about/page.tsx) and [`/share-story`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/share-story/page.tsx).
+* **Automated Sitemap**: Auto-generated via [`src/app/sitemap.ts`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/sitemap.ts), mapping all indexable routes, categories, and artworks.
+
+### Accessibility (WCAG 2.1 AA)
+* **Accessible Names**: All icon-only buttons (`CartIcon`, `WishlistIcon`, `ThemeToggle`, `ImageGallery` zoom, search button) feature explicit `aria-label` attributes.
+* **Keyboard Navigable**: Lightbox overlays include keyboard focus traps and <kbd>Escape</kbd> dismissal.
+* **Touch Targets**: All interactive elements maintain a minimum 44×44 CSS-pixel touch target.
+* **External Link Context**: External links (`target="_blank"`) announce `(opens in a new tab)` for screen readers.
+
+---
+
+## 9. Operational Cost Model
+
+| Service | Tier / Plan | Monthly Cost (Launch) | Capacity |
+| :--- | :--- | :--- | :--- |
+| **Vercel** | Hobby / Pro | $0 – $20 | Edge deployment, unlimited builds, global CDN |
+| **Supabase** | Free / Pro Tier | $0 – $25 | Managed PostgreSQL, 50,000 MAU auth, 500MB storage |
+| **Cloudinary** | Free Tier | $0 | 25 monthly transformation credits (approx. 25,000 images) |
+| **Razorpay** | Standard Gateway | 2% per successful transaction | Pay-as-you-transact (No setup or maintenance fees) |
+| **Resend** | Free Tier | $0 | Up to 3,000 transactional emails/month (100/day) |
+| **Domain & DNS** | Cloudflare / Registrar | ~$10 – $15 / year | HTTPS encryption, DDoS protection, edge caching |
+| **Total Estimated Run Rate** | | **₹0 – ₹1,800 / month** | Capable of supporting up to 50,000 monthly visitors |
 
 ---
 
 ## 10. Future Roadmap
 
-High-impact features planned for future phases to improve conversion, trust, and user experience.
-
-### Phase 7: Trust & Engagement
-| Feature | Description | Priority | Effort |
-|---------|-------------|----------|--------|
-| **WhatsApp Chat Button** | Floating button for instant customer queries | High | Low |
-| **Instagram Feed** | Display recent posts on homepage | Medium | Low |
-| **Recently Viewed** | Section showing artworks user browsed | Medium | Low |
-| **Packaging Showcase** | Show how art is safely packaged for shipping | Medium | Low |
-| **FAQ Page** | Common questions about ordering, shipping, materials | High | Low |
-
-### Phase 8: Conversion Optimization
-| Feature | Description | Priority | Effort |
-|---------|-------------|----------|--------|
-| **Sticky Add-to-Cart (Mobile)** | Button stays visible while scrolling product page | High | Low |
-| **Urgency Indicators** | "Only 1 left", "3 people viewing this" | Medium | Low |
-| **Exit Intent Popup** | Capture emails with discount before user leaves | Low | Medium |
-| **"Complete the Look"** | Suggest matching art pieces on product page | Low | Medium |
-
-### Phase 9: Advanced Features
-| Feature | Description | Priority | Effort |
-|---------|-------------|----------|--------|
-| **View in Room Preview** | AR/mockup showing art on user's wall | High | High |
-| **Size Comparison Visual** | Show art next to sofa/hand for scale understanding | Medium | Medium |
-| **Art Quiz** | "Find your art style" - engagement + email capture | Low | Medium |
-| **Artist Process Video** | Behind-the-scenes of art creation on About page | Low | Low |
-
-### Phase 10: SEO & Content
-| Feature | Description | Priority | Effort |
-|---------|-------------|----------|--------|
-| **Blog/Art Guides** | "How to choose art for your space" articles | Medium | Medium |
-| **Press/Features Section** | "As seen in..." credibility builder | Low | Low |
-| **Customer Photos Gallery** | Photos of art in customers' homes | Medium | Low |
-
-### Feature Priority Matrix
-
-```
-                    HIGH IMPACT
-                        │
-    ┌───────────────────┼───────────────────┐
-    │                   │                   │
-    │  WhatsApp Chat    │   View in Room    │
-    │  Sticky Cart      │                   │
-    │  FAQ Page         │                   │
-    │                   │                   │
-LOW ├───────────────────┼───────────────────┤ HIGH
-EFFORT                  │                   EFFORT
-    │                   │                   │
-    │  Instagram Feed   │   Art Quiz        │
-    │  Recently Viewed  │   Blog            │
-    │  Urgency Icons    │                   │
-    │                   │                   │
-    └───────────────────┼───────────────────┘
-                        │
-                    LOW IMPACT
-```
-
-**Recommendation:** Start with high-impact, low-effort features (top-left quadrant) for maximum ROI.
-
----
-
-## Related Documents
-
-- [DB_DESIGN.md](./DB_DESIGN.md) - Database schema, tables, relationships ✅
-- [schema.sql](../backend/src/main/resources/db/schema.sql) - Executable SQL queries ✅
-- [seed.sql](../backend/src/main/resources/db/seed.sql) - Initial data (categories, shipping, coupons) ✅
-- [EMAIL_TEMPLATES.md](./EMAIL_TEMPLATES.md) - Email content, templates, design guidelines ✅
-- [TECHNICAL.md](./TECHNICAL.md) - API endpoints, request/response (for developers) 🔴
-- [INFRASTRUCTURE.md](./INFRASTRUCTURE.md) - Deployment, Docker, services (for DevOps) 🔴
-
----
-
-*This document provides a high-level overview for managers and stakeholders. For technical details, see the related documents.*
+1. **Per-Product Verified Customer Reviews**:
+   * Enable customers to write reviews directly on [`/artworks/[slug]`](file:///c:/Aditya/Work/Project/anjori-arts/src/app/artworks/%5Bslug%5D/page.tsx) with verified buyer badges linked to their delivered orders.
+2. **Augmented Reality (AR) "View on Your Wall"**:
+   * Browser-based AR projection allowing collectors to visualize custom dimensions and frame styles on their room walls using camera feeds.
+3. **Automated Shipping Partner Integration**:
+   * Direct API integration with Shiprocket / Delhivery for real-time airway bill (AWB) generation, reverse pickups, and automated transit SMS notifications.
+4. **International Multi-Currency Support**:
+   * Stripe / PayPal integration allowing international art collectors to purchase and ship worldwide with automated currency conversion.

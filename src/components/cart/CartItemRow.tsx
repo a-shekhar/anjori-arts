@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Minus, Plus, Trash2, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { type CartItem, useCartStore } from "@/stores/cart-store";
+import { useWishlistStore } from "@/stores/wishlist-store";
 import { formatPrice } from "@/lib/helpers";
 import { MAX_CART_QUANTITY } from "@/config/constants";
 
@@ -13,8 +15,10 @@ interface CartItemRowProps {
 }
 
 export function CartItemRow({ item }: CartItemRowProps) {
+  const router = useRouter();
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
+  const addToWishlist = useWishlistStore((state) => state.addItem);
 
   const unitPrice = item.sellingPrice + (item.framingPrice || 0);
   const lineTotal = unitPrice * item.quantity;
@@ -37,6 +41,20 @@ export function CartItemRow({ item }: CartItemRowProps) {
   const handleRemove = () => {
     removeItem(item.id);
     toast.info(`"${item.title}" was removed from your bag.`);
+  };
+
+  const handleMoveToWishlist = async () => {
+    const success = await addToWishlist(item.artworkId, item.title, { silent: true });
+    if (success) {
+      removeItem(item.id);
+      toast.success(`"${item.title}" moved to your wishlist!`, {
+        description: "Saved to your wishlist and removed from shopping bag.",
+        action: {
+          label: "View Wishlist",
+          onClick: () => router.push("/wishlist"),
+        },
+      });
+    }
   };
 
   return (
@@ -72,14 +90,26 @@ export function CartItemRow({ item }: CartItemRowProps) {
             >
               {item.title}
             </Link>
-            <button
-              type="button"
-              onClick={handleRemove}
-              aria-label={`Remove ${item.title} from cart`}
-              className="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive sm:-mr-2"
-            >
-              <Trash2 className="size-4" aria-hidden="true" />
-            </button>
+            <div className="flex items-center gap-1 sm:-mr-2">
+              <button
+                type="button"
+                onClick={handleMoveToWishlist}
+                aria-label={`Save ${item.title} to wishlist`}
+                title="Save to wishlist"
+                className="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+              >
+                <Heart className="size-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={handleRemove}
+                aria-label={`Remove ${item.title} from cart`}
+                title="Remove from bag"
+                className="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive cursor-pointer"
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
           {/* Attributes / Options */}

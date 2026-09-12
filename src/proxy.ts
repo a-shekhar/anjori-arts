@@ -4,6 +4,16 @@ import { updateSession } from "@/lib/supabase/middleware";
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
 
+  // Protect account routes
+  if (request.nextUrl.pathname.startsWith("/account")) {
+    if (!user) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("reason", "no_session");
+      loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Protect admin routes and API routes
   if (
     request.nextUrl.pathname.startsWith("/admin") ||
@@ -15,6 +25,7 @@ export async function proxy(request: NextRequest) {
       } else {
         const loginUrl = new URL("/login", request.url);
         loginUrl.searchParams.set("reason", "no_session");
+        loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
       }
     }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { Palette, PenTool, Paintbrush, MessageSquare, PlusCircle, ArrowRight } from "lucide-react";
+import { Palette, PenTool, Paintbrush, MessageSquare, PlusCircle, ArrowRight, Users, ShoppingBag } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | Anjori Arts",
@@ -13,11 +13,13 @@ export default async function AdminDashboard() {
   const supabase = createAdminClient();
 
   // Fetch quick metrics concurrently
-  const [artworksRes, blogRes, inquiriesRes, customOrdersRes] = await Promise.all([
+  const [artworksRes, blogRes, inquiriesRes, customOrdersRes, profilesRes, ordersRes] = await Promise.all([
     supabase.from("artworks").select("*", { count: "exact", head: true }),
     supabase.from("blog_posts").select("*", { count: "exact", head: true }),
     supabase.from("inquiries").select("*", { count: "exact", head: true }),
     supabase.from("custom_orders").select("*", { count: "exact", head: true }),
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase.from("orders").select("*", { count: "exact", head: true }),
   ]);
 
   const metrics = {
@@ -25,6 +27,8 @@ export default async function AdminDashboard() {
     blogs: blogRes.count || 0,
     inquiries: inquiriesRes.count || 0,
     customOrders: customOrdersRes.count || 0,
+    collectors: profilesRes.count || 0,
+    orders: ordersRes.count || 0,
   };
 
   return (
@@ -36,7 +40,29 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <Link href="/admin/orders" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Orders</CardTitle>
+              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.orders}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/customers" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Collectors</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.collectors}</div>
+            </CardContent>
+          </Card>
+        </Link>
         <Link href="/admin/artworks" className="block transition hover:opacity-90">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -45,17 +71,6 @@ export default async function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metrics.artworks}</div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/admin/blog" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-              <PenTool className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.blogs}</div>
             </CardContent>
           </Card>
         </Link>
@@ -81,10 +96,21 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/admin/blog" className="block transition hover:opacity-90">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
+              <PenTool className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.blogs}</div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-full">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>Common administrative tasks.</CardDescription>
@@ -95,6 +121,12 @@ export default async function AdminDashboard() {
             </Link>
             <Link href="/admin/blog/new" className={buttonVariants({ variant: "outline" })}>
               <PlusCircle className="mr-2 h-4 w-4" /> Write Blog Post
+            </Link>
+            <Link href="/admin/customers" className={buttonVariants({ variant: "secondary" })}>
+              <Users className="mr-2 h-4 w-4" /> View Collectors
+            </Link>
+            <Link href="/admin/orders" className={buttonVariants({ variant: "secondary" })}>
+              <ShoppingBag className="mr-2 h-4 w-4" /> Manage Orders
             </Link>
             <Link href="/admin/custom-orders" className={buttonVariants({ variant: "secondary" })}>
               View Custom Orders <ArrowRight className="ml-2 h-4 w-4" />

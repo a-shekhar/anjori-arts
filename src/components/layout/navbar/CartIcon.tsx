@@ -1,22 +1,42 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-import { useSyncExternalStore } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const emptySubscribe = () => () => {};
 
 export function CartIcon() {
-  const isMounted = useSyncExternalStore(
+  const isMounted = React.useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false
   );
   const itemCount = useCartStore((state) => state.getItemCount());
+  const syncWithCloud = useCartStore((state) => state.syncWithCloud);
+
+  // Auto-sync guest cart items with user account on mount and on auth change (sign-in)
+  React.useEffect(() => {
+    syncWithCloud();
+
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        syncWithCloud();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [syncWithCloud]);
+
   const hasItems = isMounted && itemCount > 0;
 
   return (

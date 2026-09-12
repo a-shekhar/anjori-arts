@@ -354,8 +354,8 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                 <div className="space-y-6">
                   {variantFields.map((field, index) => (
                     <div key={field.id} className="p-4 border rounded-lg space-y-4 relative bg-muted/20">
-                      <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => removeVariant(index)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button type="button" variant="ghost" size="icon" aria-label={`Remove variant ${index + 1}`} className="absolute top-2 right-2 text-destructive" onClick={() => removeVariant(index)}>
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -378,8 +378,9 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                               size="icon" 
                               onClick={() => generateSku(index)}
                               title="Auto-generate SKU"
+                              aria-label="Auto-generate SKU"
                             >
-                              <Wand2 className="h-4 w-4" />
+                              <Wand2 className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </div>
                         </div>
@@ -509,8 +510,8 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                       <Input {...form.register(`images.${index}.alt`)} placeholder="Alt text (optional)" className="h-7 text-xs" />
                       <input type="hidden" {...form.register(`images.${index}.publicId`)} />
                     </div>
-                    <Button type="button" variant="ghost" size="icon" className="text-destructive flex-shrink-0" onClick={() => removeImage(index)}>
-                      <X className="h-4 w-4" />
+                    <Button type="button" variant="ghost" size="icon" aria-label={`Remove image ${index + 1}`} className="text-destructive flex-shrink-0" onClick={() => removeImage(index)}>
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 ))}
