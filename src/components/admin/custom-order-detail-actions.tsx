@@ -91,6 +91,7 @@ export function CustomOrderDetailActions({ order }: CustomOrderDetailActionsProp
     }).format(amount);
   };
 
+
   const hasQuote = Boolean(order.items && order.items.length > 0 && (order.quote_total || 0) > 0);
 
   const quoteBreakdown = hasQuote && order.items

@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Loader2,
   ArrowRight,
@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RESEND_OTP_COOLDOWN_SECONDS } from "@/config/constants";
 function getRemainingCooldown(key: string): number {
   if (typeof window === "undefined") return 0;
   try {
@@ -29,7 +30,7 @@ function getRemainingCooldown(key: string): number {
       return remaining > 0 ? remaining : 0;
     }
   } catch {
-    // ignore
+    // sessionStorage disabled or unavailable
   }
   return 0;
 }
@@ -44,6 +45,7 @@ function setCooldownExpiry(key: string, seconds = 60) {
 }
 
 function ForgotPasswordForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect");
   const emailParam = searchParams.get("email");
@@ -70,7 +72,10 @@ function ForgotPasswordForm() {
     if (!submittedEmail) return;
     const remaining = getRemainingCooldown(`forgot_cooldown_${submittedEmail}`);
     if (remaining > 0) {
-      setCountdown(remaining);
+      const timer = setTimeout(() => {
+        setCountdown(remaining);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [submittedEmail]);
 
@@ -83,7 +88,7 @@ function ForgotPasswordForm() {
     const handleSessionDetected = () => {
       setVerifiedRedirecting(true);
       setTimeout(() => {
-        window.location.href = "/reset-password";
+        router.push("/reset-password");
       }, 600);
     };
 
@@ -132,7 +137,7 @@ function ForgotPasswordForm() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(pollInterval);
     };
-  }, [submittedEmail]);
+  }, [submittedEmail, router]);
 
   // Resend countdown timer
   useEffect(() => {
@@ -156,7 +161,7 @@ function ForgotPasswordForm() {
 
     if (result?.code === "RATE_LIMIT") {
       setSubmittedEmail(cleanEmail);
-      const remaining = getRemainingCooldown(`forgot_cooldown_${cleanEmail}`) || 60;
+      const remaining = getRemainingCooldown(`forgot_cooldown_${cleanEmail}`) || RESEND_OTP_COOLDOWN_SECONDS;
       setCountdown(remaining);
       setLoading(false);
       return;
@@ -199,7 +204,7 @@ function ForgotPasswordForm() {
     }
 
     if (result?.success) {
-      window.location.href = "/reset-password";
+      router.push("/reset-password");
     }
   }
 
@@ -214,7 +219,7 @@ function ForgotPasswordForm() {
 
     if (result?.code === "RATE_LIMIT") {
       setResendMessage({ type: "error", text: result.error || "Please wait before requesting another email." });
-      const remaining = getRemainingCooldown(`forgot_cooldown_${submittedEmail}`) || 60;
+      const remaining = getRemainingCooldown(`forgot_cooldown_${submittedEmail}`) || RESEND_OTP_COOLDOWN_SECONDS;
       setCountdown(remaining);
       return;
     }
@@ -228,6 +233,8 @@ function ForgotPasswordForm() {
       });
       setCountdown(60);
       setCooldownExpiry(`forgot_cooldown_${submittedEmail}`, 60);
+      setCountdown(RESEND_OTP_COOLDOWN_SECONDS);
+      setCooldownExpiry(`forgot_cooldown_${submittedEmail}`, RESEND_OTP_COOLDOWN_SECONDS);
     }
   }
 

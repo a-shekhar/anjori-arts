@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   ShieldAlert,
   Smartphone,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,6 +40,9 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Global logout state
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -77,6 +82,9 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
       }
     } catch {
       toast.error("Failed to update password");
@@ -153,45 +161,78 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
               <Label htmlFor="currentPassword" className="text-xs font-medium text-foreground">
                 Current Password <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                required
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter your existing password"
-                className="min-h-[44px] h-11 rounded-xl text-sm"
-              />
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  required
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter your existing password"
+                  className="min-h-[44px] h-11 rounded-xl text-sm pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword((prev) => !prev)}
+                  aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                  className="absolute right-0 top-0 flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none cursor-pointer"
+                >
+                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="newPassword" className="text-xs font-medium text-foreground">
                 New Password <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 8 characters (letters and numbers)"
-                className="min-h-[44px] h-11 rounded-xl text-sm"
-              />
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 8 characters (letters and numbers)"
+                  className="min-h-[44px] h-11 rounded-xl text-sm pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                  className="absolute right-0 top-0 flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none cursor-pointer"
+                >
+                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword" className="text-xs font-medium text-foreground">
                 Confirm New Password <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
-                className="min-h-[44px] h-11 rounded-xl text-sm"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="min-h-[44px] h-11 rounded-xl text-sm pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                  className="absolute right-0 top-0 flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none cursor-pointer"
+                >
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             <Button

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, type Resolver } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, UploadCloud, X, Image as ImageIcon, Wand2 } from "lucide-react";
+import { Plus, Trash2, UploadCloud, X, Image as ImageIcon, Wand2, Loader2 } from "lucide-react";
 import { createArtwork, updateArtwork } from "@/actions/admin-artworks";
 import { artworkSchema, ArtworkFormValues } from "@/lib/validations/artwork";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ type TaxonomyData = {
 };
 
 type Props = {
-  initialData?: any;
+  initialData?: Partial<ArtworkFormValues & { id?: string }>;
   taxonomies: TaxonomyData;
 };
 
@@ -103,7 +104,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const generateSku = (index: number) => {
     const categoryId = form.getValues("categoryId");
     const category = taxonomies.categories.find(c => c.id === categoryId);
-    let catPrefix = category ? category.name.substring(0, 3).toUpperCase() : "ART";
+    const catPrefix = category ? category.name.substring(0, 3).toUpperCase() : "ART";
     
     // For initials, just use the first letter of each word in the title
     const title = form.getValues("title") || "";
@@ -225,7 +226,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
       } else {
         toast.error(`Upload failed: ${data.error}`, { id: toastId });
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred during upload", { id: toastId });
     } finally {
       setIsUploading(false);
@@ -304,7 +305,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
       } else {
         toast.error(`AI generation failed: ${result.error}`, { id: toastId });
       }
-    } catch (error) {
+    } catch {
       toast.error("An error occurred during AI generation", { id: toastId });
     } finally {
       setIsGeneratingAI(false);
@@ -331,7 +332,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
       const formData = new FormData();
       formData.append("payload", JSON.stringify(values));
 
-      const res = isEditing 
+      const res = isEditing && initialData?.id
         ? await updateArtwork(initialData.id, null, formData)
         : await createArtwork(null, formData);
 
@@ -344,6 +345,11 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     });
   };
 
+  const watchedCategoryId = form.watch("categoryId");
+  const watchedSurfaceId = form.watch("surfaceId");
+  const watchedMediumIds = form.watch("mediumIds") || [];
+  const watchedVariants = form.watch("variants");
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -354,7 +360,12 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button type="button" variant="outline" onClick={() => router.push("/admin/artworks")} disabled={isPending} className="flex-1 sm:flex-initial">Cancel</Button>
           <Button type="submit" disabled={isPending || isUploading} className="flex-1 sm:flex-initial">
-            {isPending ? "Saving..." : isEditing ? "Save Changes" : "Create Artwork"}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Saving...
+              </>
+            ) : isEditing ? "Save Changes" : "Create Artwork"}
           </Button>
         </div>
       </div>
@@ -406,12 +417,12 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                 <div className="grid gap-2">
                   <Label>Category <span className="text-destructive">*</span></Label>
                   <Select 
-                    value={form.watch("categoryId")} 
+                    value={watchedCategoryId} 
                     onValueChange={(val) => form.setValue("categoryId", val || "", { shouldDirty: true })}
                   >
                     <SelectTrigger>
                       <SelectValue>
-                        {form.watch("categoryId") ? taxonomies.categories.find(c => c.id === form.watch("categoryId"))?.name : "Select Category"}
+                        {watchedCategoryId ? taxonomies.categories.find(c => c.id === watchedCategoryId)?.name : "Select Category"}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -426,12 +437,12 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                 <div className="grid gap-2">
                   <Label>Surface (Optional)</Label>
                   <Select 
-                    value={form.watch("surfaceId") || "none"} 
+                    value={watchedSurfaceId || "none"} 
                     onValueChange={(val) => form.setValue("surfaceId", val === "none" ? null : val, { shouldDirty: true })}
                   >
                     <SelectTrigger>
                       <SelectValue>
-                        {form.watch("surfaceId") ? taxonomies.surfaces.find(s => s.id === form.watch("surfaceId"))?.name : "Select Surface"}
+                        {watchedSurfaceId ? taxonomies.surfaces.find(s => s.id === watchedSurfaceId)?.name : "Select Surface"}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
@@ -448,7 +459,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                 <Label>Mediums</Label>
                 <div className="flex flex-wrap gap-2">
                   {taxonomies.mediums.map(m => {
-                    const isSelected = form.watch("mediumIds")?.includes(m.id);
+                    const isSelected = watchedMediumIds.includes(m.id);
                     return (
                       <Badge 
                         key={m.id}
@@ -489,7 +500,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="artistNote">Artist's Note (Optional)</Label>
+                <Label htmlFor="artistNote">Artist&apos;s Note (Optional)</Label>
                 <Textarea id="artistNote" {...form.register("artistNote")} rows={3} />
               </div>
             </CardContent>
@@ -612,11 +623,11 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                             <p className="text-sm text-muted-foreground">Offer an optional frame for this specific size.</p>
                           </div>
                           <Switch 
-                            checked={form.watch(`variants.${index}.canBeFramed`)} 
+                            checked={Boolean(watchedVariants?.[index]?.canBeFramed)} 
                             onCheckedChange={(val) => form.setValue(`variants.${index}.canBeFramed`, val, { shouldDirty: true })} 
                           />
                         </div>
-                        {form.watch(`variants.${index}.canBeFramed`) && (
+                        {watchedVariants?.[index]?.canBeFramed && (
                           <div className="grid gap-2 max-w-xs">
                             <Label>Framing Add-on Price (₹)</Label>
                             <Input type="number" step="0.01" {...form.register(`variants.${index}.framingPrice`, { valueAsNumber: true })} />
@@ -701,7 +712,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                 {imageFields.map((field, index) => (
                   <div key={field.id} className="flex gap-3 items-center border rounded-md p-2 bg-background">
                     <div className="h-16 w-16 relative rounded-sm overflow-hidden bg-muted flex-shrink-0">
-                      <img src={form.watch(`images.${index}.url`)} alt="preview" className="w-full h-full object-cover" />
+                      <NextImage src={form.watch(`images.${index}.url`)} alt="preview" fill className="object-cover" sizes="64px" unoptimized />
                     </div>
                     <div className="flex-1 min-w-0 grid gap-2">
                       <Input {...form.register(`images.${index}.url`)} placeholder="Image URL" className="h-7 text-xs" />

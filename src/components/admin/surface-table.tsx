@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { 
   Search, 
   Plus, 
@@ -64,7 +64,6 @@ const POPULAR_PRESETS = [
 export function SurfaceTable({ initialSurfaces }: SurfaceTableProps) {
   const [surfaces, setSurfaces] = useState<AdminSurface[]>(initialSurfaces);
   const [search, setSearch] = useState("");
-  const [, startTransition] = useTransition();
 
   // Dialog states
   const [modalOpen, setModalOpen] = useState(false);
@@ -351,8 +350,9 @@ export function SurfaceTable({ initialSurfaces }: SurfaceTableProps) {
         </Button>
       </div>
 
-      {/* Main Table */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      {/* MAIN CONTENT: TABLE ON DESKTOP, CARDS ON MOBILE */}
+      {/* Desktop Table View (>= 768px) */}
+      <div className="hidden md:block rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/50">
@@ -510,6 +510,119 @@ export function SurfaceTable({ initialSurfaces }: SurfaceTableProps) {
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      {/* Mobile Cards View (< 768px) */}
+      <div className="grid gap-3 md:hidden">
+        {filteredSurfaces.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-muted/10">
+            <Layers className="h-8 w-8 mx-auto text-muted-foreground/60 mb-2" />
+            <p className="text-sm font-medium text-foreground">No surfaces found</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {search ? `No matches for "${search}".` : "Add your first artwork surface."}
+            </p>
+          </div>
+        ) : (
+          filteredSurfaces.map((surface) => {
+            const realIndex = surfaces.findIndex((s) => s.id === surface.id);
+            const isFirst = realIndex === 0;
+            const isLast = realIndex === surfaces.length - 1;
+
+            return (
+              <div
+                key={surface.id}
+                className="rounded-2xl border border-border bg-card p-4 shadow-xs space-y-3"
+              >
+                {/* Header: Layers Icon + Name + Slug + Status */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Layers className="size-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm text-foreground">{surface.name}</h3>
+                      <code className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
+                        /{surface.slug}
+                      </code>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(surface)}
+                      disabled={togglingId === surface.id}
+                      aria-label={`Toggle status for ${surface.name}`}
+                      className="cursor-pointer"
+                    >
+                      {surface.is_active ? (
+                        <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] px-2 py-0.5">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-muted-foreground text-[10px] px-2 py-0.5">
+                          Inactive
+                        </Badge>
+                      )}
+                    </button>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {surface.artworkCount} {surface.artworkCount === 1 ? "pc" : "pcs"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Position & Reorder Controls */}
+                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-xs">
+                  <span className="font-mono text-xs font-medium text-muted-foreground">
+                    Position #{realIndex + 1}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleMove(realIndex, "up")}
+                      disabled={isFirst || !!search.trim()}
+                      aria-label={`Move ${surface.name} up`}
+                      className="inline-flex size-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 cursor-pointer"
+                    >
+                      <ChevronUp className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(realIndex, "down")}
+                      disabled={isLast || !!search.trim()}
+                      aria-label={`Move ${surface.name} down`}
+                      className="inline-flex size-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 cursor-pointer"
+                    >
+                      <ChevronDown className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mobile Actions with 44px Hit Targets */}
+                <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleOpenEditModal(surface)}
+                    className="flex-1 min-h-[44px] text-xs font-semibold"
+                  >
+                    <Edit2 className="mr-1.5 size-3.5" />
+                    Edit Surface
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleOpenDeleteModal(surface)}
+                    aria-label={`Delete ${surface.name}`}
+                    className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Add / Edit Surface Dialog */}

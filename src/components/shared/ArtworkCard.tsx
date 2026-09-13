@@ -7,9 +7,10 @@ import type { Artwork, Category } from "@/types";
 interface ArtworkCardProps {
   artwork: Artwork;
   category?: Category;
+  priority?: boolean;
 }
 
-export function ArtworkCard({ artwork, category }: ArtworkCardProps) {
+export function ArtworkCard({ artwork, category, priority = false }: ArtworkCardProps) {
   const primaryImage = artwork.images[0];
 
   return (
@@ -26,6 +27,7 @@ export function ArtworkCard({ artwork, category }: ArtworkCardProps) {
               src={primaryImage.url}
               alt={primaryImage.alt}
               fill
+              priority={priority}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
             />

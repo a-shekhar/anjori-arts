@@ -1,8 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface CountryCodeSelectProps
-  extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+export type CountryCodeSelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
 
 export const COUNTRY_CODES = [
   { code: "+91", label: "IN (+91)" },

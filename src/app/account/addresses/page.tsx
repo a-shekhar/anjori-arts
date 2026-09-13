@@ -69,7 +69,7 @@ export default async function AccountAddressesPage() {
           <div className="mt-6">
             <AddressModal
               trigger={
-                <Button className="rounded-xl font-medium gap-2 shadow-sm">
+                <Button className="rounded-xl font-medium gap-2 shadow-sm min-h-[44px] h-11 text-xs sm:text-sm">
                   <Plus className="size-4" />
                   <span>Add First Delivery Address</span>
                 </Button>

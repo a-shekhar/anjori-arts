@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Edit, Eye, MoreHorizontal, Trash2, Search, Filter } from "lucide-react";
@@ -42,7 +41,7 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
       } else {
         toast.error(`Error: ${res.message}`, { id: toastId });
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to delete artwork", { id: toastId });
     }
   };
@@ -57,7 +56,7 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
       } else {
         toast.error(`Error: ${res.message}`, { id: toastId });
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to update status", { id: toastId });
     }
   };
@@ -72,7 +71,7 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
       } else {
         toast.error(`Error: ${res.message}`, { id: toastId });
       }
-    } catch (e) {
+    } catch {
       toast.error("Failed to update featured status", { id: toastId });
     }
   };
@@ -104,10 +103,11 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
         </div>
       </div>
 
-      <div className="rounded-md border bg-card">
+      {/* DESKTOP TABLE VIEW (>= 768px) */}
+      <div className="hidden md:block rounded-xl border bg-card shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Details</TableHead>
               <TableHead>Price</TableHead>
@@ -147,7 +147,14 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
                             sizes="48px"
                           />
                         ) : primaryImage?.url ? (
-                          <img src={primaryImage.url} alt={art.title} className="w-full h-full object-cover" />
+                          <Image
+                            src={primaryImage.url}
+                            alt={art.title}
+                            fill
+                            unoptimized
+                            className="object-cover"
+                            sizes="48px"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No img</div>
                         )}
@@ -207,6 +214,146 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* MOBILE CARDS VIEW (< 768px) */}
+      <div className="grid gap-3 md:hidden">
+        {filteredArtworks.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-muted/10">
+            No artworks found matching your search.
+          </div>
+        ) : (
+          filteredArtworks.map((art) => {
+            const primaryImage = art.images?.[0];
+            let publicId = primaryImage?.publicId || "";
+            if (!publicId && primaryImage?.url?.includes("res.cloudinary.com")) {
+              publicId = primaryImage.url.split("/upload/")[1]?.split("/").slice(1).join("/") || "";
+            }
+
+            return (
+              <div
+                key={art.id}
+                className="rounded-2xl border border-border bg-card p-3.5 shadow-xs space-y-3"
+              >
+                {/* Image + Info Row */}
+                <div className="flex gap-3 items-start">
+                  <div className="relative size-18 shrink-0 rounded-xl overflow-hidden bg-muted border border-border/80">
+                    {publicId ? (
+                      <Image
+                        src={publicId}
+                        alt={art.title}
+                        fill
+                        loader={cloudinaryLoader}
+                        placeholder="blur"
+                        blurDataURL={getBlurUrl(publicId)}
+                        className="object-cover"
+                        sizes="72px"
+                      />
+                    ) : primaryImage?.url ? (
+                      <Image
+                        src={primaryImage.url}
+                        alt={art.title}
+                        fill
+                        unoptimized
+                        className="object-cover"
+                        sizes="72px"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No img</div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-foreground truncate">{art.title}</h3>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                      {art.category?.name && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                          {art.category.name}
+                        </Badge>
+                      )}
+                      {art.variants?.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {art.variants.length} var
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 flex items-baseline gap-2">
+                      <span className="font-serif font-bold text-base text-foreground">
+                        ₹{(art.price / 100).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Badges Row */}
+                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Badge
+                      variant={art.is_available ? "default" : "secondary"}
+                      className={`text-[11px] ${art.is_available ? "bg-green-600 hover:bg-green-700" : ""}`}
+                    >
+                      {art.is_available ? "Available" : "Sold / Hidden"}
+                    </Badge>
+                    {art.is_featured && (
+                      <Badge variant="default" className="text-[11px] bg-amber-600 hover:bg-amber-700 text-white">
+                        Featured
+                      </Badge>
+                    )}
+                  </div>
+
+                  <span className="text-[11px] font-mono text-muted-foreground truncate max-w-[120px]">
+                    /{art.slug}
+                  </span>
+                </div>
+
+                {/* Mobile Action Buttons (44px min hit targets) */}
+                <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push(`/admin/artworks/${art.id}`)}
+                    className="flex-1 min-h-[44px] text-xs font-semibold"
+                  >
+                    <Edit className="mr-1.5 h-3.5 w-3.5" />
+                    Edit Artwork
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => window.open(`/artworks/${art.slug}`, "_blank")}
+                    aria-label={`View ${art.title} live`}
+                    className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={
+                      <Button
+                        variant="ghost"
+                        aria-label="More options"
+                        className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    } />
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleToggleStatus(art.id, art.is_available)} className="cursor-pointer min-h-[40px]">
+                        {art.is_available ? "Mark as Unavailable" : "Mark as Available"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleToggleFeatured(art.id, art.is_featured)} className="cursor-pointer min-h-[40px]">
+                        {art.is_featured ? "Remove from Featured" : "Mark as Featured"}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleDelete(art.id, art.title)} className="text-destructive focus:bg-destructive/10 cursor-pointer min-h-[40px]">
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete Artwork
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

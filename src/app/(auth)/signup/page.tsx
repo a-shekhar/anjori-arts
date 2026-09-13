@@ -22,6 +22,7 @@ import { createClient, performSignOut } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RESEND_OTP_COOLDOWN_SECONDS, DEFAULT_COUNTRY_CODE } from "@/config/constants";
 
 function getRemainingCooldown(key: string): number {
   if (typeof window === "undefined") return 0;
@@ -52,6 +53,7 @@ function SignupForm() {
   const redirectUrl = searchParams.get("redirect");
 
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verificationRequired, setVerificationRequired] = useState(false);
@@ -80,7 +82,10 @@ function SignupForm() {
     if (!verificationRequired || !submittedEmail) return;
     const remaining = getRemainingCooldown(`signup_cooldown_${submittedEmail.trim().toLowerCase()}`);
     if (remaining > 0) {
-      setCountdown(remaining);
+      const timer = setTimeout(() => {
+        setCountdown(remaining);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [verificationRequired, submittedEmail]);
 
@@ -209,7 +214,7 @@ function SignupForm() {
 
     if (result?.code === "RATE_LIMIT") {
       setResendMessage({ type: "error", text: result.error || "Please wait before requesting another email." });
-      const remaining = getRemainingCooldown(`signup_cooldown_${submittedEmail.trim().toLowerCase()}`) || 60;
+      const remaining = getRemainingCooldown(`signup_cooldown_${submittedEmail.trim().toLowerCase()}`) || RESEND_OTP_COOLDOWN_SECONDS;
       setCountdown(remaining);
       return;
     }
@@ -223,6 +228,8 @@ function SignupForm() {
       });
       setCountdown(60);
       setCooldownExpiry(`signup_cooldown_${submittedEmail.trim().toLowerCase()}`, 60);
+      setCountdown(RESEND_OTP_COOLDOWN_SECONDS);
+      setCooldownExpiry(`signup_cooldown_${submittedEmail.trim().toLowerCase()}`, RESEND_OTP_COOLDOWN_SECONDS);
     }
   }
 
@@ -645,8 +652,10 @@ function SignupForm() {
               <div className="flex gap-2">
                 <span className="inline-flex h-11 items-center justify-center rounded-xl border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
                   +91
+                  {DEFAULT_COUNTRY_CODE}
                 </span>
                 <input type="hidden" name="countryCode" value="+91" />
+                <input type="hidden" name="countryCode" value={DEFAULT_COUNTRY_CODE} />
                 <Input
                   id="phone"
                   name="phone"
@@ -696,15 +705,25 @@ function SignupForm() {
               >
                 Confirm Password <span className="text-primary">*</span>
               </Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showPassword ? "text" : "password"}
-                required
-                autoComplete="new-password"
-                placeholder="Re-enter password"
-                className="h-11 rounded-xl"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  placeholder="Re-enter password"
+                  className="h-11 rounded-xl pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none cursor-pointer"
+                >
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             <Button

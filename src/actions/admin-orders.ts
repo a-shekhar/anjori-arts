@@ -6,6 +6,7 @@ import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import { COURIER_PARTNERS } from "@/config/constants";
 import type { Order, OrderItem, OrderStatus, PaymentStatus } from "@/types";
+import { mapOrder } from "@/lib/mappers";
 
 export interface AdminOrdersFilter {
   search?: string;
@@ -32,42 +33,6 @@ export interface AdminOrderStats {
   totalRevenue: number; // in paise
 }
 
-function mapOrder(order: any, items: OrderItem[] = []): Order {
-  return {
-    id: order.id,
-    order_number: order.order_number,
-    user_id: order.user_id ?? null,
-    customer_name: order.customer_name,
-    customer_email: order.customer_email,
-    customer_phone: order.customer_phone,
-    country_code: order.country_code || "+91",
-    shipping_address: order.shipping_address || {},
-    delivery_instructions: order.delivery_instructions ?? null,
-    subtotal: Number(order.subtotal) || 0,
-    delivery_charge: Number(order.delivery_charge) || 0,
-    discount_amount: Number(order.discount_amount) || 0,
-    total_amount: Number(order.total_amount) || 0,
-    currency: order.currency || "INR",
-    payment_method: order.payment_method,
-    payment_status: order.payment_status as PaymentStatus,
-    payment_reference: order.payment_reference ?? null,
-    receipt_url: order.receipt_url ?? null,
-    order_status: order.order_status as OrderStatus,
-    courier_name: order.courier_name ?? null,
-    tracking_number: order.tracking_number ?? null,
-    tracking_url: order.tracking_url ?? null,
-    estimated_delivery: order.estimated_delivery ?? null,
-    admin_notes: order.admin_notes ?? null,
-    gateway_order_id: order.gateway_order_id ?? null,
-    paid_at: order.paid_at ?? null,
-    cancellation_reason: order.cancellation_reason ?? null,
-    refund_reference: order.refund_reference ?? null,
-    refund_amount: Number(order.refund_amount) || 0,
-    created_at: order.created_at,
-    updated_at: order.updated_at,
-    items,
-  };
-}
 
 export const getAdminOrders = withAdminAuth(
   async (filters: AdminOrdersFilter = {}): Promise<AdminOrdersResponse> => {

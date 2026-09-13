@@ -14,7 +14,7 @@ import { checkoutRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimi
 import { calculateAuthoritativeOrder } from "@/lib/order-pricing";
 import type { Order, OrderItem, CartItem, CustomOrder } from "@/types";
 
-import { generateReferenceCode } from "@/lib/reference";
+import { generateOrderNumber } from "@/lib/helpers";
 
 export interface CreateOrderPayload {
   formData: CheckoutFormData;
@@ -26,10 +26,6 @@ export interface CreateOrderResult {
   orderNumber?: string;
   orderId?: string;
   error?: string;
-}
-
-function generateOrderNumber(): string {
-  return generateReferenceCode("ART");
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<CreateOrderResult> {

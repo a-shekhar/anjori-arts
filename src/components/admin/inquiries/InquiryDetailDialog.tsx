@@ -25,7 +25,6 @@ import {
   Mail,
   Phone,
   MessageCircle,
-  Clock,
   Calendar,
   User,
   Tag,
@@ -70,8 +69,11 @@ export function InquiryDetailDialog({
 
   useEffect(() => {
     if (inquiry) {
-      setAdminNotes(inquiry.admin_notes || "");
-      setShowDeleteConfirm(false);
+      const timer = setTimeout(() => {
+        setAdminNotes(inquiry.admin_notes || "");
+        setShowDeleteConfirm(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [inquiry]);
 

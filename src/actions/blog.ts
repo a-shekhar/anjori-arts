@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { getAnonClient } from "@/lib/supabase/anon";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sanitizePostgrestFilterTerm, sanitizePostgrestIdentifier } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
@@ -182,9 +182,9 @@ export async function fetchBlogPosts(options: {
   limit: number;
   search?: string;
   sort?: "newest" | "oldest";
-}) {
+}): Promise<{ posts: any[]; count: number }> {
   try {
-    const supabase = await createClient();
+    const supabase = getAnonClient();
     const { page, limit, search, sort = "newest" } = options;
     const offset = (page - 1) * limit;
 

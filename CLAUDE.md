@@ -4,10 +4,15 @@
 
 Follow the project quality rules in `AGENTS.md` for every change. In particular:
 
-- Build and verify every feature for mobile, tablet, and desktop; interactive controls must work with touch, mouse, keyboard, and screen readers.
+- Build and verify every feature for mobile (320px+), tablet (768px+), and desktop (1024px+); interactive controls must work with touch, mouse, keyboard, and screen readers with minimum 44×44px touch targets.
 - Keep all public navigation valid. Do not expose a CTA, route, phone number, or social link that is only a placeholder.
 - Preserve a global, token-driven light/dark theme. Components with custom CSS must be reviewed in both modes.
-- Treat SEO and performance as release requirements: truthful metadata and structured data, an accurate sitemap and robots policy, stable layouts, optimized images/fonts, and minimal client JavaScript.
+- Treat SEO and Core Web Vitals as release requirements: truthful metadata and structured JSON-LD schemas, an accurate automated sitemap, stable layouts (CLS = 0 with fixed aspect ratios and blur placeholders), optimized Next.js images/fonts, and minimal client JavaScript.
+- Prioritize native GPU-accelerated CSS transitions and Tailwind utilities over heavy runtime client libraries (e.g. `framer-motion`) to guarantee instant load times and zero bundle bloat.
+- Mandate React Email (`@react-email/components`) for all transactional email communications; ban raw HTML string concatenation.
+- Enforce Zero-Trust Security: calculate all money, delivery charges, discounts, and inventory authoritatively on the server; parse all input payloads with Zod; verify cryptographic admin sessions (`withAdminAuth`).
+- Enforce WCAG 2.1 AA Accessibility & in-flight mutation UX: accessible labels on icon buttons, modal focus traps, loading spinners on disabled submit buttons, and immediate Sonner toast feedback.
+- Enforce code organization & anti-duplication: continuous pruning of unused code, strict use of centralized constants, shared components over repetition, centralized DB mappers, and safe hydration hooks.
 - Use semantic elements, descriptive labels, accessible focus states, and responsive touch targets.
 - Before completion, run lint and TypeScript checks; validate the relevant route in light and dark mode at mobile, tablet, and desktop widths.
 

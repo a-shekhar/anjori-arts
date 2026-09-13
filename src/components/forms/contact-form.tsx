@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CountryCodeSelect } from "@/components/ui/country-code-select";
 import { toast } from "sonner";
-import { Send } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { submitInquiry } from "@/actions/contact";
 import { INQUIRY_CATEGORIES } from "@/lib/inquiries";
 
@@ -33,7 +33,7 @@ export function ContactForm() {
           description: result.error || "Please try again later.",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
@@ -110,7 +110,10 @@ export function ContactForm() {
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
-          "Sending..."
+          <>
+            <Loader2 className="mr-2 size-4 animate-spin" />
+            Sending...
+          </>
         ) : (
           <>
             Send Message

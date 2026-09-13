@@ -2,108 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { MAX_WISHLIST_ITEMS, FALLBACK_ARTWORK_IMAGE } from "@/config/constants";
-import type { Artwork, ArtworkVariant } from "@/types";
+import { MAX_WISHLIST_ITEMS } from "@/config/constants";
+import type { Artwork } from "@/types";
+import { mapArtwork } from "@/lib/mappers";
+import { getAnonClient } from "@/lib/supabase/anon";
 
 export interface WishlistActionResult {
   success: boolean;
   error?: string;
   count?: number;
-}
-
-interface RawVariantRow {
-  id: string;
-  label: string;
-  width_inches: number;
-  height_inches: number;
-  mrp: number;
-  selling_price: number;
-  stock_quantity: number;
-  is_active: boolean;
-  can_be_framed?: boolean;
-  framing_price?: number;
-  sku?: string | null;
-}
-
-interface RawArtworkRow {
-  id: string;
-  slug: string;
-  title: string;
-  category_id: string;
-  price: number;
-  description?: string | null;
-  dimensions?: string | null;
-  surface?: { name?: string } | null;
-  artwork_mediums?: Array<{ medium?: { name?: string } | null }> | null;
-  is_available: boolean;
-  is_featured: boolean;
-  tags?: string[] | null;
-  images?: Array<{ url: string; alt: string; publicId?: string }> | null;
-  variants?: RawVariantRow[] | null;
-  short_description?: string | null;
-  artist_note?: string | null;
-}
-
-function getAnonClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!,
-    { db: { schema: "arts" } }
-  );
-}
-
-function mapArtwork(art: RawArtworkRow): Artwork {
-  const mediums =
-    art.artwork_mediums
-      ?.map((am) => am.medium?.name)
-      .filter(Boolean)
-      .join(", ") || "";
-
-  const surfaceName = art.surface?.name || "";
-
-  let images = art.images;
-  if (!images || !Array.isArray(images) || images.length === 0) {
-    images = [
-      {
-        url: FALLBACK_ARTWORK_IMAGE,
-        alt: art.title || "Anjori Arts Handmade Artwork",
-      },
-    ];
-  }
-
-  const variants: ArtworkVariant[] = (art.variants || []).map((v) => ({
-    id: v.id,
-    label: v.label,
-    widthInches: v.width_inches,
-    heightInches: v.height_inches,
-    mrp: v.mrp,
-    sellingPrice: v.selling_price,
-    stockQuantity: v.stock_quantity,
-    isActive: v.is_active,
-    canBeFramed: v.can_be_framed,
-    framingPrice: v.framing_price,
-    sku: v.sku,
-  }));
-
-  return {
-    id: art.id,
-    slug: art.slug,
-    title: art.title,
-    categoryId: art.category_id,
-    price: art.price,
-    description: art.description || "",
-    dimensions: art.dimensions || "",
-    surface: surfaceName,
-    medium: mediums,
-    isAvailable: art.is_available,
-    isFeatured: art.is_featured,
-    tags: art.tags || [],
-    images,
-    variants,
-    shortDescription: art.short_description || "",
-    artistNote: art.artist_note || "",
-  };
 }
 
 /**
@@ -194,7 +101,7 @@ export async function getArtworksByIds(ids: string[]): Promise<Artwork[]> {
 
     // Preserve the order of ids requested
     const artworkMap = new Map<string, Artwork>();
-    (data as unknown as RawArtworkRow[]).forEach((item) => {
+    (data as any[]).forEach((item) => {
       artworkMap.set(item.id, mapArtwork(item));
     });
 

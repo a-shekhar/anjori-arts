@@ -5,6 +5,7 @@ import { sanitizePostgrestIdentifier, isUuid } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import type { CustomOrder, CustomOrderStatus, CustomOrderItem } from "@/types";
+import { mapCustomOrder } from "@/lib/mappers";
 
 export interface QuotationUpdatePayload {
   items: CustomOrderItem[];
@@ -14,45 +15,6 @@ export interface QuotationUpdatePayload {
   estimated_timeline?: string | null;
   admin_notes?: string | null;
   updateStatusToQuoted?: boolean;
-}
-
-function mapCustomOrder(order: any): CustomOrder {
-  return {
-    id: order.id,
-    order_reference: order.order_reference,
-    status: order.status as CustomOrderStatus,
-    created_at: order.created_at,
-    first_name: order.first_name,
-    last_name: order.last_name,
-    email: order.email,
-    country_code: order.country_code,
-    phone: order.phone ?? null,
-    category: order.category ?? null,
-    medium: order.medium ?? null,
-    surface: order.surface ?? null,
-    preferred_size: order.preferred_size ?? null,
-    budget: order.budget ?? null,
-    reference_link: order.reference_link ?? null,
-    reference_images: Array.isArray(order.reference_images) ? order.reference_images : [],
-    message: order.message ?? null,
-    final_category: order.final_category ?? null,
-    final_medium: order.final_medium ?? null,
-    final_surface: order.final_surface ?? null,
-    final_size: order.final_size ?? null,
-    final_budget: order.final_budget ?? null,
-    items: Array.isArray(order.items) ? (order.items as CustomOrderItem[]) : [],
-    quote_total: typeof order.quote_total === "number" ? order.quote_total : Number(order.quote_total) || 0,
-    deposit_percentage:
-      typeof order.deposit_percentage === "number"
-        ? order.deposit_percentage
-        : Number(order.deposit_percentage) || 50,
-    advance_deposit:
-      typeof order.advance_deposit === "number"
-        ? order.advance_deposit
-        : Number(order.advance_deposit) || 0,
-    estimated_timeline: order.estimated_timeline ?? null,
-    admin_notes: order.admin_notes ?? null,
-  };
 }
 
 export const getAdminCustomOrders = withAdminAuth(async (): Promise<CustomOrder[]> => {

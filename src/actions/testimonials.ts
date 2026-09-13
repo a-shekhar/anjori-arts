@@ -1,21 +1,13 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getAnonClient } from "@/lib/supabase/anon";
 import { uploadStream } from "@/lib/cloudinary-server";
 import {
   testimonialSchema,
   TESTIMONIAL_IMAGE_LIMITS,
 } from "@/lib/validations/testimonial";
 import type { Testimonial } from "@/types";
-
-function getAnonClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!,
-    { db: { schema: "arts" } }
-  );
-}
 
 export async function submitCustomerTestimonial(formData: FormData): Promise<{
   success: boolean;

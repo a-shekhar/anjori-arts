@@ -15,11 +15,10 @@ import {
   Upload,
   X,
   Loader2,
-  Eye,
-  Check,
-  AlertCircle,
+  ImageIcon,
+  MapPin,
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -232,7 +231,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
       } else {
         toast.error(result.error || "Failed to delete testimonial.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Unexpected error during deletion.");
     } finally {
       setIsSubmitting(false);
@@ -261,7 +260,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
       } else {
         toast.error(result.error || "Failed to create testimonial.");
       }
-    } catch (err) {
+    } catch {
       toast.error("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
@@ -295,7 +294,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
       } else {
         toast.error(result.error || "Failed to update testimonial.");
       }
-    } catch (err) {
+    } catch {
       toast.error("An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
@@ -417,13 +416,14 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+      {/* MAIN CONTENT: TABLE ON DESKTOP, CARDS ON MOBILE */}
+      {/* Desktop Table View (>= 768px) */}
+      <div className="hidden md:block overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-16">Photo</TableHead>
-              <TableHead>Collector & Location</TableHead>
+              <TableHead>Collector &amp; Location</TableHead>
               <TableHead>Rating</TableHead>
               <TableHead className="max-w-xs">Story / Review</TableHead>
               <TableHead>Artwork / Style</TableHead>
@@ -449,40 +449,42 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
               </TableRow>
             ) : (
               filteredTestimonials.map((item) => (
-                <TableRow key={item.id} className="hover:bg-muted/30">
+                <TableRow key={item.id} className="transition-colors hover:bg-muted/30">
                   {/* Photo Thumbnail */}
                   <TableCell>
                     {item.image_url ? (
-                      <button
-                        type="button"
+                      <div
+                        className="relative size-12 cursor-pointer overflow-hidden rounded-xl border border-border bg-muted/40 transition-transform hover:scale-105"
                         onClick={() => setPreviewImage(item.image_url || null)}
-                        className="group relative size-12 overflow-hidden rounded-xl border border-border bg-secondary"
-                        title="Click to preview photograph"
+                        title="Click to expand full living space photo"
                       >
                         <Image
                           src={item.image_url}
-                          alt={item.author_name}
+                          alt={item.image_alt || item.author_name}
                           fill
-                          className="object-cover transition-transform group-hover:scale-110"
+                          className="object-cover"
+                          sizes="48px"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                          <Eye className="size-4 text-white" />
-                        </div>
-                      </button>
+                      </div>
                     ) : (
-                      <div className="flex size-12 items-center justify-center rounded-xl border border-border/60 bg-muted/30 text-xs font-semibold text-muted-foreground">
-                        {item.author_name.slice(0, 2).toUpperCase()}
+                      <div className="flex size-12 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+                        <ImageIcon className="size-5 opacity-40" />
                       </div>
                     )}
                   </TableCell>
 
-                  {/* Collector Name & Location */}
+                  {/* Collector Info */}
                   <TableCell>
                     <p className="font-medium text-foreground text-sm">{item.author_name}</p>
-                    <p className="text-xs text-muted-foreground">{item.author_location || "Location not set"}</p>
+                    {item.author_location && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <MapPin className="size-3 opacity-70" />
+                        <span>{item.author_location}</span>
+                      </p>
+                    )}
                   </TableCell>
 
-                  {/* Rating */}
+                  {/* Star Rating */}
                   <TableCell>
                     <div className="flex items-center gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -491,31 +493,35 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
                           className={cn(
                             "size-3.5",
                             i < item.rating
-                              ? "fill-primary text-primary"
-                              : "text-muted-foreground/30"
+                              ? "fill-amber-400 text-amber-400"
+                              : "fill-muted text-muted-foreground/30"
                           )}
                         />
                       ))}
                     </div>
                   </TableCell>
 
-                  {/* Story Excerpt */}
+                  {/* Review Text / Snippet */}
                   <TableCell className="max-w-xs">
-                    <p className="line-clamp-2 text-xs text-foreground/90 leading-relaxed">
+                    <p className="text-xs text-muted-foreground line-clamp-2 italic leading-relaxed">
                       &ldquo;{item.quote}&rdquo;
                     </p>
                   </TableCell>
 
-                  {/* Artwork Tag */}
+                  {/* Artwork Referenced */}
                   <TableCell>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {item.artwork_title || "General Commission"}
-                    </span>
+                    {item.artwork_title ? (
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {item.artwork_title}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
 
-                  {/* Status Badges */}
+                  {/* Approval / Featured Badges */}
                   <TableCell>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1">
                       {item.is_approved ? (
                         <Badge variant="outline" className="w-fit border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
                           <CheckCircle2 className="mr-1 size-3" /> Approved
@@ -606,6 +612,157 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards View (< 768px) */}
+      <div className="grid gap-3 md:hidden">
+        {filteredTestimonials.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-muted/10">
+            <p className="font-medium text-foreground text-sm">No collector stories found</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Click &ldquo;Add Testimonial&rdquo; to create your first collector story.
+            </p>
+          </div>
+        ) : (
+          filteredTestimonials.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-2xl border border-border bg-card p-4 shadow-xs space-y-3"
+            >
+              {/* Header: Photo, Name, Location & Rating */}
+              <div className="flex items-start gap-3">
+                {item.image_url ? (
+                  <div
+                    className="relative size-14 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/40 cursor-pointer"
+                    onClick={() => setPreviewImage(item.image_url || null)}
+                  >
+                    <Image
+                      src={item.image_url}
+                      alt={item.image_alt || item.author_name}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+                    <ImageIcon className="size-5 opacity-40" />
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-foreground truncate">
+                    {item.author_name}
+                  </h3>
+                  {item.author_location && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <MapPin className="size-3 opacity-70" />
+                      <span>{item.author_location}</span>
+                    </p>
+                  )}
+                  <div className="flex items-center gap-0.5 mt-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          "size-3",
+                          i < item.rating
+                            ? "fill-amber-400 text-amber-400"
+                            : "fill-muted text-muted-foreground/30"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Review Quote */}
+              <p className="text-xs text-muted-foreground italic leading-relaxed border-t border-border/60 pt-2.5">
+                &ldquo;{item.quote}&rdquo;
+              </p>
+
+              {/* Badges: Artwork + Approval + Featured */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {item.artwork_title && (
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    {item.artwork_title}
+                  </Badge>
+                )}
+                {item.is_approved ? (
+                  <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                    <CheckCircle2 className="mr-1 size-3" /> Approved
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px]">
+                    <Clock className="mr-1 size-3" /> Pending
+                  </Badge>
+                )}
+                {item.is_featured && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    <Sparkles className="mr-1 size-3 text-primary" /> Featured
+                  </Badge>
+                )}
+              </div>
+
+              {/* Action Buttons Row (44px hit targets) */}
+              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                <Button
+                  type="button"
+                  variant={item.is_approved ? "outline" : "default"}
+                  onClick={() => handleToggleApproval(item)}
+                  className={cn(
+                    "flex-1 min-h-[44px] text-xs font-semibold",
+                    !item.is_approved && "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  )}
+                >
+                  {item.is_approved ? "Unpublish" : "Approve"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => handleToggleFeatured(item)}
+                  aria-label={`Toggle featured for ${item.author_name}`}
+                  className={cn(
+                    "min-h-[44px] min-w-[44px] px-2",
+                    item.is_featured ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <Sparkles className="size-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedItem(item);
+                    setFormImageFile(null);
+                    setFormImagePreview(item.image_url || null);
+                    setEditAltText(item.image_alt || "");
+                    setIsEditOpen(true);
+                  }}
+                  aria-label={`Edit story by ${item.author_name}`}
+                  className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-foreground"
+                >
+                  <Edit className="size-4" />
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedItem(item);
+                    setIsDeleteOpen(true);
+                  }}
+                  aria-label={`Delete story by ${item.author_name}`}
+                  className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Image Preview Dialog */}

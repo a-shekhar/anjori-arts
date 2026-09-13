@@ -20,7 +20,8 @@ import {
   ShieldAlert,
   ShieldCheck,
   Loader2,
-  CheckCircle2,
+  MessageCircle,
+  ChevronRight,
 } from "lucide-react";
 import { formatPrice } from "@/lib/helpers";
 import {
@@ -42,7 +43,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 
 interface AdminCustomersTableProps {
   initialCustomers: AdminCustomerSummary[];
@@ -65,7 +65,6 @@ export function AdminCustomersTable({
   const [searchTerm, setSearchTerm] = useState("");
 
   // Drawer state
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [customerDetail, setCustomerDetail] = useState<AdminCustomerDetail | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -88,7 +87,6 @@ export function AdminCustomersTable({
   });
 
   const handleOpenDrawer = (customer: AdminCustomerSummary) => {
-    setSelectedCustomerId(customer.id);
     setCustomerDetail(null);
     setIsDrawerOpen(true);
 
@@ -249,186 +247,320 @@ export function AdminCustomersTable({
         </div>
       </div>
 
-      {/* 3. CUSTOMERS DATA TABLE */}
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-border bg-muted/40 uppercase tracking-wider text-muted-foreground text-[11px]">
-              <tr>
-                <th className="px-4 py-3.5 font-semibold">Collector</th>
-                <th className="px-4 py-3.5 font-semibold">Contact</th>
-                <th className="px-4 py-3.5 font-semibold">Type &amp; Auth</th>
-                <th className="px-4 py-3.5 font-semibold">Orders &amp; LTV</th>
-                <th className="px-4 py-3.5 font-semibold">Activity</th>
-                <th className="px-4 py-3.5 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {filteredCustomers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
-                    <Users className="mx-auto size-8 opacity-40" />
-                    <p className="mt-2 font-medium">No customers found</p>
-                    <p className="text-[11px]">
-                      No customers match the current filter or search criteria.
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                filteredCustomers.map((customer) => {
-                  const joinedDate = new Date(customer.createdAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
+      {/* 3. CUSTOMERS CONTENT: TABLE ON DESKTOP, CARDS ON MOBILE */}
+      {filteredCustomers.length === 0 ? (
+        <div className="overflow-hidden rounded-2xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground shadow-xs">
+          <Users className="mx-auto size-10 opacity-40" />
+          <p className="mt-3 font-semibold text-foreground text-sm">No customers found</p>
+          <p className="text-xs mt-1">No customers match the current filter or search criteria.</p>
+        </div>
+      ) : (
+        <>
+          {/* DESKTOP TABLE VIEW (>= 768px) */}
+          <div className="hidden md:block overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-border bg-muted/40 uppercase tracking-wider text-muted-foreground text-[11px]">
+                  <tr>
+                    <th className="px-4 py-3.5 font-semibold">Collector</th>
+                    <th className="px-4 py-3.5 font-semibold">Contact</th>
+                    <th className="px-4 py-3.5 font-semibold">Type &amp; Auth</th>
+                    <th className="px-4 py-3.5 font-semibold">Orders &amp; LTV</th>
+                    <th className="px-4 py-3.5 font-semibold">Activity</th>
+                    <th className="px-4 py-3.5 font-semibold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filteredCustomers.map((customer) => {
+                    const joinedDate = new Date(customer.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    });
 
-                  const lastOrderDateStr = customer.lastOrderDate
-                    ? new Date(customer.lastOrderDate).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "No orders yet";
+                    const lastOrderDateStr = customer.lastOrderDate
+                      ? new Date(customer.lastOrderDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "No orders yet";
 
-                  return (
-                    <tr key={customer.id} className="transition-colors hover:bg-muted/30">
-                      {/* Collector Name & Avatar */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-serif font-bold text-primary text-xs">
-                            {getInitials(customer.name)}
+                    return (
+                      <tr key={customer.id} className="transition-colors hover:bg-muted/30">
+                        {/* Collector Name & Avatar */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-serif font-bold text-primary text-xs">
+                              {getInitials(customer.name)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-foreground">
+                                  {customer.name}
+                                </span>
+                                {customer.role === "ADMIN" && (
+                                  <span className="inline-flex items-center gap-0.5 rounded-md bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300">
+                                    <ShieldAlert className="size-2.5" /> Admin
+                                  </span>
+                                )}
+                                {customer.hasActiveCommission && (
+                                  <span className="inline-flex items-center gap-0.5 rounded-md bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+                                    <Paintbrush className="size-2.5" /> Commission
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-muted-foreground">
+                                {customer.type === "registered" ? "Collector ID: " : "Guest Email"}
+                                <span className="font-mono text-[10px]">
+                                  {customer.id.startsWith("guest:")
+                                    ? customer.email
+                                    : customer.id.slice(0, 8)}
+                                </span>
+                              </p>
+                            </div>
                           </div>
-                          <div>
+                        </td>
+
+                        {/* Contact Info */}
+                        <td className="px-4 py-3.5">
+                          <div className="space-y-0.5">
+                            <a
+                              href={`mailto:${customer.email}`}
+                              className="inline-flex items-center gap-1.5 text-foreground hover:text-primary hover:underline"
+                            >
+                              <Mail className="size-3 text-muted-foreground" />
+                              <span>{customer.email}</span>
+                            </a>
+                            {customer.phone && (
+                              <div>
+                                <a
+                                  href={`tel:${customer.phone}`}
+                                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                                >
+                                  <Phone className="size-3 text-muted-foreground" />
+                                  <span>{customer.phone}</span>
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Type & Provider */}
+                        <td className="px-4 py-3.5">
+                          <div className="flex flex-col gap-1 items-start">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                                customer.type === "registered"
+                                  ? "bg-blue-500/15 text-blue-800 dark:text-blue-300"
+                                  : "bg-amber-500/15 text-amber-800 dark:text-amber-300"
+                              }`}
+                            >
+                              {customer.type === "registered" ? (
+                                <>
+                                  <UserCheck className="size-3" /> Registered
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingBag className="size-3" /> Guest
+                                </>
+                              )}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground capitalize">
+                              Via {customer.authProvider || "email"}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Orders & Total Spend (LTV) */}
+                        <td className="px-4 py-3.5">
+                          <div className="space-y-0.5">
                             <div className="flex items-center gap-1.5">
                               <span className="font-semibold text-foreground">
-                                {customer.name}
+                                {formatPrice(customer.totalSpent)}
                               </span>
-                              {customer.role === "ADMIN" && (
-                                <span className="inline-flex items-center gap-0.5 rounded-md bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300">
-                                  <ShieldAlert className="size-2.5" /> Admin
-                                </span>
-                              )}
-                              {customer.hasActiveCommission && (
-                                <span className="inline-flex items-center gap-0.5 rounded-md bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
-                                  <Paintbrush className="size-2.5" /> Commission
+                              {customer.totalOrders > 1 && (
+                                <span className="inline-flex items-center gap-0.5 rounded-full bg-purple-500/15 px-1.5 py-0.2 text-[9px] font-semibold text-purple-700 dark:text-purple-300">
+                                  <Sparkles className="size-2.5" /> VIP
                                 </span>
                               )}
                             </div>
                             <p className="text-[11px] text-muted-foreground">
-                              {customer.type === "registered" ? "Collector ID: " : "Guest Email"}
-                              <span className="font-mono text-[10px]">
-                                {customer.id.startsWith("guest:")
-                                  ? customer.email
-                                  : customer.id.slice(0, 8)}
-                              </span>
+                              {customer.totalOrders} {customer.totalOrders === 1 ? "order" : "orders"}
                             </p>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Contact Info */}
-                      <td className="px-4 py-3.5">
-                        <div className="space-y-0.5">
-                          <a
-                            href={`mailto:${customer.email}`}
-                            className="inline-flex items-center gap-1.5 text-foreground hover:text-primary hover:underline"
-                          >
-                            <Mail className="size-3 text-muted-foreground" />
-                            <span>{customer.email}</span>
-                          </a>
-                          {customer.phone && (
-                            <div>
-                              <a
-                                href={`tel:${customer.phone}`}
-                                className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
-                              >
-                                <Phone className="size-3 text-muted-foreground" />
-                                <span>{customer.phone}</span>
-                              </a>
+                        {/* Activity Dates */}
+                        <td className="px-4 py-3.5 text-muted-foreground">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1 text-[11px]">
+                              <Calendar className="size-3 opacity-70" />
+                              <span>Joined: {joinedDate}</span>
                             </div>
+                            <div className="flex items-center gap-1 text-[11px]">
+                              <Clock className="size-3 opacity-70" />
+                              <span>Last order: {lastOrderDateStr}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-4 py-3.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDrawer(customer)}
+                            aria-label={`Inspect collector profile for ${customer.name}`}
+                            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+                          >
+                            <Eye className="size-3.5 text-primary" />
+                            <span>Inspect</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* MOBILE CARDS VIEW (< 768px) */}
+          <div className="grid gap-3.5 md:hidden">
+            {filteredCustomers.map((customer) => {
+              const joinedDate = new Date(customer.createdAt).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              });
+              const cleanPhone = (customer.phone || "").replace(/\D/g, "");
+              const whatsappUrl = cleanPhone
+                ? `https://wa.me/91${cleanPhone.slice(-10)}?text=${encodeURIComponent(
+                    `Hello ${customer.name}, greetings from Anjori Arts!`
+                  )}`
+                : null;
+
+              return (
+                <div
+                  key={customer.id}
+                  className="rounded-2xl border border-border bg-card p-4 shadow-xs space-y-3.5"
+                >
+                  {/* Card Header: Avatar, Name & Type Badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-serif font-bold text-primary text-sm">
+                        {getInitials(customer.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-foreground text-sm truncate">
+                            {customer.name}
+                          </span>
+                          {customer.role === "ADMIN" && (
+                            <span className="inline-flex items-center gap-0.5 rounded-md bg-purple-500/15 px-1.5 py-0.2 text-[9px] font-semibold text-purple-700 dark:text-purple-300">
+                              Admin
+                            </span>
+                          )}
+                          {customer.totalOrders > 1 && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-purple-500/15 px-1.5 py-0.2 text-[9px] font-semibold text-purple-700 dark:text-purple-300">
+                              <Sparkles className="size-2.5" /> VIP
+                            </span>
                           )}
                         </div>
-                      </td>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Joined {joinedDate}
+                        </p>
+                      </div>
+                    </div>
 
-                      {/* Type & Provider */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex flex-col gap-1 items-start">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                              customer.type === "registered"
-                                ? "bg-blue-500/15 text-blue-800 dark:text-blue-300"
-                                : "bg-amber-500/15 text-amber-800 dark:text-amber-300"
-                            }`}
-                          >
-                            {customer.type === "registered" ? (
-                              <>
-                                <UserCheck className="size-3" /> Registered
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag className="size-3" /> Guest
-                              </>
-                            )}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground capitalize">
-                            Via {customer.authProvider || "email"}
-                          </span>
-                        </div>
-                      </td>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium shrink-0 ${
+                        customer.type === "registered"
+                          ? "bg-blue-500/15 text-blue-800 dark:text-blue-300"
+                          : "bg-amber-500/15 text-amber-800 dark:text-amber-300"
+                      }`}
+                    >
+                      {customer.type === "registered" ? "Registered" : "Guest"}
+                    </span>
+                  </div>
 
-                      {/* Orders & Total Spend (LTV) */}
-                      <td className="px-4 py-3.5">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-foreground">
-                              {formatPrice(customer.totalSpent)}
-                            </span>
-                            {customer.totalOrders > 1 && (
-                              <span className="inline-flex items-center gap-0.5 rounded-full bg-purple-500/15 px-1.5 py-0.2 text-[9px] font-semibold text-purple-700 dark:text-purple-300">
-                                <Sparkles className="size-2.5" /> VIP
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            {customer.totalOrders} {customer.totalOrders === 1 ? "order" : "orders"}
-                          </p>
-                        </div>
-                      </td>
+                  {/* Contact Row with Direct Action Buttons */}
+                  <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2.5 text-xs">
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="text-foreground truncate font-medium">{customer.email}</p>
+                      {customer.phone && (
+                        <p className="text-muted-foreground text-[11px]">{customer.phone}</p>
+                      )}
+                    </div>
 
-                      {/* Activity Dates */}
-                      <td className="px-4 py-3.5 text-muted-foreground">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1 text-[11px]">
-                            <Calendar className="size-3 opacity-70" />
-                            <span>Joined: {joinedDate}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-[11px]">
-                            <Clock className="size-3 opacity-70" />
-                            <span>Last order: {lastOrderDateStr}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Action */}
-                      <td className="px-4 py-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenDrawer(customer)}
-                          aria-label={`Inspect collector profile for ${customer.name}`}
-                          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {cleanPhone && whatsappUrl && (
+                        <a
+                          href={whatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`WhatsApp ${customer.name}`}
+                          className="inline-flex size-9 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 transition-colors hover:bg-emerald-500/20"
                         >
-                          <Eye className="size-3.5 text-primary" />
-                          <span>Inspect</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                          <MessageCircle className="size-4" />
+                        </a>
+                      )}
+                      {customer.phone && (
+                        <a
+                          href={`tel:${customer.phone}`}
+                          aria-label={`Call ${customer.name}`}
+                          className="inline-flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-foreground transition-colors hover:bg-muted"
+                        >
+                          <Phone className="size-3.5 text-primary" />
+                        </a>
+                      )}
+                      <a
+                        href={`mailto:${customer.email}`}
+                        aria-label={`Email ${customer.name}`}
+                        className="inline-flex size-9 items-center justify-center rounded-xl border border-border bg-muted/40 text-foreground transition-colors hover:bg-muted"
+                      >
+                        <Mail className="size-3.5 text-primary" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Lifetime Orders & Spend Stats Bar */}
+                  <div className="flex items-center justify-between rounded-xl bg-muted/30 px-3.5 py-2 text-xs">
+                    <div>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">
+                        Lifetime Spend
+                      </span>
+                      <span className="font-serif font-bold text-sm text-foreground">
+                        {formatPrice(customer.totalSpent)}
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">
+                        Orders
+                      </span>
+                      <span className="font-semibold text-foreground">
+                        {customer.totalOrders} {customer.totalOrders === 1 ? "order" : "orders"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Full-Width Inspect Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDrawer(customer)}
+                    className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 cursor-pointer"
+                  >
+                    <Eye className="size-4" />
+                    <span>Inspect Collector Profile &amp; Orders</span>
+                    <ChevronRight className="size-4 ml-auto" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* 4. CUSTOMER PROFILE SLIDE-OVER DRAWER */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>

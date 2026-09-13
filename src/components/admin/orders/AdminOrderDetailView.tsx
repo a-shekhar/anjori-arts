@@ -7,9 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Truck,
-  ShieldCheck,
   CheckCircle2,
-  Clock,
   Package,
   Phone,
   Mail,
@@ -17,8 +15,6 @@ import {
   ExternalLink,
   Copy,
   Check,
-  CreditCard,
-  Building2,
   Loader2,
   Save,
   AlertTriangle,

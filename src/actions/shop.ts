@@ -1,66 +1,8 @@
 "use server";
 
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Artwork, Category } from "@/types";
-import { FALLBACK_ARTWORK_IMAGE } from "@/config/constants";
-
-function mapArtwork(art: any): Artwork {
-  const mediums = art.artwork_mediums
-    ?.map((am: any) => am.medium?.name)
-    .filter(Boolean)
-    .join(", ") || "";
-
-  const surfaceName = art.surface?.name || "";
-
-  let images = art.images;
-  if (!images || !Array.isArray(images) || images.length === 0) {
-    images = [
-      {
-        url: FALLBACK_ARTWORK_IMAGE,
-        alt: art.title || "Anjori Arts Handmade Artwork",
-      }
-    ];
-  }
-
-  return {
-    id: art.id,
-    slug: art.slug,
-    title: art.title,
-    categoryId: art.category_id,
-    price: art.price,
-    description: art.description || "",
-    dimensions: art.dimensions || "",
-    surface: surfaceName,
-    medium: mediums,
-    isAvailable: art.is_available,
-    isFeatured: art.is_featured,
-    tags: art.tags || [],
-    images: images,
-    variants: (art.variants || []).map((v: any) => ({
-      id: v.id,
-      label: v.label,
-      widthInches: v.width_inches,
-      heightInches: v.height_inches,
-      mrp: v.mrp,
-      sellingPrice: v.selling_price,
-      stockQuantity: v.stock_quantity,
-      isActive: v.is_active,
-      canBeFramed: v.can_be_framed,
-      framingPrice: v.framing_price,
-      sku: v.sku,
-    })),
-    shortDescription: art.short_description || "",
-    artistNote: art.artist_note || "",
-  } as Artwork;
-}
-
-function getAnonClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!,
-    { db: { schema: "arts" } }
-  );
-}
+import { mapArtwork } from "@/lib/mappers";
+import { getAnonClient } from "@/lib/supabase/anon";
 
 export async function getAllCategories(): Promise<Category[]> {
   try {

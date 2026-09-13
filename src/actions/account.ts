@@ -371,12 +371,20 @@ export async function updatePassword(formData: FormData): Promise<AccountActionR
 
     const { error: updateError } = await supabase.auth.updateUser({
       password: parsed.data.newPassword,
+      current_password: parsed.data.currentPassword,
     });
 
     if (updateError) {
+      if (
+        updateError.message.toLowerCase().includes("current password") ||
+        updateError.message.toLowerCase().includes("invalid password")
+      ) {
+        return { error: "Current password does not match our records. Please verify and try again." };
+      }
       return { error: updateError.message };
     }
 
+    revalidatePath("/account", "layout");
     return { success: true };
   } catch (err) {
     console.error("[updatePassword] Unexpected error:", err);

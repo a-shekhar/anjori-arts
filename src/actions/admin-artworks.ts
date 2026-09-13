@@ -36,11 +36,13 @@ export const getArtworkFormTaxonomies = withAdminAuth(async () => {
   try {
     const supabase = createAdminClient();
 
-    let [categoriesRes, surfacesRes, mediumsRes] = await Promise.all([
+    const [initialCategoriesRes, surfacesRes, mediumsRes] = await Promise.all([
       supabase.from("categories").select("id, name, slug").order("display_order", { ascending: true }).order("name"),
       supabase.from("surfaces").select("id, name, slug").eq("is_active", true).order("display_order"),
       supabase.from("mediums").select("id, name, slug").order("name", { ascending: true }),
     ]);
+
+    let categoriesRes = initialCategoriesRes;
 
     if (categoriesRes.error && categoriesRes.error.code === "42703") {
       categoriesRes = await supabase.from("categories").select("id, name, slug").order("name");

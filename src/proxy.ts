@@ -29,6 +29,22 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
     }
+
+    const role =
+      (user.app_metadata?.role as string) ||
+      (user.user_metadata?.role as string) ||
+      "";
+    const isAdmin = role.toLowerCase() === "admin";
+
+    if (role && !isAdmin) {
+      if (request.nextUrl.pathname.startsWith("/api/admin")) {
+        return new NextResponse("Forbidden", { status: 403 });
+      } else {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("reason", "not_admin");
+        return NextResponse.redirect(loginUrl);
+      }
+    }
   }
 
   return response;

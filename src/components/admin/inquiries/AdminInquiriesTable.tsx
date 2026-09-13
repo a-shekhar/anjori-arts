@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Search,
-  Filter,
   Eye,
   Trash2,
-  Phone,
   Mail,
   MessageCircle,
   Clock,
@@ -15,7 +13,6 @@ import {
   Inbox,
   AlertCircle,
   ExternalLink,
-  ChevronRight,
   MoreVertical,
   X,
   FileText,
@@ -88,10 +85,8 @@ const STATUS_TABS: Array<{ key: string; label: string }> = [
 
 export function AdminInquiriesTable({
   initialInquiries,
-  stats: initialStats,
 }: AdminInquiriesTableProps) {
   const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
-  const [isPending, startTransition] = useTransition();
 
   // Filter States
   const [activeTab, setActiveTab] = useState("all");

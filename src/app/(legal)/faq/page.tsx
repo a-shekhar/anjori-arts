@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { FAQAccordionList } from "@/components/shared/FAQAccordionList";
-import { siteConfig, phoneHref, inquiryHref } from "@/config/site";
+import { siteConfig, inquiryHref } from "@/config/site";
 import { HelpCircle, Mail, MessageCircle, PhoneCall, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {

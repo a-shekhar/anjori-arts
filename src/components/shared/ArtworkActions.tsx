@@ -168,7 +168,7 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
               <span className="text-sm font-semibold text-foreground">Select Size / Edition</span>
               {selectedVariant.widthInches > 0 && selectedVariant.heightInches > 0 && (
                 <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary/20">
-                  {selectedVariant.widthInches}" × {selectedVariant.heightInches}" ({Math.round(selectedVariant.widthInches * 2.54)} × {Math.round(selectedVariant.heightInches * 2.54)} cm)
+                  {selectedVariant.widthInches}&Prime; × {selectedVariant.heightInches}&Prime; ({Math.round(selectedVariant.widthInches * 2.54)} × {Math.round(selectedVariant.heightInches * 2.54)} cm)
                 </span>
               )}
             </div>
@@ -223,7 +223,7 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
                           : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
                       )}
                     >
-                      <span>{variant.widthInches}" × {variant.heightInches}"</span>
+                      <span>{variant.widthInches}&Prime; × {variant.heightInches}&Prime;</span>
                       <span className="text-xs text-muted-foreground">({Math.round(variant.widthInches * 2.54)} × {Math.round(variant.heightInches * 2.54)} cm)</span>
                     </button>
                   );

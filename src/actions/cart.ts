@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getAnonClient } from "@/lib/supabase/anon";
 import { MAX_CART_QUANTITY, FALLBACK_ARTWORK_IMAGE } from "@/config/constants";
 import type { CartItem } from "@/stores/cart-store";
 
@@ -32,14 +32,6 @@ interface RawArtworkRow {
   is_available: boolean;
   images?: Array<{ url: string; alt: string; publicId?: string }> | null;
   variants?: RawVariantRow[] | null;
-}
-
-function getAnonClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)!,
-    { db: { schema: "arts" } }
-  );
 }
 
 /**

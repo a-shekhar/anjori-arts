@@ -377,7 +377,6 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                       <div className="flex flex-col gap-1 max-w-[220px]">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <Badge variant="outline" className="text-[11px] font-normal py-0">
-                            {order.category}
                             {order.category || "Not specified"}
                           </Badge>
                           {order.surface && (
@@ -528,7 +527,6 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                               <DropdownMenuItem render={
                                 <a href={waLink} target="_blank" rel="noopener noreferrer">
                                   <Phone className="mr-2 h-4 w-4 text-emerald-600" /> WhatsApp Customer
-                                  <Phone className="mr-2 h-4 w-4 text-whatsapp" /> WhatsApp Customer
                                 </a>
                               } />
                             )}
@@ -634,7 +632,6 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                 {/* Specs Pill */}
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <Badge variant="secondary" className="font-normal text-[11px]">
-                    {order.category}
                     {order.category || "Not specified"}
                   </Badge>
                   {order.surface && (

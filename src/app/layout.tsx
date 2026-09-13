@@ -15,13 +15,13 @@ import NextTopLoader from "nextjs-toploader";
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-serif",
-  display: "swap",
+  display: "optional",
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
-  display: "swap",
+  display: "optional",
 });
 
 export const viewport: Viewport = {
@@ -88,6 +88,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${plusJakarta.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+      </head>
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground selection:bg-primary/20 selection:text-primary">
         <NextTopLoader
           color="#5f9795"

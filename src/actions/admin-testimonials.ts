@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
-import { uploadStream, deleteAsset } from "@/lib/cloudinary-server";
+import { uploadStream } from "@/lib/cloudinary-server";
 import {
   testimonialSchema,
   TESTIMONIAL_IMAGE_LIMITS,

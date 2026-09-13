@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore, useTransition } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,7 +11,6 @@ import {
   Sparkles,
   Lock,
   QrCode,
-  Building2,
   Copy,
   Check,
   Upload,
@@ -22,16 +21,18 @@ import {
   Clock,
   CreditCard,
   MapPin,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCartStore } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/helpers";
-import { UPI_CONFIG } from "@/config/constants";
+import { UPI_CONFIG, MAX_ADDRESSES } from "@/config/constants";
 import { createOrder, uploadPaymentReceipt } from "@/actions/orders";
 import {
   createRazorpayOrder,
   verifyAndCompleteRazorpayOrder,
 } from "@/actions/razorpay";
+import { saveAddress } from "@/actions/account";
 import { CountryCodeSelect } from "@/components/ui/country-code-select";
 import type { PaymentMethod, UserAddress } from "@/types";
 
@@ -133,6 +134,15 @@ export function CheckoutForm() {
   const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
+  // PIN lookup helper state
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinDetectedInfo, setPinDetectedInfo] = useState<string | null>(null);
+  const [pinNotFound, setPinNotFound] = useState(false);
+  const pinAbortControllerRef = useRef<AbortController | null>(null);
+
+  // Address saving state for authenticated collectors
+  const [saveAddressToAccount, setSaveAddressToAccount] = useState(true);
+
   const applySavedAddress = (addr: UserAddress) => {
     setSelectedAddressId(addr.id);
     setCustomerName(addr.recipient_name);
@@ -205,9 +215,34 @@ export function CheckoutForm() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
-  // PIN lookup helper state
-  const [pinLoading, setPinLoading] = useState(false);
-  const [pinDetectedInfo, setPinDetectedInfo] = useState<string | null>(null);
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (pinAbortControllerRef.current) {
+        pinAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Helper to persist custom address if collector opted in
+  const maybeSaveNewAddress = async () => {
+    if (currentUser && saveAddressToAccount && !selectedAddressId) {
+      try {
+        const addrData = new FormData();
+        addrData.append("recipient_name", customerName.trim());
+        addrData.append("phone", customerPhone.trim());
+        addrData.append("street", street.trim());
+        addrData.append("landmark", landmark.trim());
+        addrData.append("city", city.trim());
+        addrData.append("state", stateName.trim());
+        addrData.append("pincode", pincode.trim());
+        addrData.append("address_type", "home");
+        await saveAddress(addrData);
+      } catch (e) {
+        console.error("[CheckoutForm] Failed to auto-save address to account:", e);
+      }
+    }
+  };
 
   // Copy helper
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -219,15 +254,29 @@ export function CheckoutForm() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  // Indian Pincode Auto-Lookup
+  // Indian Pincode Auto-Lookup (with race-condition cancellation & timeout)
   const handlePincodeChange = async (val: string) => {
+    if (pinAbortControllerRef.current) {
+      pinAbortControllerRef.current.abort();
+      pinAbortControllerRef.current = null;
+    }
+
     const clean = val.replace(/\D/g, "").slice(0, 6);
     setPincode(clean);
+    setPinNotFound(false);
 
     if (clean.length === 6) {
       setPinLoading(true);
+      const controller = new AbortController();
+      pinAbortControllerRef.current = controller;
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${clean}`);
+        const res = await fetch(`https://api.postalpincode.in/pincode/${clean}`, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
         if (res.ok) {
           const data = await res.json();
           if (data && data[0]?.Status === "Success" && data[0].PostOffice?.length > 0) {
@@ -237,19 +286,29 @@ export function CheckoutForm() {
             setCity(detectedCity);
             setStateName(detectedState);
             setPinDetectedInfo(`${detectedCity}, ${detectedState}`);
+            setPinNotFound(false);
             toast.success(`Location detected: ${detectedCity}, ${detectedState}`);
           } else {
             setPinDetectedInfo(null);
+            setPinNotFound(true);
           }
+        } else {
+          setPinDetectedInfo(null);
+          setPinNotFound(true);
         }
-      } catch {
-        // Fallback: silently ignore network error so user can fill manually
-        setPinDetectedInfo(null);
+      } catch (err: unknown) {
+        if ((err as Error)?.name !== "AbortError") {
+          setPinDetectedInfo(null);
+        }
       } finally {
-        setPinLoading(false);
+        if (pinAbortControllerRef.current === controller) {
+          setPinLoading(false);
+          pinAbortControllerRef.current = null;
+        }
       }
     } else {
       setPinDetectedInfo(null);
+      setPinNotFound(false);
     }
   };
 
@@ -445,6 +504,7 @@ export function CheckoutForm() {
                 if (verifyRes.success && verifyRes.orderNumber) {
                   toast.success("Payment verified! Your order has been placed.");
                   clearCart();
+                  void maybeSaveNewAddress();
                   router.push(`/order-success/${verifyRes.orderNumber}`);
                 } else {
                   toast.error(
@@ -523,6 +583,7 @@ export function CheckoutForm() {
 
         toast.success("Order placed successfully! Redirecting to confirmation...");
         clearCart();
+        void maybeSaveNewAddress();
         router.push(`/order-success/${orderNumber}`);
       } catch (err: unknown) {
         console.error("Order submission error:", err);
@@ -625,6 +686,33 @@ export function CheckoutForm() {
                         </button>
                       );
                     })}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAddressId(null);
+                        setStreet("");
+                        setLandmark("");
+                        setCity("");
+                        setStateName("");
+                        setPincode("");
+                        setPinDetectedInfo(null);
+                        setPinNotFound(false);
+                      }}
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border border-dashed text-xs transition-all cursor-pointer text-center min-h-[72px] ${
+                        selectedAddressId === null
+                          ? "border-primary bg-primary/10 ring-1 ring-primary/30 text-primary font-medium"
+                          : "border-border bg-card hover:bg-muted/60 text-muted-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-medium text-foreground">
+                        <Plus className="size-3.5 text-primary" />
+                        <span>Use a New Address</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Deliver to another location
+                      </p>
+                    </button>
                   </div>
                 </div>
               )}
@@ -716,6 +804,11 @@ export function CheckoutForm() {
                       ✓ {pinDetectedInfo}
                     </span>
                   )}
+                  {pinNotFound && !pinLoading && (
+                    <span className="mt-1 block text-[11px] text-amber-600 dark:text-amber-400">
+                      PIN not found in postal directory. Please enter City &amp; State manually.
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -794,6 +887,25 @@ export function CheckoutForm() {
                   className="mt-1.5 w-full resize-none rounded-xl border border-input bg-background p-3 text-xs text-foreground placeholder:text-muted-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
+
+              {/* Save Address Checkbox for logged in collectors */}
+              {currentUser && selectedAddressId === null && savedAddresses.length < MAX_ADDRESSES && (
+                <div className="flex items-center gap-2.5 pt-1">
+                  <input
+                    id="saveAddressToAccount"
+                    type="checkbox"
+                    checked={saveAddressToAccount}
+                    onChange={(e) => setSaveAddressToAccount(e.target.checked)}
+                    className="size-4 rounded border-input text-primary focus:ring-primary cursor-pointer accent-primary"
+                  />
+                  <label
+                    htmlFor="saveAddressToAccount"
+                    className="text-xs text-muted-foreground cursor-pointer select-none"
+                  >
+                    Save this delivery address to my collector account for future 1-click checkout
+                  </label>
+                </div>
+              )}
             </div>
           </section>
 
@@ -1107,7 +1219,7 @@ export function CheckoutForm() {
                   <span>Transit Insurance &amp; Shipping</span>
                 </dt>
                 <dd className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  FREE
+                  {deliveryCharge === 0 ? "FREE" : formatPrice(deliveryCharge)}
                 </dd>
               </div>
 

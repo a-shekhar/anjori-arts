@@ -19,7 +19,7 @@ export const getAdminCategories = withAdminAuth(async (): Promise<AdminCategory[
   try {
     const supabase = createAdminClient();
 
-    let [categoriesRes, artworksRes] = await Promise.all([
+    const [initialCategoriesRes, artworksRes] = await Promise.all([
       supabase
         .from("categories")
         .select("*")
@@ -29,6 +29,8 @@ export const getAdminCategories = withAdminAuth(async (): Promise<AdminCategory[
         .from("artworks")
         .select("category_id"),
     ]);
+
+    let categoriesRes = initialCategoriesRes;
 
     if (categoriesRes.error && categoriesRes.error.code === "42703") {
       categoriesRes = await supabase

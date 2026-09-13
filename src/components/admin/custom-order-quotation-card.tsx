@@ -194,6 +194,7 @@ export function CustomOrderQuotationCard({ order }: CustomOrderQuotationCardProp
     }).format(amount);
   };
 
+
   const hasExistingQuote = (order.quote_total ?? 0) > 0 || (order.items && order.items.length > 0);
 
   return (

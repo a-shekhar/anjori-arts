@@ -11,10 +11,8 @@ import {
   Edit, 
   Trash2, 
   ExternalLink, 
-  FolderTree, 
   Loader2, 
   ImageIcon, 
-  Check, 
   Sparkles,
   Wand2,
   ChevronUp,
@@ -391,7 +389,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
       } else {
         toast.error(res.message || "Failed to delete category", { id: toastId });
       }
-    } catch (err: any) {
+    } catch {
       toast.error("Failed to delete category", { id: toastId });
     }
   };
@@ -416,11 +414,11 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
         </Button>
       </div>
 
-      {/* Categories Table */}
-      <div className="rounded-xl border bg-card shadow-xs overflow-hidden">
+      {/* DESKTOP TABLE VIEW (>= 768px) */}
+      <div className="hidden md:block rounded-xl border bg-card shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="w-[80px]">Cover</TableHead>
               <TableHead className="w-[180px]">Name & Slug</TableHead>
               <TableHead>Description</TableHead>
@@ -602,6 +600,138 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* MOBILE CARDS VIEW (< 768px) */}
+      <div className="grid gap-3 md:hidden">
+        {filteredCategories.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-muted/10">
+            No categories found matching your search.
+          </div>
+        ) : (
+          filteredCategories.map((cat) => {
+            const isUploadingThis = uploadingId === cat.id;
+            const realIndex = categories.findIndex((c) => c.id === cat.id);
+            const isFirst = realIndex === 0;
+            const isLast = realIndex === categories.length - 1;
+
+            return (
+              <div
+                key={cat.id}
+                className="rounded-2xl border border-border bg-card p-4 shadow-xs space-y-3"
+              >
+                {/* Header: Thumbnail + Name + Slug + Pieces */}
+                <div className="flex items-start gap-3">
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-xl border border-border bg-muted/40">
+                    {cat.cover_image ? (
+                      <Image
+                        src={cat.cover_image}
+                        alt={cat.alt_text || cat.name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <ImageIcon className="h-6 w-6 opacity-40" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <h3 className="font-semibold text-sm text-foreground truncate">{cat.name}</h3>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                        {cat.artworkCount} {cat.artworkCount === 1 ? "pc" : "pcs"}
+                      </Badge>
+                    </div>
+                    <p className="text-xs font-mono text-muted-foreground mt-0.5">/{cat.slug}</p>
+                    {cat.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                        {cat.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Position and Reorder Row */}
+                <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-xs">
+                  <span className="font-mono text-xs font-medium text-muted-foreground">
+                    Position #{realIndex + 1}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleMove(realIndex, "up")}
+                      disabled={isFirst || !!search.trim()}
+                      aria-label={`Move ${cat.name} up`}
+                      className="inline-flex size-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 cursor-pointer"
+                    >
+                      <ChevronUp className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMove(realIndex, "down")}
+                      disabled={isLast || !!search.trim()}
+                      aria-label={`Move ${cat.name} down`}
+                      className="inline-flex size-10 min-h-[40px] min-w-[40px] items-center justify-center rounded-xl border border-border bg-muted/30 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 cursor-pointer"
+                    >
+                      <ChevronDown className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Action Buttons Row with 44px Touch Targets */}
+                <div className="flex items-center gap-2 pt-1 border-t border-border/60">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleOpenEditModal(cat)}
+                    className="flex-1 min-h-[44px] text-xs font-semibold"
+                  >
+                    <Edit className="mr-1.5 h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => fileInputRefs.current[cat.id]?.click()}
+                    disabled={isUploadingThis}
+                    aria-label={`Upload photo for ${cat.name}`}
+                    className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-primary"
+                  >
+                    {isUploadingThis ? (
+                      <Loader2 className="size-4 animate-spin text-primary" />
+                    ) : (
+                      <UploadCloud className="size-4" />
+                    )}
+                  </Button>
+
+                  <Link
+                    href={`/categories/${cat.slug}`}
+                    target="_blank"
+                    aria-label={`View ${cat.name} live`}
+                    className={buttonVariants({
+                      variant: "ghost",
+                      className: "min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-foreground",
+                    })}
+                  >
+                    <ExternalLink className="size-4" />
+                  </Link>
+
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleDelete(cat)}
+                    aria-label={`Delete ${cat.name}`}
+                    className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Add / Edit Category Dialog */}

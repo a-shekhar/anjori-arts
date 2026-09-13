@@ -1,5 +1,12 @@
 import { siteConfig } from "@/config/site";
 
+// ---------- Locale & Communication ----------
+/** Standard default country calling code */
+export const DEFAULT_COUNTRY_CODE = "+91";
+
+/** OTP and Verification resend cooldown in seconds */
+export const RESEND_OTP_COOLDOWN_SECONDS = 60;
+
 // ---------- Pricing ----------
 /** GST rate as a decimal (e.g. 0.12 = 12%) */
 export const GST_RATE = 0.12;

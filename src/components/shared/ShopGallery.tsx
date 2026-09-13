@@ -89,24 +89,28 @@ export function ShopGallery({
 
   // Sync state when URL searchParams change externally (e.g. Back/Forward navigation)
   useEffect(() => {
-    const urlQ = searchParams.get("q") || "";
-    setSearch(urlQ);
+    const timer = setTimeout(() => {
+      const urlQ = searchParams.get("q") || "";
+      setSearch(urlQ);
 
-    const urlCat = searchParams.get("category");
-    if (urlCat) {
-      setActiveCategory(resolveCategory(urlCat) || urlCat);
-    } else {
-      setActiveCategory(initialCategory || "all");
-    }
+      const urlCat = searchParams.get("category");
+      if (urlCat) {
+        setActiveCategory(resolveCategory(urlCat) || urlCat);
+      } else {
+        setActiveCategory(initialCategory || "all");
+      }
 
-    const urlSort = searchParams.get("sort") as SortKey | null;
-    if (urlSort && VALID_SORT_KEYS.has(urlSort)) {
-      setSortKey(urlSort);
-    } else {
-      setSortKey("featured");
-    }
+      const urlSort = searchParams.get("sort") as SortKey | null;
+      if (urlSort && VALID_SORT_KEYS.has(urlSort)) {
+        setSortKey(urlSort);
+      } else {
+        setSortKey("featured");
+      }
 
-    setVisibleCount(ITEMS_PER_PAGE);
+      setVisibleCount(ITEMS_PER_PAGE);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [searchParams, resolveCategory, initialCategory]);
 
   // Helper to update URL search parameters
@@ -383,7 +387,7 @@ export function ShopGallery({
       {/* ── Grid ───────────────────────────────────────── */}
       {visible.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
-          {visible.map((artwork) => {
+          {visible.map((artwork, idx) => {
             const category = categories.find(
               (c) => c.id === artwork.categoryId
             );
@@ -392,6 +396,7 @@ export function ShopGallery({
                 key={artwork.id}
                 artwork={artwork}
                 category={category}
+                priority={idx < 2}
               />
             );
           })}

@@ -12,6 +12,7 @@ function generateReference(prefix: "INQ" = "INQ") {
   return generateReferenceCode(prefix);
 }
 
+
 export async function submitInquiry(formData: FormData) {
   try {
     // 0. Rate limiting by client IP
@@ -48,6 +49,7 @@ export async function submitInquiry(formData: FormData) {
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       inquiryReference = generateReference("INQ");
+      inquiryReference = generateReferenceCode("INQ");
       const { error } = await supabase.from("inquiries").insert({
         inquiry_reference: inquiryReference,
         first_name: validated.data.firstName,

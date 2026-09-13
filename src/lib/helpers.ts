@@ -12,6 +12,19 @@ export function formatPrice(paise: number): string {
 }
 
 /**
+ * Format whole rupee amounts to INR display string.
+ * e.g. 1500 → "₹1,500"
+ */
+export function formatRupees(rupees: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(rupees);
+}
+
+/**
  * Calculate discount percentage from MRP and selling price.
  */
 export function getDiscountPercent(mrp: number, sellingPrice: number): number {

@@ -4,15 +4,16 @@ import { ArrowDownRight, ArrowRight, Check, MessageCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { hasWhatsApp, inquiryHref, siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/shared/ArtworkCard";
 import type { Artwork, Category } from "@/types";
-import { getFeaturedArtworks } from "@/actions/shop";
+import { getAllCategories, getFeaturedArtworks } from "@/actions/shop";
 import { fetchBlogPosts } from "@/actions/blog";
 import { getPublicTestimonials } from "@/actions/testimonials";
 import { TestimonialsSection } from "@/components/shared/TestimonialsSection";
 import { formatDate } from "@/lib/helpers";
 import { getCategoryCoverImage, getCategoryAltText } from "@/config/category-images";
+
+export const revalidate = 3600;
 
 const practices = [
   {
@@ -33,26 +34,21 @@ const practices = [
 ];
 
 export default async function HomePage() {
-  const supabase = await createClient();
-
-  // Fetch Categories
-  const { data: categoriesData } = await supabase
-    .from("categories")
-    .select("*")
-    .order("name", { ascending: true });
+  // Fetch homepage data in parallel to minimize TTFB and eliminate query waterfalls
+  const [
+    allCategories,
+    featuredArtworks,
+    { posts: latestPosts },
+    testimonials,
+  ] = await Promise.all([
+    getAllCategories(),
+    getFeaturedArtworks(4),
+    fetchBlogPosts({ page: 1, limit: 3, sort: "newest" }),
+    getPublicTestimonials({ featuredOnly: true, limit: 3 }),
+  ]);
   
-  const allCategories = categoriesData || [];
   // For the homepage, we only want to feature the top 3 to maintain a premium feel.
   const categories = allCategories.slice(0, 3);
-
-  // Fetch Featured Artworks with full relations and shared mapArtwork utility
-  const featuredArtworks = await getFeaturedArtworks(4);
-
-  // Fetch Latest Blog Posts
-  const { posts: latestPosts } = await fetchBlogPosts({ page: 1, limit: 3, sort: "newest" });
-
-  // Fetch Featured Testimonials
-  const testimonials = await getPublicTestimonials({ featuredOnly: true, limit: 3 });
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -130,7 +126,7 @@ export default async function HomePage() {
                   alt="Original handmade Radha Krishna artwork with intricate gold illumination on black canvas by Anjori Arts"
                   fill
                   priority
-                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 560px"
                   className="object-cover object-[center_16%] transition-transform duration-700 ease-out hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
@@ -158,8 +154,13 @@ export default async function HomePage() {
             </div>
             
             <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredArtworks.map((artwork: Artwork & { category?: Category }) => (
-                <ArtworkCard key={artwork.id} artwork={artwork} category={artwork.category} />
+              {featuredArtworks.map((artwork: Artwork & { category?: Category }, idx: number) => (
+                <ArtworkCard
+                  key={artwork.id}
+                  artwork={artwork}
+                  category={artwork.category}
+                  priority={idx === 0}
+                />
               ))}
             </div>
           </section>

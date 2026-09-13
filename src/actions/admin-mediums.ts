@@ -18,7 +18,7 @@ export const getAdminMediums = withAdminAuth(async (): Promise<AdminMedium[]> =>
   try {
     const supabase = createAdminClient();
 
-    let [mediumsRes, artworkMediumsRes] = await Promise.all([
+    const [mediumsRes, artworkMediumsRes] = await Promise.all([
       supabase
         .from("mediums")
         .select("*")

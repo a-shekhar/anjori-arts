@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('path');
-const fs = require('fs');
 const sharp = require(path.resolve(process.cwd(), 'node_modules/sharp'));
 
 async function createRoundedImage(inputPath, width, height, radius = 16, border = { width: 3, color: '#FFFFFF' }) {

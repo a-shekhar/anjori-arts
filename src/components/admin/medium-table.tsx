@@ -307,13 +307,14 @@ export function MediumTable({ initialMediums }: MediumTableProps) {
         </Button>
       </div>
 
-      {/* Main Table */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      {/* MAIN CONTENT: TABLE ON DESKTOP, CARDS ON MOBILE */}
+      {/* Desktop Table View (>= 768px) */}
+      <div className="hidden md:block rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead className="w-[300px] font-semibold text-foreground">Medium & Pigment</TableHead>
+                <TableHead className="w-[300px] font-semibold text-foreground">Medium &amp; Pigment</TableHead>
                 <TableHead className="w-[180px] font-semibold text-foreground">Slug</TableHead>
                 <TableHead className="font-semibold text-foreground">Description</TableHead>
                 <TableHead className="w-[140px] font-semibold text-foreground text-center">
@@ -351,9 +352,6 @@ export function MediumTable({ initialMediums }: MediumTableProps) {
                           <div>
                             <div className="font-medium text-foreground text-sm">
                               {medium.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground md:hidden mt-0.5 line-clamp-1">
-                              {medium.description || "No description provided"}
                             </div>
                           </div>
                         </div>
@@ -411,6 +409,73 @@ export function MediumTable({ initialMediums }: MediumTableProps) {
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      {/* Mobile Cards View (< 768px) */}
+      <div className="grid gap-3 md:hidden">
+        {filteredMediums.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground bg-muted/10">
+            <Pipette className="h-8 w-8 mx-auto text-muted-foreground/60 mb-2" />
+            <p className="text-sm font-medium text-foreground">No mediums found</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {search ? `No matches for "${search}".` : "Add your first art medium or pigment."}
+            </p>
+          </div>
+        ) : (
+          filteredMediums.map((medium) => (
+            <div
+              key={medium.id}
+              className="rounded-2xl border border-border bg-card p-4 shadow-xs space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Pipette className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground">{medium.name}</h3>
+                    <code className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
+                      /{medium.slug}
+                    </code>
+                  </div>
+                </div>
+
+                <Badge
+                  variant={medium.artworkCount > 0 ? "secondary" : "outline"}
+                  className="text-[10px] px-1.5 py-0 shrink-0"
+                >
+                  {medium.artworkCount} {medium.artworkCount === 1 ? "pc" : "pcs"}
+                </Badge>
+              </div>
+
+              {medium.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed border-t border-border/60 pt-2">
+                  {medium.description}
+                </p>
+              )}
+
+              <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                <Button
+                  variant="outline"
+                  onClick={() => handleOpenEditModal(medium)}
+                  className="flex-1 min-h-[44px] text-xs font-semibold"
+                >
+                  <Edit2 className="mr-1.5 size-3.5" />
+                  Edit Medium
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => handleOpenDeleteModal(medium)}
+                  aria-label={`Delete ${medium.name}`}
+                  className="min-h-[44px] min-w-[44px] px-2 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Add / Edit Medium Dialog */}

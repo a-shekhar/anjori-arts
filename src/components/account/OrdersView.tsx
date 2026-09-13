@@ -20,6 +20,7 @@ import { formatPrice } from "@/lib/helpers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OrderStatusBadge, CustomOrderStatusBadge } from "@/components/shared/StatusBadge";
 import type { Order, CustomOrder, OrderStatus, PaymentStatus } from "@/types";
 
 interface OrdersViewProps {
@@ -68,6 +69,7 @@ function getOrderStatusBadge(status: OrderStatus | string) {
       );
   }
 }
+
 
 function getPaymentStatusBadge(status: PaymentStatus | string) {
   switch (status) {
@@ -153,6 +155,7 @@ function getCustomOrderStatusBadge(status: string) {
   }
 }
 
+
 export function OrdersView({ orders, customOrders }: OrdersViewProps) {
   const [activeTab, setActiveTab] = useState<string>("acquisitions");
 
@@ -227,6 +230,7 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                         {order.order_number}
                       </span>
                       {getOrderStatusBadge(order.order_status)}
+                      <OrderStatusBadge status={order.order_status} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Placed on{" "}
@@ -351,6 +355,7 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                         {custom.order_reference}
                       </span>
                       {getCustomOrderStatusBadge(custom.status)}
+                      <CustomOrderStatusBadge status={custom.status} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                       <Calendar className="size-3.5" />

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createBlogPost, updateBlogPost } from "@/actions/blog";
-import { Wand2 } from "lucide-react";
+import { Wand2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -176,7 +176,16 @@ export function BlogForm({ initialData }: BlogFormProps) {
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
         <Button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] h-11">
-          {isPending ? "Saving..." : isEditing ? "Update Post" : "Create Post"}
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Saving...
+            </>
+          ) : isEditing ? (
+            "Update Post"
+          ) : (
+            "Create Post"
+          )}
         </Button>
         <Link href="/admin/blog" className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto min-h-[44px] h-11 text-center justify-center")}>
           Cancel

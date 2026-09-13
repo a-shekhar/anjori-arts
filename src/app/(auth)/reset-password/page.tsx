@@ -1,16 +1,19 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, EyeOff, Loader2, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import { resetPassword } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function ResetPasswordForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +47,7 @@ function ResetPasswordForm() {
     }
 
     if (result?.success) {
-      window.location.href = "/login?reason=reset_success";
+      router.push("/login?reason=reset_success");
     }
   }
 
@@ -116,15 +119,25 @@ function ResetPasswordForm() {
               >
                 Confirm New Password
               </Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showPassword ? "text" : "password"}
-                required
-                autoComplete="new-password"
-                placeholder="Re-enter new password"
-                className="h-11 rounded-xl"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  placeholder="Re-enter new password"
+                  className="h-11 rounded-xl pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none cursor-pointer"
+                >
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
 
             <Button

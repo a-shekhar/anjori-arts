@@ -6,7 +6,7 @@ export default function AdminArtworksLoading() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Artworks</h2>
           <p className="text-muted-foreground">
-            Manage your store's artwork catalog.
+            Manage your store&apos;s artwork catalog.
           </p>
         </div>
         <div className="h-10 w-32 animate-pulse rounded-md bg-primary/30" />

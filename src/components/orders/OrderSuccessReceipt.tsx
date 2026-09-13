@@ -11,15 +11,13 @@ import {
   Check,
   Truck,
   ShieldCheck,
-  Package,
-  Calendar,
   ArrowRight,
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/helpers";
 import { siteConfig, inquiryHref } from "@/config/site";
-import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from "@/config/constants";
+import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from "@/config/constants";
 import type { Order } from "@/types";
 
 interface OrderSuccessReceiptProps {
