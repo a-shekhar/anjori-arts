@@ -35,6 +35,7 @@ export const ADMIN_PAGE_SIZE = 20;
 export const BLOG_PAGE_SIZE = 9;
 
 // ---------- Limits ----------
+export const HOMEPAGE_FEATURED_LIMIT = 4;
 export const MAX_CART_QUANTITY = 5;
 export const MAX_ADDRESSES = 5;
 export const MAX_WISHLIST_ITEMS = 20;

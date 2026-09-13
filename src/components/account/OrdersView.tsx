@@ -20,6 +20,7 @@ import { formatPrice } from "@/lib/helpers";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, CustomOrderStatusBadge } from "@/components/shared/StatusBadge";
+import { AccountSubpageHeader } from "@/components/account/AccountSubpageHeader";
 import type { Order, CustomOrder, PaymentStatus } from "@/types";
 
 interface OrdersViewProps {
@@ -67,61 +68,55 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header & Tabs bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <h2 className="font-serif text-2xl font-medium tracking-tight text-foreground">
-            Orders & Acquisitions
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Track courier delivery for catalog paintings and review bespoke commission inquiries.
-          </p>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as string)} className="w-full sm:w-auto">
-          <TabsList className="grid grid-cols-2 w-full sm:w-auto h-11 rounded-xl bg-muted/60 p-1">
-            <TabsTrigger
-              value="acquisitions"
-              className="rounded-lg text-xs font-medium px-3 py-2 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs justify-center"
-            >
-              <ShoppingBag className="size-3.5 shrink-0" />
-              <span>
-                <span className="sm:hidden">Orders ({orders.length})</span>
-                <span className="hidden sm:inline">Shop Orders ({orders.length})</span>
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="commissions"
-              className="rounded-lg text-xs font-medium px-3 py-2 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs justify-center"
-            >
-              <Paintbrush className="size-3.5 shrink-0" />
-              <span>
-                <span className="sm:hidden">Custom ({customOrders.length})</span>
-                <span className="hidden sm:inline">Bespoke Commissions ({customOrders.length})</span>
-              </span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+      <AccountSubpageHeader
+        title="Orders & Acquisitions"
+        description="Track courier delivery for catalog paintings and review bespoke commission inquiries."
+        action={
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as string)} className="w-full sm:w-auto">
+            <TabsList className="grid grid-cols-2 w-full sm:w-auto h-11 rounded-xl bg-muted/60 p-1">
+              <TabsTrigger
+                value="acquisitions"
+                className="rounded-lg text-xs font-medium px-3 py-2 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs justify-center"
+              >
+                <ShoppingBag className="size-3.5 shrink-0" />
+                <span>
+                  <span className="sm:hidden">Orders ({orders.length})</span>
+                  <span className="hidden sm:inline">Shop Orders ({orders.length})</span>
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="commissions"
+                className="rounded-lg text-xs font-medium px-3 py-2 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs justify-center"
+              >
+                <Paintbrush className="size-3.5 shrink-0" />
+                <span>
+                  <span className="sm:hidden">Custom ({customOrders.length})</span>
+                  <span className="hidden sm:inline">Bespoke Commissions ({customOrders.length})</span>
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        }
+      />
 
       {/* 1. Shop Orders Tab Content */}
       {activeTab === "acquisitions" && (
         <div className="space-y-4">
           {orders.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+            <div className="rounded-2xl border border-dashed border-border bg-card p-6 sm:p-12 text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
                 <ShoppingBag className="size-7" />
               </div>
-              <h3 className="font-serif text-xl font-medium text-foreground">
+              <h3 className="font-serif text-lg sm:text-xl font-medium text-foreground">
                 No acquisitions recorded yet
               </h3>
-              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                 You haven&apos;t placed any orders with this account yet. Explore our curated gallery of
                 authentic handcrafted paintings.
               </p>
               <div className="mt-6">
                 <Link href="/shop">
-                  <Button className="rounded-xl font-medium gap-2">
+                  <Button className="rounded-xl font-medium gap-2 min-h-[44px] text-xs sm:text-sm">
                     <span>Explore Art Collection</span>
                     <ArrowRight className="size-4" />
                   </Button>
@@ -232,20 +227,20 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
       {activeTab === "commissions" && (
         <div className="space-y-4">
           {customOrders.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+            <div className="rounded-2xl border border-dashed border-border bg-card p-6 sm:p-12 text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
                 <Paintbrush className="size-7" />
               </div>
-              <h3 className="font-serif text-xl font-medium text-foreground">
+              <h3 className="font-serif text-lg sm:text-xl font-medium text-foreground">
                 No custom commissions requested yet
               </h3>
-              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                 Have a specific vision, deity theme, or custom dimensions in mind? Collaborate
                 directly with our master folk artists for bespoke Tanjore or Madhubani creations.
               </p>
               <div className="mt-6">
                 <Link href="/custom-order">
-                  <Button className="rounded-xl font-medium gap-2">
+                  <Button className="rounded-xl font-medium gap-2 min-h-[44px] text-xs sm:text-sm">
                     <Sparkles className="size-4" />
                     <span>Start Custom Commission</span>
                   </Button>

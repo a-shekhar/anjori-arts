@@ -4,6 +4,7 @@ import { getUserAddresses } from "@/actions/account";
 import { MAX_ADDRESSES } from "@/config/constants";
 import { AddressCard } from "@/components/account/AddressCard";
 import { AddressModal } from "@/components/account/AddressModal";
+import { AccountSubpageHeader } from "@/components/account/AccountSubpageHeader";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -17,36 +18,29 @@ export default async function AccountAddressesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <h2 className="font-serif text-2xl font-medium tracking-tight text-foreground">
-            Saved Delivery Addresses
-          </h2>
-          <p className="text-xs text-muted-foreground mt-1">
-            Manage your personal and gifting shipping addresses for fast 1-click checkout.
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-          <span className="text-xs font-medium text-muted-foreground">
-            <strong className="text-foreground">{addresses.length}</strong> / {MAX_ADDRESSES} used
+      <AccountSubpageHeader
+        title="Saved Delivery Addresses"
+        description="Manage your personal and gifting shipping addresses for fast 1-click checkout."
+        badge={
+          <span className="text-xs font-medium text-muted-foreground ml-1">
+            ({addresses.length}/{MAX_ADDRESSES} saved)
           </span>
-
+        }
+        action={
           <AddressModal
             disabled={maxReached}
             trigger={
               <Button
                 disabled={maxReached}
-                className="rounded-xl gap-2 shadow-sm font-medium min-h-[44px] h-11 text-xs sm:text-sm"
+                className="w-full sm:w-auto rounded-xl gap-2 shadow-sm font-medium min-h-[44px] h-10 text-xs sm:text-sm"
               >
                 <Plus className="size-3.5" />
                 <span>Add Address</span>
               </Button>
             }
           />
-        </div>
-      </div>
+        }
+      />
 
       {maxReached && (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-xs text-amber-800 dark:text-amber-300">
@@ -55,14 +49,14 @@ export default async function AccountAddressesPage() {
       )}
 
       {addresses.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+        <div className="rounded-2xl border border-dashed border-border bg-card p-6 sm:p-12 text-center">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
             <MapPin className="size-7" />
           </div>
-          <h3 className="font-serif text-xl font-medium text-foreground">
+          <h3 className="font-serif text-lg sm:text-xl font-medium text-foreground">
             No saved delivery addresses yet
           </h3>
-          <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
             Save your home, studio, or gifting addresses now to enjoy streamlined checkout for your
             future handcrafted art acquisitions.
           </p>

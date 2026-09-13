@@ -65,46 +65,11 @@ export default async function AccountLayout({
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Banner */}
-      <section className="border-b border-border bg-muted/30 px-4 py-4 sm:px-8 sm:py-8 lg:px-10">
+    <div className="min-h-screen bg-background overflow-x-clip">
+      {/* Header Banner (Tablet & Desktop sm+) */}
+      <section className="hidden sm:block border-b border-border bg-muted/30 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <div className="mx-auto max-w-6xl">
-          {/* Mobile compact header (< sm) */}
-          <div className="flex sm:hidden items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 font-serif text-base font-bold text-primary shrink-0">
-                {fullName.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="font-serif text-base font-medium tracking-tight text-foreground truncate">
-                    Namaste, {firstName || fullName}
-                  </h1>
-                  {role === "ADMIN" && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 shrink-0">
-                      Admin
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              {role === "ADMIN" && (
-                <Link href="/admin">
-                  <Button variant="outline" size="sm" className="rounded-xl h-8.5 text-xs px-2.5 gap-1.5">
-                    <ShieldCheck className="size-3.5 text-primary" />
-                    <span>Admin</span>
-                  </Button>
-                </Link>
-              )}
-              <SignOutButton className="rounded-xl h-8.5 text-xs px-2.5" />
-            </div>
-          </div>
-
-          {/* Tablet & Desktop spacious header (sm+) */}
-          <div className="hidden sm:flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <span className="aa-eyebrow inline-block mb-1">Collector Portal</span>
               <h1 className="font-serif text-2xl font-medium tracking-tight text-foreground sm:text-3xl">
@@ -133,10 +98,10 @@ export default async function AccountLayout({
       {/* Main Content Layout */}
       <main className="mx-auto max-w-6xl px-4 py-4 sm:px-8 sm:py-8 lg:px-10">
         <div className="grid gap-6 lg:grid-cols-[280px_1fr] lg:gap-10">
-          {/* Left Sidebar */}
-          <aside className="space-y-4 lg:space-y-6">
-            {/* Collector Mini Card (Desktop only to prevent redundant vertical stacking on mobile) */}
-            <div className="hidden lg:block rounded-2xl border border-border bg-card p-5 shadow-sm">
+          {/* Left Sidebar (Desktop Only) */}
+          <aside className="hidden lg:block space-y-6">
+            {/* Collector Mini Card */}
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
               <div className="flex items-center gap-3.5">
                 <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 font-serif text-xl font-bold text-primary shrink-0">
                   {fullName.charAt(0).toUpperCase()}
@@ -171,7 +136,7 @@ export default async function AccountLayout({
               </div>
             </div>
 
-            {/* Navigation (Sticky Pills on Mobile, Sidebar on Desktop) */}
+            {/* Navigation Menu */}
             <AccountNav />
           </aside>
 

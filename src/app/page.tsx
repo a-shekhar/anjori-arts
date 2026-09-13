@@ -12,6 +12,7 @@ import { getPublicTestimonials } from "@/actions/testimonials";
 import { TestimonialsSection } from "@/components/shared/TestimonialsSection";
 import { formatDate } from "@/lib/helpers";
 import { getCategoryCoverImage, getCategoryAltText } from "@/config/category-images";
+import { HOMEPAGE_FEATURED_LIMIT } from "@/config/constants";
 
 export const revalidate = 3600;
 
@@ -42,7 +43,7 @@ export default async function HomePage() {
     testimonials,
   ] = await Promise.all([
     getAllCategories(),
-    getFeaturedArtworks(4),
+    getFeaturedArtworks(HOMEPAGE_FEATURED_LIMIT),
     fetchBlogPosts({ page: 1, limit: 3, sort: "newest" }),
     getPublicTestimonials({ featuredOnly: true, limit: 3 }),
   ]);

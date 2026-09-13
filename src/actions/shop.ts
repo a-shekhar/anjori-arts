@@ -3,6 +3,7 @@
 import { Artwork, Category } from "@/types";
 import { mapArtwork } from "@/lib/mappers";
 import { getAnonClient } from "@/lib/supabase/anon";
+import { HOMEPAGE_FEATURED_LIMIT } from "@/config/constants";
 
 export async function getAllCategories(): Promise<Category[]> {
   try {
@@ -68,7 +69,7 @@ export async function getShopData(): Promise<{ artworks: Artwork[]; categories: 
   }
 }
 
-export async function getFeaturedArtworks(limit = 4): Promise<(Artwork & { category?: Category })[]> {
+export async function getFeaturedArtworks(limit = HOMEPAGE_FEATURED_LIMIT): Promise<(Artwork & { category?: Category })[]> {
   try {
     const supabase = getAnonClient();
 

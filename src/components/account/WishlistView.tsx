@@ -21,6 +21,7 @@ import { formatPrice } from "@/lib/helpers";
 import { MAX_WISHLIST_ITEMS } from "@/config/constants";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AccountSubpageHeader } from "@/components/account/AccountSubpageHeader";
 import {
   Dialog,
   DialogContent,
@@ -259,48 +260,42 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header with Title and Count Indicator */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="font-serif text-2xl font-medium tracking-tight text-foreground">
-              Collector Wishlist
-            </h2>
-            <Badge
-              variant={isFull ? "destructive" : "secondary"}
-              className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
-            >
-              {count} / {MAX_WISHLIST_ITEMS} saved
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Curate and bookmark your favorite traditional folk art pieces for upcoming occasions.
-          </p>
-        </div>
-
-        {count > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleMoveAllToBag}
-              className="rounded-xl text-xs font-medium gap-1.5 shadow-xs hover:border-primary/40 hover:text-primary"
-            >
-              <ShoppingBag className="size-3.5" />
-              <span>Move All to Bag</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowClearDialog(true)}
-              className="rounded-xl text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/40"
-            >
-              <Trash2 className="size-3.5 mr-1" />
-              <span>Clear All</span>
-            </Button>
-          </div>
-        )}
-      </div>
+      <AccountSubpageHeader
+        title="Collector Wishlist"
+        description="Curate and bookmark your favorite traditional folk art pieces for upcoming occasions."
+        badge={
+          <Badge
+            variant={isFull ? "destructive" : "secondary"}
+            className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
+          >
+            {count} / {MAX_WISHLIST_ITEMS} saved
+          </Badge>
+        }
+        action={
+          count > 0 ? (
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMoveAllToBag}
+                className="flex-1 sm:flex-initial rounded-xl text-xs font-medium gap-1.5 min-h-[40px] shadow-xs hover:border-primary/40 hover:text-primary"
+              >
+                <ShoppingBag className="size-3.5" />
+                <span>Move All to Bag</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowClearDialog(true)}
+                className="rounded-xl text-xs font-medium min-h-[40px] text-muted-foreground hover:text-destructive hover:border-destructive/40"
+              >
+                <Trash2 className="size-3.5 mr-1" />
+                <span>Clear All</span>
+              </Button>
+            </div>
+          ) : undefined
+        }
+      />
 
       {/* Capacity Warning Alert if at or near limit */}
       {isFull && (
@@ -324,7 +319,7 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
 
       {/* Empty State */}
       {!loading && count === 0 && (
-        <div className="rounded-2xl border border-border bg-card p-10 sm:p-14 text-center shadow-xs">
+        <div className="rounded-2xl border border-border bg-card p-6 sm:p-14 text-center shadow-xs">
           <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 mb-5 shadow-xs">
             <Heart className="size-8 fill-rose-500/20 text-rose-500" />
           </div>

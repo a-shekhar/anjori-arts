@@ -203,6 +203,7 @@ export const createArtwork = withAdminAuth(async (prevState: unknown, formData: 
       }
     }
 
+    revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true, artworkId };
@@ -317,6 +318,7 @@ export const updateArtwork = withAdminAuth(async (id: string, prevState: unknown
        await supabase.from("artwork_variants").delete().eq("artwork_id", id);
     }
 
+    revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath(`/artworks/${baseData.slug}`);
     revalidatePath("/admin/artworks");
@@ -361,6 +363,7 @@ export const deleteArtwork = withAdminAuth(async (id: string) => {
       }
     }
     
+    revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true };
@@ -375,6 +378,7 @@ export const toggleArtworkStatus = withAdminAuth(async (id: string, isAvailable:
     const supabase = createAdminClient();
     const { error } = await supabase.from("artworks").update({ is_available: isAvailable }).eq("id", id);
     if (error) return { success: false, message: error.message };
+    revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true };
@@ -389,6 +393,7 @@ export const toggleArtworkFeatured = withAdminAuth(async (id: string, isFeatured
     const supabase = createAdminClient();
     const { error } = await supabase.from("artworks").update({ is_featured: isFeatured }).eq("id", id);
     if (error) return { success: false, message: error.message };
+    revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true };

@@ -33,7 +33,9 @@ export function Navbar() {
           <NavSearch />
           <WishlistIcon />
           <CartIcon />
-          <UserNav />
+          <div className="hidden sm:block">
+            <UserNav />
+          </div>
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>

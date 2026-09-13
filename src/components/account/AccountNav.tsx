@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSyncExternalStore, useRef, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { User, Package, MapPin, Heart, Shield, Sparkles, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +47,6 @@ const BASE_NAV_ITEMS: NavItem[] = [
 
 export function AccountNav({ className }: { className?: string }) {
   const pathname = usePathname();
-  const activePillRef = useRef<HTMLAnchorElement | null>(null);
   const isMounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -69,59 +68,10 @@ export function AccountNav({ className }: { className?: string }) {
     return pathname.startsWith(item.href);
   }
 
-  // Smoothly center the active tab in the mobile scroll view
-  useEffect(() => {
-    if (activePillRef.current) {
-      activePillRef.current.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
-    }
-  }, [pathname]);
-
   return (
     <div className={cn("space-y-4 lg:space-y-6", className)}>
-      {/* Mobile Sticky Horizontal Scrollable Pills */}
-      <div className="sticky top-[4.5rem] z-30 lg:hidden -mx-4 sm:-mx-8 px-4 sm:px-8 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/70 shadow-xs">
-        <div className="flex overflow-x-auto pb-1 scrollbar-none gap-2 scroll-smooth">
-          {navItems.map((item) => {
-            const active = isActive(item);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                ref={active ? activePillRef : undefined}
-                href={item.href}
-                className={cn(
-                  "inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-all shrink-0 active:scale-95",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                )}
-              >
-                <Icon className="size-3.5 shrink-0" />
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-semibold",
-                      active
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-primary/10 text-primary"
-                    )}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Desktop Vertical Menu */}
-      <nav className="hidden lg:flex flex-col gap-1 rounded-2xl border border-border bg-card p-2 shadow-sm">
+      <nav className="flex flex-col gap-1 rounded-2xl border border-border bg-card p-2 shadow-sm">
         {navItems.map((item) => {
           const active = isActive(item);
           const Icon = item.icon;
@@ -150,8 +100,8 @@ export function AccountNav({ className }: { className?: string }) {
         })}
       </nav>
 
-      {/* Bespoke Art Commissions Card (Desktop only) */}
-      <div className="hidden lg:block rounded-2xl border border-border bg-muted/40 p-5 space-y-3">
+      {/* Bespoke Art Commissions Card */}
+      <div className="rounded-2xl border border-border bg-muted/40 p-5 space-y-3">
         <div className="flex items-center gap-2 text-primary">
           <Sparkles className="size-4" />
           <span className="text-xs font-semibold uppercase tracking-wider">Bespoke Artworks</span>
