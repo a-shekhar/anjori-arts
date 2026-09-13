@@ -133,9 +133,9 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* 1. Password Update Section */}
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 border-b border-border pb-4">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <KeyRound className="size-5" />
@@ -257,7 +257,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
       </section>
 
       {/* 2. Global Session Management */}
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 border-b border-border pb-4">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Smartphone className="size-5" />
@@ -301,7 +301,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
       </section>
 
       {/* 3. Danger Zone / Account Deletion */}
-      <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 shadow-sm">
+      <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 border-b border-destructive/20 pb-4">
           <div className="flex size-10 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
             <AlertTriangle className="size-5" />
@@ -341,7 +341,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
 
       {/* Delete Account Confirmation Dialog */}
       <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6">
+        <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-md rounded-2xl p-4 sm:p-6 mx-auto">
           <DialogHeader className="space-y-1">
             <DialogTitle className="font-serif text-lg font-semibold text-destructive flex items-center gap-2">
               <AlertTriangle className="size-5" />
@@ -368,7 +368,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
               <Button
                 type="button"
                 variant="outline"
@@ -377,7 +377,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                   setDeleteConfirmation("");
                 }}
                 disabled={deleteLoading}
-                className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-4"
+                className="flex-1 sm:flex-initial rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-4"
               >
                 Cancel
               </Button>
@@ -386,7 +386,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                 variant="destructive"
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading || deleteConfirmation.trim() !== "DELETE"}
-                className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 font-medium gap-1.5 px-4"
+                className="flex-1 sm:flex-initial rounded-xl text-xs sm:text-sm min-h-[44px] h-11 font-medium gap-1.5 px-4"
               >
                 {deleteLoading ? (
                   <>

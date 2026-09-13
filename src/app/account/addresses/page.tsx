@@ -28,7 +28,7 @@ export default async function AccountAddressesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
           <span className="text-xs font-medium text-muted-foreground">
             <strong className="text-foreground">{addresses.length}</strong> / {MAX_ADDRESSES} used
           </span>

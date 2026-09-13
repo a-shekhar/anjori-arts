@@ -107,7 +107,7 @@ export function AddressCard({ address }: AddressCardProps) {
       >
         <div className="space-y-3">
           {/* Header row: type badge + default badge */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
               {getTypeIcon(address.address_type)}
               <span>{getTypeLabel(address.address_type)}</span>
@@ -123,7 +123,7 @@ export function AddressCard({ address }: AddressCardProps) {
                 type="button"
                 onClick={handleSetDefault}
                 disabled={loading}
-                className="inline-flex min-h-[36px] items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary cursor-pointer relative after:absolute after:-inset-1"
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary cursor-pointer active:scale-95"
               >
                 <Star className="size-3.5" />
                 <span>Set as Default</span>
@@ -162,7 +162,7 @@ export function AddressCard({ address }: AddressCardProps) {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="min-h-[36px] rounded-lg text-xs gap-1.5 font-normal"
+                className="min-h-[44px] rounded-xl text-xs gap-1.5 font-medium px-3.5"
               >
                 <Edit2 className="size-3.5" />
                 <span>Edit</span>
@@ -175,7 +175,7 @@ export function AddressCard({ address }: AddressCardProps) {
             variant="ghost"
             size="sm"
             onClick={() => setShowDeleteConfirm(true)}
-            className="min-h-[36px] rounded-lg text-xs gap-1.5 font-normal text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="min-h-[44px] rounded-xl text-xs gap-1.5 font-medium px-3.5 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="size-3.5" />
             <span>Delete</span>

@@ -169,42 +169,42 @@ function AddressFormContent({
       {/* Address Type Selector */}
       <div className="space-y-1.5">
         <Label className="text-xs font-medium text-foreground">Address Label</Label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => setAddressType("home")}
-            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border p-2 text-[11px] sm:text-xs font-medium transition-colors cursor-pointer text-center ${
               addressType === "home"
                 ? "border-primary bg-primary/10 text-primary font-semibold"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
-            <Home className="size-3.5" />
+            <Home className="size-3.5 shrink-0" />
             <span>Home</span>
           </button>
           <button
             type="button"
             onClick={() => setAddressType("work")}
-            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border p-2 text-[11px] sm:text-xs font-medium transition-colors cursor-pointer text-center ${
               addressType === "work"
                 ? "border-primary bg-primary/10 text-primary font-semibold"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
-            <Briefcase className="size-3.5" />
-            <span>Work / Studio</span>
+            <Briefcase className="size-3.5 shrink-0" />
+            <span>Work<span className="hidden sm:inline"> / Studio</span></span>
           </button>
           <button
             type="button"
             onClick={() => setAddressType("other")}
-            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border p-2 text-[11px] sm:text-xs font-medium transition-colors cursor-pointer text-center ${
               addressType === "other"
                 ? "border-primary bg-primary/10 text-primary font-semibold"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
             }`}
           >
-            <Building className="size-3.5" />
-            <span>Other / Gift</span>
+            <Building className="size-3.5 shrink-0" />
+            <span>Other<span className="hidden sm:inline"> / Gift</span></span>
           </button>
         </div>
       </div>
@@ -357,20 +357,20 @@ function AddressFormContent({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+      <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
         <Button
           type="button"
           variant="outline"
           onClick={onCancel}
           disabled={loading}
-          className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-4"
+          className="flex-1 sm:flex-initial rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-4"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={loading}
-          className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-5 min-w-[120px] font-medium shadow-sm"
+          className="flex-1 sm:flex-initial rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-5 sm:min-w-[120px] font-medium shadow-sm"
         >
           {loading ? (
             <>
@@ -440,9 +440,9 @@ export function AddressModal({
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6">
+        <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-lg max-h-[88vh] overflow-y-auto rounded-2xl p-4 sm:p-6 mx-auto">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="font-serif text-xl font-medium text-foreground flex items-center gap-2">
+            <DialogTitle className="font-serif text-lg sm:text-xl font-medium text-foreground flex items-center gap-2">
               <MapPin className="size-5 text-primary" />
               <span>{initialAddress ? "Edit Delivery Address" : "Add Delivery Address"}</span>
             </DialogTitle>

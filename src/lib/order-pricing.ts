@@ -184,9 +184,45 @@ export async function calculateAuthoritativeOrder(
 
     const variant = variantMap.get(item.variantId);
 
-    if (variant) {
-      const art = Array.isArray(variant.artwork) ? variant.artwork[0] : variant.artwork;
+    if (!variant) {
+      // Fallback for legacy artworks without variants or if variant not found
+      const artwork = artworkMap.get(item.artworkId) || artworkMap.get(item.variantId);
+      if (!artwork) {
+        return {
+          success: false,
+          error: `Artwork "${item.title}" could not be verified in the catalog.`,
+          subtotal: 0,
+          deliveryCharge: 0,
+          discountAmount: 0,
+          totalAmount: 0,
+          orderItemsToInsert: [],
+        };
+      }
 
+      if (!artwork.is_available) {
+        return {
+          success: false,
+          error: `"${artwork.title}" is currently unavailable.`,
+          subtotal: 0,
+          deliveryCharge: 0,
+          discountAmount: 0,
+          totalAmount: 0,
+          orderItemsToInsert: [],
+        };
+      }
+
+      unitPrice = Number(artwork.price);
+      isFramed = false;
+      framingPrice = 0;
+      artworkId = artwork.id;
+      variantId = null;
+      title = artwork.title || item.title;
+
+      if (Array.isArray(artwork.images) && artwork.images.length > 0 && artwork.images[0]?.url) {
+        imageUrl = artwork.images[0].url;
+      }
+    } else {
+      const art = Array.isArray(variant.artwork) ? variant.artwork[0] : variant.artwork;
       if (variant.is_active === false || art?.is_available === false) {
         return {
           success: false,
@@ -228,42 +264,6 @@ export async function calculateAuthoritativeOrder(
       const artworkImages = art?.images;
       if (Array.isArray(artworkImages) && artworkImages.length > 0 && artworkImages[0]?.url) {
         imageUrl = artworkImages[0].url;
-      }
-    } else {
-      const artwork = artworkMap.get(item.artworkId) || artworkMap.get(item.variantId);
-      if (!artwork) {
-        return {
-          success: false,
-          error: `Artwork "${item.title}" could not be verified in the catalog.`,
-          subtotal: 0,
-          deliveryCharge: 0,
-          discountAmount: 0,
-          totalAmount: 0,
-          orderItemsToInsert: [],
-        };
-      }
-
-      if (!artwork.is_available) {
-        return {
-          success: false,
-          error: `"${artwork.title}" is currently unavailable.`,
-          subtotal: 0,
-          deliveryCharge: 0,
-          discountAmount: 0,
-          totalAmount: 0,
-          orderItemsToInsert: [],
-        };
-      }
-
-      unitPrice = Number(artwork.price);
-      isFramed = false;
-      framingPrice = 0;
-      artworkId = artwork.id;
-      variantId = null;
-      title = artwork.title || item.title;
-
-      if (Array.isArray(artwork.images) && artwork.images.length > 0 && artwork.images[0]?.url) {
-        imageUrl = artwork.images[0].url;
       }
     }
 

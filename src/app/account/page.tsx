@@ -43,12 +43,12 @@ export default async function AccountProfilePage() {
       !user.app_metadata.providers.includes("email"));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {/* Quick Overview Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <Link
           href="/account/orders"
-          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
+          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
         >
           <div className="flex items-center gap-3.5">
             <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -56,7 +56,7 @@ export default async function AccountProfilePage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Acquisitions & Orders</p>
-              <p className="font-serif text-xl font-bold text-foreground">
+              <p className="font-serif text-lg sm:text-xl font-bold text-foreground">
                 {orders.length} {orders.length === 1 ? "Order" : "Orders"}
               </p>
             </div>
@@ -66,7 +66,7 @@ export default async function AccountProfilePage() {
 
         <Link
           href="/account/addresses"
-          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
+          className="group flex items-center justify-between rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
         >
           <div className="flex items-center gap-3.5">
             <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -74,7 +74,7 @@ export default async function AccountProfilePage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Saved Delivery Addresses</p>
-              <p className="font-serif text-xl font-bold text-foreground">
+              <p className="font-serif text-lg sm:text-xl font-bold text-foreground">
                 {addresses.length} of 5 Saved
               </p>
             </div>
@@ -84,7 +84,7 @@ export default async function AccountProfilePage() {
       </div>
 
       {/* Personal Information Form */}
-      <section className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+      <section className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-sm">
         <div className="border-b border-border pb-5 mb-6">
           <div className="flex items-center gap-3">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">

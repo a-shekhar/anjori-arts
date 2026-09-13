@@ -59,7 +59,7 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
   
   // Use first variant for initial display or default
   const defaultVariant = artwork.variants?.[0] || {
-    mrp: artwork.price * 1.2,
+    mrp: artwork.price,
     sellingPrice: artwork.price,
     widthInches: 0,
     heightInches: 0,
@@ -68,22 +68,25 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
 
   // Smart multi-variant dimensions summary
   const variants = artwork.variants || [];
-  let dimensionsSummary = artwork.dimensions || "Original / Standard";
+  const validVariants = variants.filter((v) => v.widthInches > 0 && v.heightInches > 0);
+  const isZeroOrInvalidDimension = (dim?: string | null) => {
+    if (!dim || !dim.trim()) return true;
+    return /^0(?:\.0+)?["']?\s*[×x*]\s*0(?:\.0+)?["']?$/i.test(dim.trim());
+  };
 
-  if (variants.length === 1 && variants[0].widthInches > 0 && variants[0].heightInches > 0) {
-    const w = variants[0].widthInches;
-    const h = variants[0].heightInches;
+  let dimensionsSummary = !isZeroOrInvalidDimension(artwork.dimensions) ? artwork.dimensions! : "Original / Standard";
+
+  if (validVariants.length === 1) {
+    const w = validVariants[0].widthInches;
+    const h = validVariants[0].heightInches;
     dimensionsSummary = `${w}" × ${h}" (${Math.round(w * 2.54)} × ${Math.round(h * 2.54)} cm)`;
+  } else if (validVariants.length > 1) {
+    const sortedByArea = [...validVariants].sort((a, b) => a.widthInches * a.heightInches - b.widthInches * b.heightInches);
+    const smallest = sortedByArea[0];
+    const largest = sortedByArea[sortedByArea.length - 1];
+    dimensionsSummary = `${validVariants.length} Sizes (${smallest.widthInches}" × ${smallest.heightInches}" to ${largest.widthInches}" × ${largest.heightInches}")`;
   } else if (variants.length > 1) {
-    const validVariants = [...variants].filter((v) => v.widthInches > 0 && v.heightInches > 0);
-    if (validVariants.length > 1) {
-      const sortedByArea = validVariants.sort((a, b) => a.widthInches * a.heightInches - b.widthInches * b.heightInches);
-      const smallest = sortedByArea[0];
-      const largest = sortedByArea[sortedByArea.length - 1];
-      dimensionsSummary = `${validVariants.length} Sizes (${smallest.widthInches}" × ${smallest.heightInches}" to ${largest.widthInches}" × ${largest.heightInches}")`;
-    } else {
-      dimensionsSummary = `${variants.length} Sizes Available`;
-    }
+    dimensionsSummary = `${variants.length} Sizes Available`;
   }
 
   const breadcrumbCrumbs = [

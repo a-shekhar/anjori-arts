@@ -21,25 +21,16 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   
-  // Default to first variant if variants exist, otherwise we just handle a single product state.
-  // We'll mock a default variant if none are provided to keep it backward compatible.
+  const hasVariants = Boolean(artwork.variants && artwork.variants.length > 0);
+
   const variants = useMemo(() => {
-    return artwork.variants?.length ? artwork.variants : [{
-      id: artwork.id,
-      label: "Standard",
-      widthInches: 12,
-      heightInches: 16,
-      mrp: artwork.price * 1.2,
-      sellingPrice: artwork.price,
-      stockQuantity: artwork.isAvailable ? 1 : 0,
-      isActive: true
-    }];
-  }, [artwork]);
+    return artwork.variants || [];
+  }, [artwork.variants]);
 
   // Group variants by label
   const groupedVariants = useMemo(() => {
     const groups: Record<string, typeof variants> = {};
-    variants.forEach(v => {
+    variants.forEach((v) => {
       if (!groups[v.label]) groups[v.label] = [];
       groups[v.label].push(v);
     });
@@ -48,16 +39,96 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
 
   const groupLabels = Object.keys(groupedVariants);
 
-  const [selectedGroup, setSelectedGroup] = useState(variants[0].label);
-  const [selectedVariantId, setSelectedVariantId] = useState(variants[0].id);
+  const [selectedGroup, setSelectedGroup] = useState(() => variants[0]?.label || "");
+  const [selectedVariantId, setSelectedVariantId] = useState(() => variants[0]?.id || "");
+  const [isFramed, setIsFramed] = useState(false);
 
   const handleGroupChange = (group: string) => {
     setSelectedGroup(group);
-    setSelectedVariantId(groupedVariants[group][0].id);
+    const groupVariant = groupedVariants[group]?.[0];
+    if (groupVariant) {
+      setSelectedVariantId(groupVariant.id);
+    }
   };
 
-  const [isFramed, setIsFramed] = useState(false);
-  const selectedVariant = variants.find(v => v.id === selectedVariantId) || variants[0];
+  // If artwork has no variants in DB, fail cleanly without manufacturing fake dimensions or discounts
+  if (!hasVariants) {
+    const isZeroOrInvalidDimension = (dim?: string | null) => {
+      if (!dim || !dim.trim()) return true;
+      return /^0(?:\.0+)?["']?\s*[×x*]\s*0(?:\.0+)?["']?$/i.test(dim.trim());
+    };
+    const hasValidArtworkDims = !isZeroOrInvalidDimension(artwork.dimensions);
+    const resolvedDimensions = hasValidArtworkDims ? artwork.dimensions : "Specifications pending";
+
+    const inquiryMessage = `Hi! I'm interested in "${artwork.title}"${hasValidArtworkDims ? ` (${artwork.dimensions})` : ""}. Could you please share pricing and availability details for purchasing this piece?`;
+    const noVariantWhatsappUrl = `${inquiryHref}?text=${encodeURIComponent(inquiryMessage)}`;
+
+    return (
+      <div className="flex flex-col gap-6">
+        {/* Dynamic Price Display */}
+        <div className="-mt-4 mb-2">
+          <PriceDisplay 
+            mrp={artwork.price} 
+            sellingPrice={artwork.price} 
+            showTaxNote 
+          />
+        </div>
+
+        {/* Sizing Card */}
+        <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5 flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dimensions</span>
+            <span className={cn("text-sm font-medium", hasValidArtworkDims ? "text-foreground" : "text-muted-foreground italic")}>
+              {resolvedDimensions}
+            </span>
+          </div>
+        </div>
+
+        {/* Custom Size Request Link */}
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-muted-foreground">Need a custom dimension?</span>
+          <Link 
+            href={`/custom-order?artworkId=${artwork.id}&type=${encodeURIComponent(category?.name || 'Other')}&title=${encodeURIComponent(artwork.title)}`}
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Request Custom Size
+          </Link>
+        </div>
+
+        {/* Stock Status / Specifications Pending Notice */}
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium text-sm">
+            <AlertCircle className="size-4 shrink-0" />
+            <span>Specifications & Stock Pending</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Detailed edition sizing and stock specifications for this artwork are currently being cataloged. Add to cart is paused until verified specifications are published.
+          </p>
+        </div>
+
+        {/* Purchase Actions Row */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <WishlistButton
+            artworkId={artwork.id}
+            artworkTitle={artwork.title}
+            variant="icon"
+            className="size-12 rounded-xl border border-border bg-card shrink-0 hover:bg-muted/60 transition-colors shadow-xs"
+          />
+          <a
+            href={noVariantWhatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:scale-[0.98]"
+          >
+            <MessageCircle className="size-4 shrink-0" />
+            <span>Inquire on WhatsApp to Purchase</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const selectedVariant = variants.find((v) => v.id === selectedVariantId) || variants[0];
   const isOutOfStock = !artwork.isAvailable || selectedVariant.isActive === false;
   const isMadeToOrder = !isOutOfStock && selectedVariant.stockQuantity <= 0;
 
@@ -65,7 +136,8 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   const framingPrice = selectedVariant.framingPrice || 0;
   const effectiveIsFramed = canBeFramed && isFramed;
   const effectiveFramingPrice = effectiveIsFramed ? framingPrice : 0;
-  const resolvedSize = selectedVariant.label || (selectedVariant.widthInches && selectedVariant.heightInches ? `${selectedVariant.widthInches}" × ${selectedVariant.heightInches}"` : "Original");
+  const hasValidDims = Boolean(selectedVariant.widthInches && selectedVariant.heightInches && selectedVariant.widthInches > 0 && selectedVariant.heightInches > 0);
+  const resolvedSize = selectedVariant.label || (hasValidDims ? `${selectedVariant.widthInches}" × ${selectedVariant.heightInches}"` : "Original");
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -211,22 +283,29 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
               <div className="flex flex-wrap gap-2">
                 {groupedVariants[selectedGroup].map((variant) => {
                   const isSelected = selectedVariantId === variant.id;
-                  return (
-                    <button
-                      key={variant.id}
-                      type="button"
-                      onClick={() => setSelectedVariantId(variant.id)}
-                      className={cn(
-                        "rounded-xl border px-3.5 py-2 text-sm font-medium transition-all flex items-center gap-2",
-                        isSelected
-                          ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
-                          : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                      )}
-                    >
-                      <span>{variant.widthInches}&Prime; × {variant.heightInches}&Prime;</span>
-                      <span className="text-xs text-muted-foreground">({Math.round(variant.widthInches * 2.54)} × {Math.round(variant.heightInches * 2.54)} cm)</span>
-                    </button>
-                  );
+                    const hasDims = variant.widthInches > 0 && variant.heightInches > 0;
+                    return (
+                      <button
+                        key={variant.id}
+                        type="button"
+                        onClick={() => setSelectedVariantId(variant.id)}
+                        className={cn(
+                          "rounded-xl border px-3.5 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                          isSelected
+                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                        )}
+                      >
+                        {hasDims ? (
+                          <>
+                            <span>{variant.widthInches}&Prime; × {variant.heightInches}&Prime;</span>
+                            <span className="text-xs text-muted-foreground">({Math.round(variant.widthInches * 2.54)} × {Math.round(variant.heightInches * 2.54)} cm)</span>
+                          </>
+                        ) : (
+                          <span>{variant.label || "Standard"}</span>
+                        )}
+                      </button>
+                    );
                 })}
               </div>
             </div>

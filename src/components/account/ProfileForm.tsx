@@ -202,7 +202,7 @@ export function ProfileForm({ initialData, isOAuthUser = false }: ProfileFormPro
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 min-w-[140px] rounded-xl font-medium gap-2 shadow-sm"
+          className="h-11 w-full sm:w-auto min-w-[140px] rounded-xl font-medium gap-2 shadow-sm"
         >
           {loading ? (
             <>

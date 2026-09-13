@@ -90,6 +90,8 @@ export async function getUserCartItems(): Promise<CartItem[]> {
       if (!art) continue;
 
       const variant = (art.variants || []).find((v) => v.id === row.variant_id);
+      if (!variant) continue;
+
       const isFramed = Boolean(row.is_framed);
 
       const title = art.title;
@@ -98,17 +100,10 @@ export async function getUserCartItems(): Promise<CartItem[]> {
         imageUrl = art.images[0].url;
       }
 
-      let size = "Standard";
-      let sellingPrice = art.price;
-      let mrp = Math.round(art.price * 1.2);
-      let framingPrice = 0;
-
-      if (variant) {
-        size = variant.label;
-        sellingPrice = variant.selling_price;
-        mrp = variant.mrp;
-        framingPrice = isFramed && variant.can_be_framed ? (variant.framing_price || 0) : 0;
-      }
+      const size = variant.label || "Standard";
+      const sellingPrice = variant.selling_price || art.price;
+      const mrp = variant.mrp || Math.round(sellingPrice * 1.2);
+      const framingPrice = isFramed && variant.can_be_framed ? (variant.framing_price || 0) : 0;
 
       items.push({
         id: `${row.variant_id}-${isFramed ? "framed" : "unframed"}`,

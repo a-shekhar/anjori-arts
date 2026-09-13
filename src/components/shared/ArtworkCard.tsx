@@ -63,11 +63,17 @@ export function ArtworkCard({ artwork, category, priority = false }: ArtworkCard
               {artwork.title}
             </Link>
           </h3>
-          {([artwork.dimensions, artwork.surface].some(Boolean)) && (
-            <p className="mt-1.5 text-[11px] text-muted-foreground line-clamp-1 sm:text-xs">
-              {[artwork.dimensions, artwork.surface].filter(Boolean).join(" · ")}
-            </p>
-          )}
+          {(() => {
+            const isZeroDimension = artwork.dimensions && /^0(?:\.0+)?["']?\s*[×x*]\s*0(?:\.0+)?["']?$/i.test(artwork.dimensions.trim());
+            const cleanDimensions = isZeroDimension ? null : artwork.dimensions;
+            const meta = [cleanDimensions, artwork.surface].filter(Boolean);
+            if (meta.length === 0) return null;
+            return (
+              <p className="mt-1.5 text-[11px] text-muted-foreground line-clamp-1 sm:text-xs">
+                {meta.join(" · ")}
+              </p>
+            );
+          })()}
         </div>
 
         <div className="mt-3 flex items-end justify-between border-t border-border/50 pt-3">

@@ -12,7 +12,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { deleteArtwork, toggleArtworkStatus, toggleArtworkFeatured } from "@/actions/admin-artworks";
 import { toast } from "sonner";
-import { cloudinaryLoader, getBlurUrl } from "@/lib/cloudinary";
 
 export function ArtworkTable({ artworks }: { artworks: any[] }) {
   const router = useRouter();
@@ -126,32 +125,16 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
             ) : (
               filteredArtworks.map((art) => {
                 const primaryImage = art.images?.[0];
-                let publicId = primaryImage?.publicId || "";
-                if (!publicId && primaryImage?.url?.includes("res.cloudinary.com")) {
-                   publicId = primaryImage.url.split("/upload/")[1]?.split("/").slice(1).join("/") || "";
-                }
 
                 return (
                   <TableRow key={art.id}>
                     <TableCell>
                       <div className="relative h-12 w-12 rounded-md overflow-hidden bg-muted">
-                        {publicId ? (
-                          <Image
-                            src={publicId}
-                            alt={art.title}
-                            fill
-                            loader={cloudinaryLoader}
-                            placeholder="blur"
-                            blurDataURL={getBlurUrl(publicId)}
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        ) : primaryImage?.url ? (
+                        {primaryImage?.url ? (
                           <Image
                             src={primaryImage.url}
                             alt={art.title}
                             fill
-                            unoptimized
                             className="object-cover"
                             sizes="48px"
                           />
@@ -167,8 +150,12 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
                         {art.category?.name && (
                           <Badge variant="outline" className="text-[10px] h-4 px-1 py-0">{art.category.name}</Badge>
                         )}
-                        {art.variants?.length > 0 && (
+                        {art.variants?.length > 0 ? (
                           <span className="text-[10px] text-muted-foreground">+{art.variants.length} var</span>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 border-amber-500/50 text-amber-600 bg-amber-500/10 font-medium">
+                            No Variants
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
@@ -225,11 +212,6 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
         ) : (
           filteredArtworks.map((art) => {
             const primaryImage = art.images?.[0];
-            let publicId = primaryImage?.publicId || "";
-            if (!publicId && primaryImage?.url?.includes("res.cloudinary.com")) {
-              publicId = primaryImage.url.split("/upload/")[1]?.split("/").slice(1).join("/") || "";
-            }
-
             return (
               <div
                 key={art.id}
@@ -238,23 +220,11 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
                 {/* Image + Info Row */}
                 <div className="flex gap-3 items-start">
                   <div className="relative size-18 shrink-0 rounded-xl overflow-hidden bg-muted border border-border/80">
-                    {publicId ? (
-                      <Image
-                        src={publicId}
-                        alt={art.title}
-                        fill
-                        loader={cloudinaryLoader}
-                        placeholder="blur"
-                        blurDataURL={getBlurUrl(publicId)}
-                        className="object-cover"
-                        sizes="72px"
-                      />
-                    ) : primaryImage?.url ? (
+                    {primaryImage?.url ? (
                       <Image
                         src={primaryImage.url}
                         alt={art.title}
                         fill
-                        unoptimized
                         className="object-cover"
                         sizes="72px"
                       />
@@ -271,10 +241,14 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
                           {art.category.name}
                         </Badge>
                       )}
-                      {art.variants?.length > 0 && (
+                      {art.variants?.length > 0 ? (
                         <span className="text-[10px] text-muted-foreground">
                           {art.variants.length} var
                         </span>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-500/50 text-amber-600 bg-amber-500/10 font-medium">
+                          No Variants
+                        </Badge>
                       )}
                     </div>
                     <div className="mt-1.5 flex items-baseline gap-2">

@@ -17,59 +17,15 @@ import {
   Calendar,
 } from "lucide-react";
 import { formatPrice } from "@/lib/helpers";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, CustomOrderStatusBadge } from "@/components/shared/StatusBadge";
-import type { Order, CustomOrder, OrderStatus, PaymentStatus } from "@/types";
+import type { Order, CustomOrder, PaymentStatus } from "@/types";
 
 interface OrdersViewProps {
   orders: Order[];
   customOrders: CustomOrder[];
 }
-
-function getOrderStatusBadge(status: OrderStatus | string) {
-  switch (status) {
-    case "confirmed":
-      return (
-        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 font-medium">
-          Confirmed
-        </Badge>
-      );
-    case "framing_packing":
-      return (
-        <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 font-medium">
-          Framing & Packing
-        </Badge>
-      );
-    case "dispatched":
-      return (
-        <Badge className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20 font-medium">
-          Dispatched
-        </Badge>
-      );
-    case "delivered":
-      return (
-        <Badge className="bg-emerald-600 text-white font-medium">
-          Delivered
-        </Badge>
-      );
-    case "cancelled":
-      return (
-        <Badge className="bg-destructive/10 text-destructive border-destructive/20 font-medium">
-          Cancelled
-        </Badge>
-      );
-    case "received":
-    default:
-      return (
-        <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 font-medium">
-          Order Placed
-        </Badge>
-      );
-  }
-}
-
 
 function getPaymentStatusBadge(status: PaymentStatus | string) {
   switch (status) {
@@ -106,56 +62,6 @@ function getPaymentStatusBadge(status: PaymentStatus | string) {
   }
 }
 
-function getCustomOrderStatusBadge(status: string) {
-  switch (status) {
-    case "quoted":
-      return (
-        <Badge className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20 font-medium">
-          Quotation Ready
-        </Badge>
-      );
-    case "accepted":
-      return (
-        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 font-medium">
-          Quote Accepted
-        </Badge>
-      );
-    case "in_progress":
-      return (
-        <Badge className="bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20 font-medium">
-          In Creation / Painting
-        </Badge>
-      );
-    case "completed":
-      return (
-        <Badge className="bg-emerald-600 text-white font-medium">
-          Completed
-        </Badge>
-      );
-    case "reviewed":
-      return (
-        <Badge className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 font-medium">
-          Under Studio Review
-        </Badge>
-      );
-    case "cancelled":
-      return (
-        <Badge className="bg-destructive/10 text-destructive border-destructive/20 font-medium">
-          Cancelled
-        </Badge>
-      );
-    case "submitted":
-    case "new":
-    default:
-      return (
-        <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 font-medium">
-          Inquiry Submitted
-        </Badge>
-      );
-  }
-}
-
-
 export function OrdersView({ orders, customOrders }: OrdersViewProps) {
   const [activeTab, setActiveTab] = useState<string>("acquisitions");
 
@@ -172,21 +78,27 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as string)}>
-          <TabsList className="h-10 rounded-xl bg-muted/60 p-1">
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as string)} className="w-full sm:w-auto">
+          <TabsList className="grid grid-cols-2 w-full sm:w-auto h-11 rounded-xl bg-muted/60 p-1">
             <TabsTrigger
               value="acquisitions"
-              className="rounded-lg text-xs font-medium px-3.5 py-1.5 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="rounded-lg text-xs font-medium px-3 py-2 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs justify-center"
             >
-              <ShoppingBag className="size-3.5" />
-              <span>Shop Orders ({orders.length})</span>
+              <ShoppingBag className="size-3.5 shrink-0" />
+              <span>
+                <span className="sm:hidden">Orders ({orders.length})</span>
+                <span className="hidden sm:inline">Shop Orders ({orders.length})</span>
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="commissions"
-              className="rounded-lg text-xs font-medium px-3.5 py-1.5 gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="rounded-lg text-xs font-medium px-3 py-2 gap-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs justify-center"
             >
-              <Paintbrush className="size-3.5" />
-              <span>Bespoke Commissions ({customOrders.length})</span>
+              <Paintbrush className="size-3.5 shrink-0" />
+              <span>
+                <span className="sm:hidden">Custom ({customOrders.length})</span>
+                <span className="hidden sm:inline">Bespoke Commissions ({customOrders.length})</span>
+              </span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -225,11 +137,10 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                 {/* Order Header */}
                 <div className="flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 flex-wrap">
                       <span className="font-mono text-sm font-semibold text-foreground">
                         {order.order_number}
                       </span>
-                      {getOrderStatusBadge(order.order_status)}
                       <OrderStatusBadge status={order.order_status} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -350,11 +261,10 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                 {/* Header: Reference + Status */}
                 <div className="flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 flex-wrap">
                       <span className="font-mono text-sm font-semibold text-foreground">
                         {custom.order_reference}
                       </span>
-                      {getCustomOrderStatusBadge(custom.status)}
                       <CustomOrderStatusBadge status={custom.status} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">

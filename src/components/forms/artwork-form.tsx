@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, useWatch, type Resolver } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,69 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, UploadCloud, X, Image as ImageIcon, Wand2, Loader2 } from "lucide-react";
+import { Plus, Trash2, UploadCloud, X, Image as ImageIcon, Wand2, Loader2, AlertCircle } from "lucide-react";
 import { createArtwork, updateArtwork } from "@/actions/admin-artworks";
-import { artworkSchema, ArtworkFormValues } from "@/lib/validations/artwork";
+import { artworkSchema, ArtworkFormValues, ArtworkVariantValues } from "@/lib/validations/artwork";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+
+const DEFAULT_NEW_VARIANT: ArtworkVariantValues = {
+  label: "12\" × 16\"",
+  widthInches: 12,
+  heightInches: 16,
+  mrp: 5000,
+  sellingPrice: 4700,
+  stockQuantity: 1,
+  isActive: true,
+  canBeFramed: false,
+  framingPrice: 0,
+};
+
+function parseDimensions(dimStr?: string | null): { width: number; height: number } | null {
+  if (!dimStr) return null;
+  const match = dimStr.match(/(\d+(?:\.\d+)?)\s*["″]?\s*[×x*X]\s*(\d+(?:\.\d+)?)/);
+  if (match) {
+    const w = parseFloat(match[1]);
+    const h = parseFloat(match[2]);
+    if (w > 0 && h > 0) {
+      return { width: w, height: h };
+    }
+  }
+  return null;
+}
+
+function resolveInitialVariants(initialData?: Partial<ArtworkFormValues & { id?: string }>): {
+  variants: ArtworkVariantValues[];
+  hasNoVariantsInDb: boolean;
+} {
+  if (initialData?.variants && initialData.variants.length > 0) {
+    return { variants: initialData.variants, hasNoVariantsInDb: false };
+  }
+
+  const hasNoVariantsInDb = Boolean(initialData?.id);
+  const parsedDims = parseDimensions(initialData?.dimensions);
+  const width = parsedDims?.width || DEFAULT_NEW_VARIANT.widthInches;
+  const height = parsedDims?.height || DEFAULT_NEW_VARIANT.heightInches;
+  const price = initialData?.price && initialData.price > 0 ? initialData.price : DEFAULT_NEW_VARIANT.sellingPrice;
+  const label = parsedDims ? `${width}" × ${height}"` : DEFAULT_NEW_VARIANT.label;
+
+  const prefilledVariant: ArtworkVariantValues = {
+    label,
+    widthInches: width,
+    heightInches: height,
+    sellingPrice: price,
+    mrp: price,
+    stockQuantity: 1,
+    isActive: true,
+    canBeFramed: false,
+    framingPrice: 0,
+  };
+
+  return {
+    variants: [prefilledVariant],
+    hasNoVariantsInDb,
+  };
+}
 
 type TaxonomyData = {
   categories: { id: string; name: string; slug: string }[];
@@ -36,6 +94,11 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
+  const { variants: initialResolvedVariants, hasNoVariantsInDb } = useMemo(
+    () => resolveInitialVariants(initialData),
+    [initialData]
+  );
+
   const form = useForm<ArtworkFormValues>({
     resolver: zodResolver(artworkSchema) as Resolver<ArtworkFormValues>,
     defaultValues: {
@@ -53,12 +116,13 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
       isAvailable: initialData?.isAvailable ?? true,
       isFeatured: initialData?.isFeatured ?? false,
       images: initialData?.images || [],
-      variants: initialData?.variants?.length ? initialData.variants : [{ label: "Base/Unframed", widthInches: 0, heightInches: 0, mrp: 0, sellingPrice: 0, stockQuantity: 1, isActive: true, canBeFramed: false, framingPrice: 0 }],
+      variants: initialResolvedVariants,
     },
   });
 
   useEffect(() => {
     if (initialData) {
+      const { variants: currentVariants } = resolveInitialVariants(initialData);
       form.reset({
         title: initialData.title || "",
         slug: initialData.slug || "",
@@ -74,9 +138,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
         isAvailable: initialData.isAvailable ?? true,
         isFeatured: initialData.isFeatured ?? false,
         images: initialData.images || [],
-        variants: initialData.variants?.length
-          ? initialData.variants
-          : [{ label: "Base/Unframed", widthInches: 0, heightInches: 0, mrp: 0, sellingPrice: 0, stockQuantity: 1, isActive: true, canBeFramed: false, framingPrice: 0 }],
+        variants: currentVariants,
       });
     }
   }, [initialData, form]);
@@ -126,7 +188,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     const h = variant?.heightInches;
 
     let label = "Original";
-    if (w && h && (w > 0 || h > 0)) {
+    if (w && h && w > 0 && h > 0) {
       label = `${w}" × ${h}"`;
     } else if (w && w > 0) {
       label = `${w}" width`;
@@ -324,8 +386,13 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const onSubmit = (values: ArtworkFormValues) => {
     // Derive base price and dimensions from the first variant
     if (values.variants && values.variants.length > 0) {
-      values.price = values.variants[0].sellingPrice;
-      values.dimensions = `${values.variants[0].widthInches}" × ${values.variants[0].heightInches}"`;
+      const firstVariant = values.variants[0];
+      values.price = firstVariant.sellingPrice;
+      if (firstVariant.widthInches > 0 && firstVariant.heightInches > 0) {
+        values.dimensions = `${firstVariant.widthInches}" × ${firstVariant.heightInches}"`;
+      } else {
+        values.dimensions = "";
+      }
     }
 
     startTransition(async () => {
@@ -513,11 +580,22 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                 <CardTitle>Variants & Pricing <span className="text-destructive">*</span></CardTitle>
                 <CardDescription>Add base sizes and framing options. The first variant serves as the base price.</CardDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendVariant({ label: "", widthInches: 0, heightInches: 0, mrp: 0, sellingPrice: 0, stockQuantity: -1, isActive: true, canBeFramed: false, framingPrice: 0 })}>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendVariant({ ...DEFAULT_NEW_VARIANT, label: "" })}>
                 <Plus className="mr-2 h-4 w-4" /> Add Variant
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
+              {hasNoVariantsInDb && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-950 dark:text-amber-200">
+                  <AlertCircle className="size-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Missing Database Variants</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This artwork currently has 0 records in the <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">artwork_variants</code> database table. We have pre-filled a default variant from the artwork&apos;s parent price (₹{initialData?.price || 0}) and dimensions ({initialData?.dimensions || "Standard"}). Please review the fields below and click &quot;Save Changes&quot; to write official variant records to the database.
+                    </p>
+                  </div>
+                </div>
+              )}
               {form.formState.errors.variants && <p className="text-sm text-destructive">{form.formState.errors.variants.root?.message || form.formState.errors.variants.message}</p>}
               {variantFields.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-lg">No variants added.</p>
@@ -534,7 +612,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                         <input type="hidden" {...form.register(`variants.${index}.id`)} />
                         
                         <div className="grid gap-2 col-span-full md:col-span-1">
-                          <Label>Variant Label</Label>
+                          <Label>Variant Label <span className="text-destructive">*</span></Label>
                           <div className="flex gap-2">
                             <Input 
                               {...form.register(`variants.${index}.label`)} 
@@ -585,34 +663,53 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                         </div>
                         
                         <div className="grid gap-2">
-                          <Label>Width (inches)</Label>
+                          <Label>Width (inches) <span className="text-destructive">*</span></Label>
                           <Input 
                             type="number" 
                             step="0.1" 
+                            min="0.5"
+                            placeholder="e.g. 12"
                             {...form.register(`variants.${index}.widthInches`, { valueAsNumber: true })} 
                             onBlur={(e) => handleDimensionBlur(index, "widthInches", e)}
                           />
+                          {form.formState.errors.variants?.[index]?.widthInches && (
+                            <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.widthInches?.message}</p>
+                          )}
                         </div>
                         <div className="grid gap-2">
-                          <Label>Height (inches)</Label>
+                          <Label>Height (inches) <span className="text-destructive">*</span></Label>
                           <Input 
                             type="number" 
                             step="0.1" 
+                            min="0.5"
+                            placeholder="e.g. 16"
                             {...form.register(`variants.${index}.heightInches`, { valueAsNumber: true })} 
                             onBlur={(e) => handleDimensionBlur(index, "heightInches", e)}
                           />
+                          {form.formState.errors.variants?.[index]?.heightInches && (
+                            <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.heightInches?.message}</p>
+                          )}
                         </div>
                         <div className="grid gap-2">
-                          <Label>Stock Qty (-1 for unlimited)</Label>
+                          <Label>Stock Qty (-1 for unlimited) <span className="text-destructive">*</span></Label>
                           <Input type="number" {...form.register(`variants.${index}.stockQuantity`, { valueAsNumber: true })} />
+                          {form.formState.errors.variants?.[index]?.stockQuantity && (
+                            <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.stockQuantity?.message}</p>
+                          )}
                         </div>
                         <div className="grid gap-2">
-                          <Label>MRP (₹)</Label>
-                          <Input type="number" {...form.register(`variants.${index}.mrp`, { valueAsNumber: true })} />
+                          <Label>MRP (₹) <span className="text-destructive">*</span></Label>
+                          <Input type="number" min="1" placeholder="e.g. 5000" {...form.register(`variants.${index}.mrp`, { valueAsNumber: true })} />
+                          {form.formState.errors.variants?.[index]?.mrp && (
+                            <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.mrp?.message}</p>
+                          )}
                         </div>
                         <div className="grid gap-2">
-                          <Label>Selling Price (₹)</Label>
-                          <Input type="number" {...form.register(`variants.${index}.sellingPrice`, { valueAsNumber: true })} />
+                          <Label>Selling Price (₹) <span className="text-destructive">*</span></Label>
+                          <Input type="number" min="1" placeholder="e.g. 4500" {...form.register(`variants.${index}.sellingPrice`, { valueAsNumber: true })} />
+                          {form.formState.errors.variants?.[index]?.sellingPrice && (
+                            <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.sellingPrice?.message}</p>
+                          )}
                         </div>
                       </div>
 
@@ -630,7 +727,10 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                         {watchedVariants?.[index]?.canBeFramed && (
                           <div className="grid gap-2 max-w-xs">
                             <Label>Framing Add-on Price (₹)</Label>
-                            <Input type="number" step="0.01" {...form.register(`variants.${index}.framingPrice`, { valueAsNumber: true })} />
+                            <Input type="number" min="0" step="0.01" {...form.register(`variants.${index}.framingPrice`, { valueAsNumber: true })} />
+                            {form.formState.errors.variants?.[index]?.framingPrice && (
+                              <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.framingPrice?.message}</p>
+                            )}
                           </div>
                         )}
                       </div>

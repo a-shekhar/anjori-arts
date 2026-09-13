@@ -144,6 +144,11 @@ export const createArtwork = withAdminAuth(async (prevState: unknown, formData: 
     
     const tagsArray = tags ? tags.split(",").map(t => t.trim()).filter(Boolean) : [];
     const artworkId = `art-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const firstVariant = variants[0];
+    const authoritativePrice = firstVariant ? Math.round(firstVariant.sellingPrice * 100) : Math.round(baseData.price * 100);
+    const authoritativeDimensions = firstVariant && firstVariant.widthInches > 0 && firstVariant.heightInches > 0
+      ? `${firstVariant.widthInches}" × ${firstVariant.heightInches}"`
+      : (baseData.dimensions && !/^0(?:\.0+)?["']?\s*[×x*]\s*0(?:\.0+)?["']?$/i.test(baseData.dimensions.trim()) ? baseData.dimensions : null);
 
     // 1. Insert base artwork
     const { error: artworkError } = await supabase
@@ -154,8 +159,8 @@ export const createArtwork = withAdminAuth(async (prevState: unknown, formData: 
         slug: baseData.slug,
         category_id: baseData.categoryId,
         surface_id: baseData.surfaceId || null,
-        price: Math.round(baseData.price * 100), // rupees to paise
-        dimensions: baseData.dimensions,
+        price: authoritativePrice, // authoritatively calculated in paise
+        dimensions: authoritativeDimensions,
         short_description: baseData.shortDescription,
         description: baseData.description,
         artist_note: baseData.artistNote,
@@ -229,6 +234,12 @@ export const updateArtwork = withAdminAuth(async (id: string, prevState: unknown
     const { mediumIds, variants, tags, ...baseData } = validatedFields.data;
     const tagsArray = tags ? tags.split(",").map(t => t.trim()).filter(Boolean) : [];
 
+    const firstVariant = variants[0];
+    const authoritativePrice = firstVariant ? Math.round(firstVariant.sellingPrice * 100) : Math.round(baseData.price * 100);
+    const authoritativeDimensions = firstVariant && firstVariant.widthInches > 0 && firstVariant.heightInches > 0
+      ? `${firstVariant.widthInches}" × ${firstVariant.heightInches}"`
+      : (baseData.dimensions && !/^0(?:\.0+)?["']?\s*[×x*]\s*0(?:\.0+)?["']?$/i.test(baseData.dimensions.trim()) ? baseData.dimensions : null);
+
     // 1. Update base artwork
     const { error: artworkError } = await supabase
       .from("artworks")
@@ -237,8 +248,8 @@ export const updateArtwork = withAdminAuth(async (id: string, prevState: unknown
         slug: baseData.slug,
         category_id: baseData.categoryId,
         surface_id: baseData.surfaceId || null,
-        price: Math.round(baseData.price * 100),
-        dimensions: baseData.dimensions,
+        price: authoritativePrice,
+        dimensions: authoritativeDimensions,
         short_description: baseData.shortDescription,
         description: baseData.description,
         artist_note: baseData.artistNote,

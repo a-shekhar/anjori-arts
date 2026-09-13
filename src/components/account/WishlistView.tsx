@@ -104,6 +104,11 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
       return;
     }
 
+    if (!artwork.variants || artwork.variants.length === 0) {
+      toast.error("Specifications for this artwork are pending update. Please view the artwork to inquire.", { id: "wishlist-action" });
+      return;
+    }
+
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
@@ -148,22 +153,24 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
   };
 
   const handleMoveAllToBag = async () => {
-    const available = artworks.filter((a) => a.isAvailable);
-    if (available.length === 0) {
-      toast.error("None of your wishlisted artworks are currently in stock.", { id: "wishlist-action" });
+    const eligible = artworks.filter(
+      (a) => a.isAvailable && a.variants && a.variants.length > 0
+    );
+    if (eligible.length === 0) {
+      toast.error("None of your wishlisted artworks currently have verified variants in stock.", { id: "wishlist-action" });
       return;
     }
 
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
-    // Optimistically remove available artworks from local view immediately
-    setArtworks((prev) => prev.filter((a) => !a.isAvailable));
+    // Optimistically remove eligible artworks from local view immediately
+    setArtworks((prev) => prev.filter((a) => !eligible.some((e) => e.id === a.id)));
 
     try {
-      for (const art of available) {
-        const defaultVariant = art.variants?.[0];
-        const variantId = defaultVariant?.id || art.id;
+      for (const art of eligible) {
+        const defaultVariant = art.variants![0];
+        const variantId = defaultVariant.id;
 
         addToCart({
           id: `${variantId}-unframed`,
@@ -175,16 +182,16 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
           framingPrice: 0,
           title: art.title,
           imageUrl: art.images[0]?.url || "",
-          size: defaultVariant?.label || "Standard",
-          sellingPrice: defaultVariant?.sellingPrice || art.price,
-          mrp: defaultVariant?.mrp || Math.round(art.price * 1.2),
+          size: defaultVariant.label || "Standard",
+          sellingPrice: defaultVariant.sellingPrice,
+          mrp: defaultVariant.mrp || defaultVariant.sellingPrice,
         });
 
         await removeItem(art.id, undefined, { silent: true });
       }
 
       toast.success(
-        `Moved ${available.length} ${available.length === 1 ? "artwork" : "artworks"} to your bag!`,
+        `Moved ${eligible.length} ${eligible.length === 1 ? "artwork" : "artworks"} to your bag!`,
         {
           id: "wishlist-action",
           action: {
@@ -411,11 +418,17 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
                       </Link>
                     </h3>
 
-                    {([artwork.dimensions, artwork.surface].some(Boolean)) && (
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                        {[artwork.dimensions, artwork.surface].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
+                    {(() => {
+                      const isZeroDimension = artwork.dimensions && /^0(?:\.0+)?["']?\s*[×x*]\s*0(?:\.0+)?["']?$/i.test(artwork.dimensions.trim());
+                      const cleanDimensions = isZeroDimension ? null : artwork.dimensions;
+                      const meta = [cleanDimensions, artwork.surface].filter(Boolean);
+                      if (meta.length === 0) return null;
+                      return (
+                        <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                          {meta.join(" · ")}
+                        </p>
+                      );
+                    })()}
 
                     <p className="mt-2.5 text-base font-semibold text-foreground">
                       {formatPrice(artwork.price)}
@@ -425,13 +438,25 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
                   {/* Move to Bag Action */}
                   <div className="mt-4 pt-3 border-t border-border/60 flex items-center gap-2">
                     {artwork.isAvailable ? (
-                      <Button
-                        onClick={() => handleMoveToBag(artwork)}
-                        className="w-full min-h-[44px] h-11 rounded-xl font-medium gap-2 shadow-xs text-xs sm:text-sm"
-                      >
-                        <ShoppingBag className="size-4" />
-                        <span>Move to Bag</span>
-                      </Button>
+                      artwork.variants && artwork.variants.length > 0 ? (
+                        <Button
+                          onClick={() => handleMoveToBag(artwork)}
+                          className="w-full min-h-[44px] h-11 rounded-xl font-medium gap-2 shadow-xs text-xs sm:text-sm"
+                        >
+                          <ShoppingBag className="size-4" />
+                          <span>Move to Bag</span>
+                        </Button>
+                      ) : (
+                        <Link href={`/artworks/${artwork.slug}`} className="w-full">
+                          <Button
+                            variant="outline"
+                            className="w-full min-h-[44px] h-11 rounded-xl font-medium gap-2 text-xs sm:text-sm text-amber-600 dark:text-amber-400 border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20"
+                          >
+                            <AlertCircle className="size-4" />
+                            <span>Specs Pending · View</span>
+                          </Button>
+                        </Link>
+                      )
                     ) : (
                       <Link
                         href={`/custom-order?type=Custom&title=${encodeURIComponent(artwork.title)}`}
