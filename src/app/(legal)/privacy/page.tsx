@@ -84,27 +84,36 @@ export default function PrivacyPage() {
         {/* 3. Logistical Sharing */}
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-3">
           <h2 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2.5">
-            <EyeOff className="size-5 text-primary" /> 3. Courier &amp; Third-Party Service Providers
+            <EyeOff className="size-5 text-primary" /> 3. Courier &amp; Logistics Partners
           </h2>
           <p>
-            We share only essential delivery information (recipient name, address, contact number) with certified logistics partners (Blue Dart, Delhivery, DTDC, Shiprocket) solely to execute door-to-door transit and provide real-time SMS tracking.
+            We share only essential delivery information (recipient name, destination address, and contact number) with certified courier partners (Blue Dart, Delhivery, DTDC, Shiprocket, and India Post) solely to execute insured door-to-door transit and provide real-time SMS/tracking notifications.
           </p>
         </div>
 
-        {/* 4. Contact for Data Removal */}
+        {/* 4. Contact for Data Removal & Grievance Officer */}
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-3">
           <h2 className="font-serif text-xl font-semibold text-foreground">
-            4. Data Retention &amp; Your Rights
+            4. Data Retention, Rights &amp; Grievance Redressal
           </h2>
           <p>
-            You have the right to request a copy of your personal data or ask for the deletion of your account/address history from our database at any time.
+            You have the right to request a copy of your personal data or ask for the deletion of your account/address history from our records at any time.
           </p>
-          <p>
-            For privacy inquiries, please contact our Data Grievance Officer at{" "}
-            <a href={`mailto:${siteConfig.email.support}`} className="text-primary hover:underline font-medium">
-              {siteConfig.email.support}
-            </a>.
-          </p>
+          <div className="mt-3 rounded-xl border border-border bg-muted/30 p-4 text-xs sm:text-sm space-y-1.5">
+            <p className="font-semibold text-foreground">Data Grievance Officer:</p>
+            <p><strong className="text-foreground">Name:</strong> Jyotsna Sharma</p>
+            <p><strong className="text-foreground">Designation:</strong> Grievance Officer &amp; Studio Director, Anjori Arts</p>
+            <p><strong className="text-foreground">Location:</strong> Puducherry, India</p>
+            <p>
+              <strong className="text-foreground">Email:</strong>{" "}
+              <a href={`mailto:${siteConfig.email.support}`} className="text-primary hover:underline font-medium">
+                {siteConfig.email.support}
+              </a>
+            </p>
+            <p className="text-muted-foreground text-xs pt-1">
+              In accordance with the Information Technology Act 2000 and rules made thereunder, complaints are acknowledged within 48 hours and resolved within 15 days.
+            </p>
+          </div>
         </div>
 
       </section>

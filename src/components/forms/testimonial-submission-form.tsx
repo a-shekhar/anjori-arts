@@ -168,33 +168,35 @@ export function TestimonialSubmissionForm() {
           <p className="mt-1 text-xs text-muted-foreground">
             How was the artwork, craftsmanship, and delivery?
           </p>
-          <div className="mt-3 flex items-center gap-1.5" role="radiogroup" aria-label="Rating selection">
-            {[1, 2, 3, 4, 5].map((starValue) => {
-              const active = (hoverRating ?? rating) >= starValue;
-              return (
-                <button
-                  key={starValue}
-                  type="button"
-                  role="radio"
-                  aria-checked={rating === starValue}
-                  aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
-                  onMouseEnter={() => setHoverRating(starValue)}
-                  onMouseLeave={() => setHoverRating(null)}
-                  onClick={() => setRating(starValue)}
-                  className="flex size-11 items-center justify-center rounded-xl border border-transparent transition-all hover:scale-105 hover:bg-muted/80 focus-visible:border-primary focus-visible:outline-none"
-                >
-                  <Star
-                    className={cn(
-                      "size-6 transition-colors",
-                      active
-                        ? "fill-primary text-primary"
-                        : "text-muted-foreground/40 hover:text-muted-foreground"
-                    )}
-                  />
-                </button>
-              );
-            })}
-            <span className="ml-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+          <div className="mt-3 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Rating selection">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((starValue) => {
+                const active = (hoverRating ?? rating) >= starValue;
+                return (
+                  <button
+                    key={starValue}
+                    type="button"
+                    role="radio"
+                    aria-checked={rating === starValue}
+                    aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
+                    onMouseEnter={() => setHoverRating(starValue)}
+                    onMouseLeave={() => setHoverRating(null)}
+                    onClick={() => setRating(starValue)}
+                    className="flex size-11 items-center justify-center rounded-xl border border-transparent transition-all hover:scale-105 hover:bg-muted/80 focus-visible:border-primary focus-visible:outline-none cursor-pointer"
+                  >
+                    <Star
+                      className={cn(
+                        "size-6 transition-colors",
+                        active
+                          ? "fill-primary text-primary"
+                          : "text-muted-foreground/40 hover:text-muted-foreground"
+                      )}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               {rating === 5 && "Flawless & Exquisite"}
               {rating === 4 && "Great Experience"}
               {rating === 3 && "Satisfactory"}
@@ -328,7 +330,7 @@ export function TestimonialSubmissionForm() {
                 type="button"
                 onClick={removePhoto}
                 aria-label="Remove uploaded photo"
-                className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-background/85 text-foreground shadow-md backdrop-blur-xs transition-colors hover:bg-destructive hover:text-white"
+                className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-md backdrop-blur-xs transition-colors hover:bg-destructive hover:text-white relative after:absolute after:-inset-1.5 cursor-pointer"
               >
                 <X className="size-4" />
               </button>

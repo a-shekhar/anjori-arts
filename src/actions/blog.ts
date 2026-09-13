@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizePostgrestFilterTerm, sanitizePostgrestIdentifier } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -192,8 +193,9 @@ export async function fetchBlogPosts(options: {
       .select("*", { count: "exact" })
       .not("published_at", "is", null);
 
-    if (search) {
-      query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+    const cleanSearch = sanitizePostgrestFilterTerm(search);
+    if (cleanSearch) {
+      query = query.or(`title.ilike.%${cleanSearch}%,content.ilike.%${cleanSearch}%`);
     }
 
     if (sort === "newest") {
@@ -217,3 +219,54 @@ export async function fetchBlogPosts(options: {
     return { posts: [], count: 0 };
   }
 }
+
+export const getAdminBlogPosts = withAdminAuth(
+  async () => {
+    try {
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("[getAdminBlogPosts] Error fetching blog posts:", error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error: unknown) {
+      console.error("[getAdminBlogPosts] Unexpected error:", error);
+      return [];
+    }
+  },
+  { fallback: [] }
+);
+
+export const getAdminBlogPostById = withAdminAuth(
+  async (id: string) => {
+    try {
+      const cleanId = sanitizePostgrestIdentifier(id);
+      if (!cleanId) return null;
+
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("id", cleanId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("[getAdminBlogPostById] Error fetching blog post:", error);
+        return null;
+      }
+
+      return data;
+    } catch (error: unknown) {
+      console.error("[getAdminBlogPostById] Unexpected error:", error);
+      return null;
+    }
+  },
+  { fallback: null }
+);
+

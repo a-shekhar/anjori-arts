@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { DELIVERY_CHARGE } from "@/config/constants";
+import { DELIVERY_CHARGE, FREE_DELIVERY_THRESHOLD } from "@/config/constants";
 import type { CartItem } from "@/types";
 
 export interface AuthoritativeOrderItem {
@@ -199,7 +199,7 @@ export async function calculateAuthoritativeOrder(
         };
       }
 
-      if (variant.stock_quantity !== null && variant.stock_quantity < quantity) {
+      if (variant.stock_quantity !== null && variant.stock_quantity >= 0 && variant.stock_quantity < quantity) {
         return {
           success: false,
           error: `"${art?.title || item.title}" (${variant.label}) has only ${variant.stock_quantity} in stock.`,
@@ -311,7 +311,7 @@ export async function calculateAuthoritativeOrder(
     });
   }
 
-  const deliveryCharge = DELIVERY_CHARGE;
+  const deliveryCharge = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGE;
   const discountAmount = 0;
   const totalAmount = subtotal + deliveryCharge - discountAmount;
 

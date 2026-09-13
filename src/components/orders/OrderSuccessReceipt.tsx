@@ -14,6 +14,7 @@ import {
   Package,
   Calendar,
   ArrowRight,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/helpers";
@@ -83,13 +84,13 @@ export function OrderSuccessReceipt({ order }: OrderSuccessReceiptProps) {
 
         {/* Order Reference Badge & Actions */}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs sm:text-sm shadow-xs">
+          <div className="flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs sm:text-sm shadow-xs">
             <span className="text-muted-foreground">Order Reference:</span>
             <span className="font-mono font-bold text-foreground">{order.order_number}</span>
             <button
               type="button"
               onClick={handleCopyOrderNumber}
-              className="ml-1 text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded p-1"
+              className="relative after:absolute after:-inset-2 ml-1 rounded-md p-1.5 text-primary hover:bg-muted hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer transition-colors"
               title="Copy Order Reference"
               aria-label="Copy Order Reference"
             >
@@ -100,7 +101,7 @@ export function OrderSuccessReceipt({ order }: OrderSuccessReceiptProps) {
           <button
             type="button"
             onClick={handlePrint}
-            className="flex min-h-[40px] items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-xs"
+            className="flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs sm:text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-xs cursor-pointer active:scale-98"
           >
             <Printer className="size-4 text-primary" aria-hidden="true" />
             <span>Print Collector Invoice</span>
@@ -110,13 +111,30 @@ export function OrderSuccessReceipt({ order }: OrderSuccessReceiptProps) {
             href={whatsappInquiryUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[40px] items-center gap-2 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-4 py-2 text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-300 transition-colors hover:bg-emerald-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shadow-xs"
+            className="flex min-h-[44px] items-center gap-2 rounded-xl border border-emerald-600/30 bg-emerald-600/10 px-4 py-2.5 text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-300 transition-colors hover:bg-emerald-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shadow-xs active:scale-98"
           >
             <MessageCircle className="size-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             <span>WhatsApp Gallery Desk</span>
           </a>
         </div>
       </div>
+
+      {/* Framing Consultation Next Steps Guidance Banner */}
+      {order.payment_method === "pay_on_dispatch" && (
+        <div className="print:hidden rounded-2xl border border-primary/30 bg-primary/5 p-5 text-xs sm:text-sm shadow-xs">
+          <div className="flex items-start gap-3">
+            <Clock className="size-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="space-y-1">
+              <span className="font-semibold text-foreground">
+                Framing Consultation Request Registered
+              </span>
+              <p className="text-muted-foreground leading-relaxed">
+                Thank you for your reservation! Because you selected custom framing consultation, no upfront payment was charged today. Our gallery curator will contact you via WhatsApp or phone within 24 hours to review your framing preferences and share the 50% advance confirmation payment link before packing.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Visual Fulfillment Pipeline Stepper (Hidden on Print) */}
       <div className="print:hidden rounded-2xl border border-border bg-card p-6 shadow-xs sm:p-7">

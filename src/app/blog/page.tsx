@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
-import { BlogList } from "@/components/shared/BlogList";
+import { BlogList, type BlogPost } from "@/components/shared/BlogList";
 
 export const metadata: Metadata = {
   title: "Art Journal & Blog",
@@ -28,8 +28,17 @@ export default async function BlogListingPage() {
     .order("published_at", { ascending: false })
     .range(0, 11); // Initial 12 posts
 
-  // Fallback to empty array if no posts found
-  const blogPosts = posts || [];
+  // Normalize posts to guarantee non-null values matching BlogPost contract
+  const blogPosts: BlogPost[] = (posts || []).map((post) => ({
+    id: post.id,
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt ?? "",
+    cover_image: post.cover_image ?? "/images/artwork-placeholder.jpg",
+    author: post.author ?? "Anjori Arts",
+    published_at: post.published_at ?? new Date().toISOString(),
+    tags: Array.isArray(post.tags) ? post.tags : [],
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,7 +55,6 @@ export default async function BlogListingPage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10 pb-16 sm:pb-24">
-        {/* @ts-ignore - Supabase type mismatch with BlogList */}
         <BlogList initialPosts={blogPosts} initialCount={count || 0} />
       </div>
     </div>

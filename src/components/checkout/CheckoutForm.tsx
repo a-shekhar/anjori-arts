@@ -26,7 +26,7 @@ import {
 import { toast } from "sonner";
 import { useCartStore } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/helpers";
-import { UPI_CONFIG, PAYMENT_METHODS } from "@/config/constants";
+import { UPI_CONFIG } from "@/config/constants";
 import { createOrder, uploadPaymentReceipt } from "@/actions/orders";
 import {
   createRazorpayOrder,
@@ -360,6 +360,20 @@ export function CheckoutForm() {
       return;
     }
 
+    if (paymentMethod === "upi_qr") {
+      const trimmedRef = paymentReference.trim();
+      if (!trimmedRef && !receiptFile) {
+        toast.error(
+          "Please enter your 12-digit UPI Reference / UTR number or upload your payment screenshot to complete your order."
+        );
+        return;
+      }
+      if (trimmedRef && trimmedRef.length < 6) {
+        toast.error("Please enter a valid UPI Reference / UTR number (at least 6 characters).");
+        return;
+      }
+    }
+
     if (paymentMethod === "razorpay") {
       startTransition(async () => {
         try {
@@ -410,7 +424,7 @@ export function CheckoutForm() {
               contact: `${countryCode}${customerPhone.trim()}`,
             },
             theme: {
-              color: "#8B2500",
+              color: "#5f9795",
             },
             handler: async function (response: RazorpaySuccessResponse) {
               const verifyToastId = toast.loading("Verifying payment security signature...");
@@ -482,7 +496,9 @@ export function CheckoutForm() {
             country: "India",
             deliveryInstructions: deliveryInstructions.trim(),
             paymentMethod,
-            paymentReference: paymentReference.trim(),
+            paymentReference:
+              paymentReference.trim() ||
+              (receiptFile ? "Screenshot attached (uploading)" : ""),
             receiptUrl: undefined,
           },
           items,
@@ -860,23 +876,20 @@ export function CheckoutForm() {
                     onChange={() => setPaymentMethod("upi_qr")}
                     className="mt-1 size-4 text-primary focus:ring-primary"
                   />
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium text-foreground flex items-center gap-2">
-                        <QrCode className="size-4 text-primary" aria-hidden="true" />
-                        UPI QR &amp; Direct Bank Transfer (NEFT / IMPS / RTGS)
-                        Instant UPI / Dynamic QR Code
-                      </span>
-                      <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        Direct Studio Account • High-Value Art
-                        Instant Verification • Zero Fee
-                      </span>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium text-foreground flex items-center gap-2">
+                          <QrCode className="size-4 text-primary" aria-hidden="true" />
+                          Instant UPI / Dynamic QR Code
+                        </span>
+                        <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          Instant Verification • Zero Fee
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                        Scan the dynamic QR code with any UPI app (Google Pay, PhonePe, Paytm, BHIM) or pay directly to our verified studio UPI ID.
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                      Direct transfer to Anjori Arts official bank account. Ideal for high-ticket original artworks without card transaction limits.
-                      Scan the QR code with any UPI app (Google Pay, PhonePe, Paytm, BHIM) or pay directly to our verified studio UPI ID.
-                    </p>
-                  </div>
                 </div>
 
                 {/* Sub-panel when UPI is selected */}
@@ -943,15 +956,22 @@ export function CheckoutForm() {
                     </div>
 
                         {/* UTR Input & Receipt Upload */}
-                        <div className="pt-2 border-t border-border/70 space-y-2">
+                        <div className="pt-3 border-t border-border/70 space-y-3">
+                          <div className="rounded-lg bg-amber-500/10 border border-amber-500/25 p-2.5 text-[11px] text-amber-900 dark:text-amber-200 flex items-start gap-2 leading-relaxed">
+                            <AlertCircle className="size-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                            <span>
+                              <strong>Proof of Payment Required:</strong> To reserve original artwork stock and confirm your order, please enter your <strong>12-digit UPI Reference / UTR</strong> below <em>or</em> upload your payment screenshot.
+                            </span>
+                          </div>
+
                           <div>
                             <label htmlFor="utr-ref" className="block text-[11px] font-medium text-foreground">
-                              Transaction Reference / UTR Number (Optional now)
+                              UPI Transaction Reference / UTR Number {!receiptFile && <span className="text-primary font-semibold">*</span>}
                             </label>
                             <input
                               id="utr-ref"
                               type="text"
-                              placeholder="e.g. 423819028192 or UPI Ref"
+                              placeholder="e.g. 423819028192 (12-digit UPI ref)"
                               value={paymentReference}
                               onChange={(e) => setPaymentReference(e.target.value)}
                               className="mt-1 min-h-[36px] w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-1 focus-visible:ring-primary"
@@ -960,7 +980,7 @@ export function CheckoutForm() {
 
                           <div>
                             <label className="block text-[11px] font-medium text-foreground">
-                              Upload Payment Screenshot (Optional now, or via email later)
+                              Upload Payment Screenshot {!paymentReference.trim() && <span className="text-primary font-semibold">*</span>}
                             </label>
                             <div className="mt-1 flex items-center gap-3">
                               <label
@@ -968,7 +988,7 @@ export function CheckoutForm() {
                                 className="inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                               >
                                 <Upload className="size-3.5 text-primary" />
-                                <span>{receiptFile ? "Change Image" : "Choose File"}</span>
+                                <span>{receiptFile ? "Change Screenshot" : "Upload Screenshot"}</span>
                               </label>
                               <input
                                 id="receipt-upload"
@@ -1022,14 +1042,14 @@ export function CheckoutForm() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="font-medium text-foreground flex items-center gap-2">
                         <Clock className="size-4 text-primary" aria-hidden="true" />
-                        Pay on Dispatch / Advance Verification
+                        Framing Consultation &amp; Advance Confirmation
                       </span>
                       <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        Gallery Verified
+                        Consultation First • 50% Advance
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                      Reserve your selected artworks now. Our gallery manager will contact you within 24 hours to review custom framing preferences and collect a 50% advance confirmation before packing.
+                      Submit a reservation request without upfront charge. Our gallery curator will contact you within 24 hours to review custom framing preferences and collect a 50% advance confirmation before packing.
                     </p>
                   </div>
                 </div>

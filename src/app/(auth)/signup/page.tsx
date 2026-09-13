@@ -593,7 +593,7 @@ function SignupForm() {
                   type="text"
                   required
                   placeholder="Priya"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </div>
               <div className="space-y-1.5">
@@ -608,7 +608,7 @@ function SignupForm() {
                   name="lastName"
                   type="text"
                   placeholder="Sharma"
-                  className="h-10 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </div>
             </div>
@@ -627,7 +627,7 @@ function SignupForm() {
                 required
                 autoComplete="email"
                 placeholder="priya@example.com"
-                className="h-10 rounded-xl"
+                className="h-11 rounded-xl"
                 onChange={() => {
                   if (existingAccountEmail) setExistingAccountEmail(null);
                   if (error) setError(null);
@@ -643,7 +643,7 @@ function SignupForm() {
                 Phone Number (Optional)
               </Label>
               <div className="flex gap-2">
-                <span className="inline-flex h-10 items-center justify-center rounded-xl border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+                <span className="inline-flex h-11 items-center justify-center rounded-xl border border-input bg-muted/40 px-3 text-sm text-muted-foreground">
                   +91
                 </span>
                 <input type="hidden" name="countryCode" value="+91" />
@@ -653,7 +653,7 @@ function SignupForm() {
                   type="tel"
                   maxLength={10}
                   placeholder="9876543210"
-                  className="h-10 rounded-xl flex-1"
+                  className="h-11 rounded-xl flex-1"
                 />
               </div>
             </div>
@@ -673,13 +673,13 @@ function SignupForm() {
                   required
                   autoComplete="new-password"
                   placeholder="Min. 8 characters"
-                  className="h-10 rounded-xl pr-10"
+                  className="h-11 rounded-xl pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-0 top-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none"
+                  className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
@@ -703,7 +703,7 @@ function SignupForm() {
                 required
                 autoComplete="new-password"
                 placeholder="Re-enter password"
-                className="h-10 rounded-xl"
+                className="h-11 rounded-xl"
               />
             </div>
 

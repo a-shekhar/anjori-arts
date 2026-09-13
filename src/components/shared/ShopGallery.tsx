@@ -177,7 +177,7 @@ export function ShopGallery({
       result = result.filter(
         (a) =>
           a.title.toLowerCase().includes(q) ||
-          a.tags.some((t) => t.toLowerCase().includes(q)) ||
+          a.tags?.some((t) => t.toLowerCase().includes(q)) ||
           a.medium.toLowerCase().includes(q) ||
           a.surface.toLowerCase().includes(q)
       );
@@ -274,20 +274,20 @@ export function ShopGallery({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative flex-1 sm:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               value={search}
               onChange={handleSearchChange}
               placeholder="Search by name, tag, medium…"
-              className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="min-h-[44px] h-11 w-full rounded-xl border border-border bg-card pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               aria-label="Search artworks"
             />
             {search && (
               <button
                 type="button"
                 onClick={clearSearch}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors relative after:absolute after:-inset-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Clear search"
               >
                 <X className="size-4" />
@@ -302,7 +302,7 @@ export function ShopGallery({
               <button
                 type="button"
                 onClick={() => setShowFilters((p) => !p)}
-                className="flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:hidden"
+                className="flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted sm:hidden active:scale-98"
                 aria-expanded={showFilters}
                 aria-controls="category-filters"
               >
@@ -320,7 +320,7 @@ export function ShopGallery({
                 id="sort-select"
                 value={sortKey}
                 onChange={(e) => handleSortChange(e.target.value as SortKey)}
-                className="h-10 rounded-xl border border-border bg-card px-3 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                className="min-h-[44px] h-11 rounded-xl border border-border bg-card px-3.5 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -341,7 +341,7 @@ export function ShopGallery({
             <button
               type="button"
               onClick={() => handleCategoryChange("all")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              className={`inline-flex min-h-[40px] items-center rounded-full px-4 py-2 text-xs sm:text-sm font-medium transition-colors relative after:absolute after:-inset-1 ${
                 activeCategory === "all"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
@@ -357,7 +357,7 @@ export function ShopGallery({
                 key={cat.id}
                 type="button"
                 onClick={() => handleCategoryChange(cat.id)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`inline-flex min-h-[40px] items-center rounded-full px-4 py-2 text-xs sm:text-sm font-medium transition-colors relative after:absolute after:-inset-1 ${
                   activeCategory === cat.id
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"

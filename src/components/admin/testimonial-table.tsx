@@ -354,7 +354,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
             type="button"
             onClick={() => setStatusFilter("all")}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+              "inline-flex min-h-[36px] sm:min-h-[32px] items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer relative after:absolute after:-inset-1",
               statusFilter === "all" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -364,7 +364,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
             type="button"
             onClick={() => setStatusFilter("pending")}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+              "inline-flex min-h-[36px] sm:min-h-[32px] items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer relative after:absolute after:-inset-1",
               statusFilter === "pending" ? "bg-background text-amber-600 dark:text-amber-400 shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -374,7 +374,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
             type="button"
             onClick={() => setStatusFilter("approved")}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+              "inline-flex min-h-[36px] sm:min-h-[32px] items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer relative after:absolute after:-inset-1",
               statusFilter === "approved" ? "bg-background text-emerald-600 dark:text-emerald-400 shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -384,7 +384,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
             type="button"
             onClick={() => setStatusFilter("featured")}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+              "inline-flex min-h-[36px] sm:min-h-[32px] items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-all cursor-pointer relative after:absolute after:-inset-1",
               statusFilter === "featured" ? "bg-background text-primary shadow-xs" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -393,14 +393,14 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
         </div>
 
         {/* Search & Add button */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search author or quote..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 pl-9 rounded-xl text-xs"
+              className="min-h-[44px] h-11 pl-9 rounded-xl text-xs"
             />
           </div>
 
@@ -410,7 +410,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
               setFormImagePreview(null);
               setIsAddOpen(true);
             }}
-            className="h-10 rounded-xl px-4 text-xs shrink-0"
+            className="min-h-[44px] h-11 rounded-xl px-4 text-xs shrink-0 w-full sm:w-auto"
           >
             <Plus className="mr-1.5 size-4" /> Add Testimonial
           </Button>
@@ -544,7 +544,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
                         variant={item.is_approved ? "outline" : "default"}
                         onClick={() => handleToggleApproval(item)}
                         className={cn(
-                          "h-8 rounded-lg text-xs font-medium",
+                          "min-h-[36px] h-9 rounded-lg text-xs font-medium px-3 relative after:absolute after:-inset-1",
                           !item.is_approved && "bg-emerald-600 hover:bg-emerald-700 text-white"
                         )}
                         title={item.is_approved ? "Unapprove story" : "Approve & publish to site"}
@@ -559,7 +559,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
                         variant="ghost"
                         onClick={() => handleToggleFeatured(item)}
                         className={cn(
-                          "h-8 px-2.5 rounded-lg text-xs",
+                          "min-h-[36px] h-9 px-2.5 rounded-lg text-xs relative after:absolute after:-inset-1",
                           item.is_featured ? "text-primary font-semibold" : "text-muted-foreground"
                         )}
                         title={item.is_featured ? "Remove from home" : "Feature on homepage"}
@@ -579,7 +579,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
                           setEditAltText(item.image_alt || "");
                           setIsEditOpen(true);
                         }}
-                        className="h-8 px-2 rounded-lg text-muted-foreground hover:text-foreground"
+                        className="min-h-[36px] h-9 px-2 rounded-lg text-muted-foreground hover:text-foreground relative after:absolute after:-inset-1"
                         title="Edit details"
                       >
                         <Edit className="size-3.5" />
@@ -594,7 +594,7 @@ export function TestimonialTable({ initialTestimonials }: TestimonialTableProps)
                           setSelectedItem(item);
                           setIsDeleteOpen(true);
                         }}
-                        className="h-8 px-2 rounded-lg text-muted-foreground hover:text-destructive"
+                        className="min-h-[36px] h-9 px-2 rounded-lg text-muted-foreground hover:text-destructive relative after:absolute after:-inset-1"
                         title="Delete story"
                       >
                         <Trash2 className="size-3.5" />

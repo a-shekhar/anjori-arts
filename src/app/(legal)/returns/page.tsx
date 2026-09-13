@@ -59,10 +59,10 @@ export default function ReturnsPage() {
             </h2>
           </div>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-muted-foreground">
-            All shipments are insured during transit. If an artwork arrives damaged due to courier handling, we offer an <strong className="text-foreground">immediate free re-creation or 100% refund</strong> without friction.
+            All shipments are insured during transit. If an artwork arrives damaged due to courier handling, we provide an <strong className="text-foreground">immediate free re-creation / replacement or 100% full refund</strong>.
           </p>
           <div className="mt-4 rounded-xl border border-border bg-background/80 p-4 text-xs sm:text-sm text-muted-foreground">
-            <strong className="text-foreground font-semibold">How to claim:</strong> Please share 2–3 clear unboxing photos/videos of the package and damaged piece on WhatsApp (<strong>+91 80519 60916</strong>) or email (<strong>support@anjoriarts.com</strong>) within <span className="text-foreground font-medium">24 hours</span> of delivery.
+            <strong className="text-foreground font-semibold">Mandatory unboxing recording:</strong> To claim transit damage insurance, please record a continuous, uncut unboxing video while opening the parcel. Share the video with our studio on WhatsApp (<strong>+91 80519 60916</strong>) or email (<strong>support@anjoriarts.com</strong>) within <span className="text-foreground font-semibold">24 hours</span> of delivery. A video recording is mandatory to substantiate courier damage claims.
           </div>
         </div>
 
@@ -75,14 +75,14 @@ export default function ReturnsPage() {
                 <RefreshCw className="size-5" />
               </div>
               <h3 className="font-serif text-lg font-semibold text-foreground">
-                Ready-to-Ship Artworks
+                Generic &amp; Ready-to-Ship Artworks
               </h3>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Pre-made original paintings and handcrafted earrings can be returned or exchanged within <strong className="text-foreground">48 hours of receipt</strong> provided they are unused, in original un-stretched condition, and in protective packaging.
+                Standard catalog paintings and handcrafted earrings can be returned or exchanged within <strong className="text-foreground">7 days of delivery</strong>, provided they are unused, in original condition, and securely packed in their original packaging. For non-damaged returns or exchanges, the return courier shipping charge is borne by the customer.
               </p>
             </div>
             <div className="mt-5 rounded-lg bg-muted/60 px-3 py-2 text-xs text-foreground font-medium flex items-center gap-2">
-              <CheckCircle2 className="size-4 text-primary shrink-0" /> Eligible for return / exchange
+              <CheckCircle2 className="size-4 text-primary shrink-0" /> 7-day return / exchange (original packaging)
             </div>
           </div>
 
@@ -96,11 +96,11 @@ export default function ReturnsPage() {
                 Custom Orders &amp; Bespoke Art
               </h3>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Custom-dimension paintings and personalized names/themes are made specifically for you and cannot be returned once approved. However, we send <strong className="text-foreground">work-in-progress photos for your approval</strong> before varnishing and dispatching.
+                Custom-dimension paintings and personalized themes are individually crafted to order. We share work-in-progress photos for your approval before final varnishing. Once approved and dispatched, custom orders are non-returnable and non-refundable, except in the rare event of transit damage substantiated with an unboxing video within 24 hours.
               </p>
             </div>
             <div className="mt-5 rounded-lg bg-muted/60 px-3 py-2 text-xs text-foreground font-medium flex items-center gap-2">
-              <AlertCircle className="size-4 text-primary shrink-0" /> Full preview approval before dispatch
+              <AlertCircle className="size-4 text-primary shrink-0" /> Replacement only if transit-damaged
             </div>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function ReturnsPage() {
           </div>
           <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
             • <strong>Ready Inventory:</strong> Orders can be cancelled at zero charge before courier dispatch (typically within 12–24 hours of placing the order).<br />
-            • <strong>Custom Commissions:</strong> Orders can be cancelled before our artist begins surface preparation and line sketching. Once materials are dedicated, a minimal 15% drafting fee applies if cancelled.
+            • <strong>Custom Commissions:</strong> Custom projects require a 50% advance deposit to begin sketching and surface preparation, with the remaining 50% payable upon milestone photo approval prior to dispatch. Cancellations are accepted only prior to surface preparation. Once materials and artwork dedication have begun, deposits are non-refundable.
           </p>
         </div>
 

@@ -16,6 +16,7 @@ import {
   ImageIcon, 
   Check, 
   Sparkles,
+  Wand2,
   ChevronUp,
   ChevronDown,
   X 
@@ -150,15 +151,33 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
     }
   };
 
-  // Auto-generate slug when typing name in Add mode
+  // Helper to generate kebab-case slug from category name
+  const generateSlug = () => {
+    const generated = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+    setSlug(generated);
+  };
+
+  // Auto-generate slug when typing name in Add mode or if slug is empty
   const handleNameChange = (val: string) => {
     setName(val);
-    if (!isEditing) {
+    if (!slug || !isEditing) {
       const generated = val
         .toLowerCase()
+        .trim()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
       setSlug(generated);
+    }
+  };
+
+  // Auto-refill slug from name if left empty on blur
+  const handleSlugBlur = () => {
+    if (!slug.trim() && name.trim()) {
+      generateSlug();
     }
   };
 
@@ -382,16 +401,16 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
       {/* Top Controls: Search & Add Button */}
       <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Search categories or slugs..."
-            className="pl-8"
+            className="min-h-[44px] h-11 pl-9 rounded-xl text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <Button onClick={handleOpenAddModal} className="shrink-0">
+        <Button onClick={handleOpenAddModal} className="shrink-0 min-h-[44px] h-11 rounded-xl">
           <Plus className="mr-2 h-4 w-4" />
           Add Category
         </Button>
@@ -502,7 +521,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
                             disabled={isFirst || !!search.trim()}
                             title={search.trim() ? "Clear search to reorder" : "Move up"}
                             aria-label={`Move ${cat.name} up`}
-                            className="inline-flex size-7 items-center justify-center rounded border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                            className="inline-flex size-8 sm:size-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer relative after:absolute after:-inset-1.5"
                           >
                             <ChevronUp className="size-4" />
                           </button>
@@ -512,7 +531,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
                             disabled={isLast || !!search.trim()}
                             title={search.trim() ? "Clear search to reorder" : "Move down"}
                             aria-label={`Move ${cat.name} down`}
-                            className="inline-flex size-7 items-center justify-center rounded border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                            className="inline-flex size-8 sm:size-7 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none cursor-pointer relative after:absolute after:-inset-1.5"
                           >
                             <ChevronDown className="size-4" />
                           </button>
@@ -618,14 +637,27 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Slug (URL Identifier) *
               </label>
-              <Input
-                placeholder="e.g. pichwai-painting"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. pichwai-painting"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  onBlur={handleSlugBlur}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={generateSlug}
+                  title="Auto-generate Slug from Name"
+                  aria-label="Auto-generate Slug from Name"
+                >
+                  <Wand2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                Will be accessible at: /categories/{slug || "your-slug"}
+                Public URL: <code className="font-mono text-foreground/90 bg-muted px-1.5 py-0.5 rounded text-[10px]">/categories/{slug || "..."}</code>. Click 🪄 to sync with name.
               </p>
             </div>
 

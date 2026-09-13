@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Anjori Arts — Handcrafted Indian Fine Art & E-Commerce
 
-## Getting Started
+Bespoke D2C Indian art gallery platform created for artist **Jyotsna Sharma**, specializing in Madhubani / Mithila paintings, Tanjore gold leaf artwork, Warli, Mandala, and handcrafted keepsakes.
 
-First, run the development server:
+> **Master Project Status & Punchlist:** See **[`PROJECT_TRACKER.md`](./PROJECT_TRACKER.md)** for live progress, completed milestones, and pre-launch tasks.
+
+---
+
+## 🛠️ Technology Stack
+
+* **Framework:** [Next.js 16](https://nextjs.org) (App Router, Server Actions, React 19)
+* **Hosting:** [Vercel](https://vercel.com) Global Edge Network
+* **Database & Auth:** [Supabase](https://supabase.com) (Managed PostgreSQL, Row Level Security, Auth)
+* **DNS & Inbound Routing:** [Cloudflare](https://cloudflare.com) (Nameservers & Email Routing)
+* **Outbound Transactional Email:** [Resend](https://resend.com) (API & SMTP Relay)
+* **Media Delivery & Optimization:** [Cloudinary](https://cloudinary.com)
+* **Payment Gateway:** [Razorpay](https://razorpay.com) (UPI, NetBanking, Cards)
+* **Telemetry & Monitoring:** [Sentry](https://sentry.io) & Vercel Analytics
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone & Install Dependencies
+
+```bash
+git clone https://github.com/a-shekhar/anjori-arts.git
+cd anjori-arts
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Copy the example environment file and fill in your Supabase, Cloudinary, Razorpay, and Resend credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+### 3. Start Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the storefront.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📚 Documentation Directory
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* **[PROJECT_TRACKER.md](./PROJECT_TRACKER.md)** — Master launch readiness dashboard, completed features, and pre-launch punchlist.
+* **[docs/SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md)** — Comprehensive architecture, user sequence flows, and component structure.
+* **[docs/INFRASTRUCTURE.md](./docs/INFRASTRUCTURE.md)** — Production infrastructure, DNS records table, Cloudflare, and environment variables.
+* **[docs/EMAIL_TEMPLATES.md](./docs/EMAIL_TEMPLATES.md)** — Email architecture, address directory, and transactional email guidelines.
+* **[docs/SUPABASE_EMAIL_TEMPLATES.md](./docs/SUPABASE_EMAIL_TEMPLATES.md)** — Branded authentication email templates (Reset Password, Signup Confirmation, Magic Link).
+* **[docs/DB_DESIGN.md](./docs/DB_DESIGN.md)** — Supabase `arts` schema entity relationships and table descriptions.

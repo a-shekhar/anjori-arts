@@ -60,12 +60,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Default: Artwork analysis
-    const { imageUrl } = body;
+    const { imageUrl, title, category, surface, mediums, artistNote } = body;
     if (!imageUrl) {
       return NextResponse.json({ success: false, error: "Image URL is required" }, { status: 400 });
     }
 
-    const data = await analyzeArtworkImage(imageUrl);
+    const data = await analyzeArtworkImage({
+      imageUrl,
+      title,
+      category,
+      surface,
+      mediums,
+      artistNote,
+    });
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error("Gemini AI Route Error:", error);

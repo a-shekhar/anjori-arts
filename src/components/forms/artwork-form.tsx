@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +36,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const form = useForm<ArtworkFormValues>({
-    // @ts-ignore: ZodResolver type mismatch with useForm
-    resolver: zodResolver(artworkSchema),
+    resolver: zodResolver(artworkSchema) as Resolver<ArtworkFormValues>,
     defaultValues: {
       title: initialData?.title || "",
       slug: initialData?.slug || "",
@@ -57,6 +56,30 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        title: initialData.title || "",
+        slug: initialData.slug || "",
+        categoryId: initialData.categoryId || "",
+        surfaceId: initialData.surfaceId || null,
+        mediumIds: initialData.mediumIds || [],
+        price: initialData.price || 0,
+        dimensions: initialData.dimensions || "",
+        shortDescription: initialData.shortDescription || "",
+        description: initialData.description || "",
+        artistNote: initialData.artistNote || "",
+        tags: initialData.tags || "",
+        isAvailable: initialData.isAvailable ?? true,
+        isFeatured: initialData.isFeatured ?? false,
+        images: initialData.images || [],
+        variants: initialData.variants?.length
+          ? initialData.variants
+          : [{ label: "Base/Unframed", widthInches: 0, heightInches: 0, mrp: 0, sellingPrice: 0, stockQuantity: 1, isActive: true, canBeFramed: false, framingPrice: 0 }],
+      });
+    }
+  }, [initialData, form]);
+
   const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
     control: form.control,
     name: "variants",
@@ -66,6 +89,16 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     control: form.control,
     name: "images",
   });
+
+  const generateSlug = () => {
+    const title = form.getValues("title") || "";
+    const generated = title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+    form.setValue("slug", generated, { shouldDirty: true, shouldValidate: true });
+  };
 
   const generateSku = (index: number) => {
     const categoryId = form.getValues("categoryId");
@@ -86,10 +119,86 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     form.setValue(`variants.${index}.sku`, sku, { shouldDirty: true, shouldValidate: true });
   };
 
+  const generateVariantLabel = (index: number) => {
+    const variant = form.getValues(`variants.${index}`);
+    const w = variant?.widthInches;
+    const h = variant?.heightInches;
+
+    let label = "Original";
+    if (w && h && (w > 0 || h > 0)) {
+      label = `${w}" × ${h}"`;
+    } else if (w && w > 0) {
+      label = `${w}" width`;
+    } else if (h && h > 0) {
+      label = `${h}" height`;
+    }
+
+    form.setValue(`variants.${index}.label`, label, { shouldDirty: true, shouldValidate: true });
+  };
+
+  const applyVariantPreset = (index: number, preset: string) => {
+    if (preset === "Framed" || preset === "Unframed") {
+      const current = form.getValues(`variants.${index}.label`) || "";
+      const cleaned = current.replace(/\s*\((Framed|Unframed)\)/gi, "").trim();
+      const next = cleaned ? `${cleaned} (${preset})` : preset;
+      form.setValue(`variants.${index}.label`, next, { shouldDirty: true, shouldValidate: true });
+      return;
+    }
+
+    form.setValue(`variants.${index}.label`, preset, { shouldDirty: true, shouldValidate: true });
+
+    const match = preset.match(/^(\d+(?:\.\d+)?)"\s*×\s*(\d+(?:\.\d+)?)"$/);
+    if (match) {
+      const currentW = form.getValues(`variants.${index}.widthInches`);
+      const currentH = form.getValues(`variants.${index}.heightInches`);
+      if (!currentW || currentW === 0) {
+        form.setValue(`variants.${index}.widthInches`, parseFloat(match[1]), { shouldDirty: true, shouldValidate: true });
+      }
+      if (!currentH || currentH === 0) {
+        form.setValue(`variants.${index}.heightInches`, parseFloat(match[2]), { shouldDirty: true, shouldValidate: true });
+      }
+    }
+  };
+
+  const handleVariantLabelBlur = (index: number, e: React.FocusEvent<HTMLInputElement>) => {
+    form.register(`variants.${index}.label`).onBlur(e);
+    if (!e.target.value.trim()) {
+      generateVariantLabel(index);
+    }
+  };
+
+  const handleDimensionBlur = (index: number, field: "widthInches" | "heightInches", e: React.FocusEvent<HTMLInputElement>) => {
+    form.register(`variants.${index}.${field}`, { valueAsNumber: true }).onBlur(e);
+    const currentLabel = form.getValues(`variants.${index}.label`);
+    if (!currentLabel || !currentLabel.trim()) {
+      generateVariantLabel(index);
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.register("slug").onChange(e);
+    if (!e.target.value) {
+      form.setValue("slug", "", { shouldDirty: false });
+    }
+  };
+
+  const handleSlugBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    form.register("slug").onBlur(e);
+    if (!e.target.value.trim()) {
+      generateSlug();
+    }
+  };
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.register("title").onChange(e);
     form.setValue("title", e.target.value);
-    if (!isEditing && !form.formState.dirtyFields.slug) {
-      form.setValue("slug", e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""));
+    const currentSlug = form.getValues("slug");
+    if (!currentSlug || (!isEditing && !form.formState.dirtyFields.slug)) {
+      form.setValue(
+        "slug",
+        e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+        { shouldValidate: true }
+      );
     }
   };
 
@@ -135,10 +244,28 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     const toastId = toast.loading("AI is analyzing your artwork...");
     
     try {
+      const categoryId = form.getValues("categoryId");
+      const category = taxonomies.categories.find(c => c.id === categoryId)?.name;
+      const surfaceId = form.getValues("surfaceId");
+      const surface = taxonomies.surfaces.find(s => s.id === surfaceId)?.name;
+      const mediumIds = form.getValues("mediumIds") || [];
+      const mediums = taxonomies.mediums
+        .filter(m => mediumIds.includes(m.id))
+        .map(m => m.name);
+      const title = form.getValues("title")?.trim();
+      const artistNote = form.getValues("artistNote")?.trim();
+
       const res = await fetch("/api/admin/ai/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: images[0].url }),
+        body: JSON.stringify({
+          imageUrl: images[0].url,
+          title: title || undefined,
+          category: category || undefined,
+          surface: surface || undefined,
+          mediums: mediums.length > 0 ? mediums : undefined,
+          artistNote: artistNote || undefined,
+        }),
       });
       
       const result = await res.json();
@@ -146,13 +273,23 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
       if (result.success && result.data) {
         // Apply data
         form.setValue("title", result.data.title || "", { shouldDirty: true, shouldValidate: true });
-        // Optionally update slug if not editing
-        if (!isEditing && !form.formState.dirtyFields.slug) {
-           form.setValue("slug", (result.data.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""), { shouldDirty: true });
+        // Optionally update slug if empty or in new mode without manual edits
+        const currentSlug = form.getValues("slug");
+        if (!currentSlug || (!isEditing && !form.formState.dirtyFields.slug)) {
+           form.setValue(
+             "slug",
+             (result.data.title || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, ""),
+             { shouldDirty: true, shouldValidate: true }
+           );
         }
         form.setValue("shortDescription", result.data.shortDescription || "", { shouldDirty: true });
         form.setValue("description", result.data.description || "", { shouldDirty: true });
         
+        // Artist's Note
+        if (result.data.artistNote) {
+          form.setValue("artistNote", result.data.artistNote, { shouldDirty: true });
+        }
+
         // Tags
         if (result.data.tags) {
           form.setValue("tags", result.data.tags, { shouldDirty: true });
@@ -163,7 +300,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
           form.setValue("images.0.alt", result.data.altText, { shouldDirty: true });
         }
         
-        toast.success("SEO fields auto-filled successfully!", { id: toastId });
+        toast.success("Artwork details & SEO auto-filled successfully!", { id: toastId });
       } else {
         toast.error(`AI generation failed: ${result.error}`, { id: toastId });
       }
@@ -183,7 +320,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     }
   };
 
-  const onSubmit = (values: any) => {
+  const onSubmit = (values: ArtworkFormValues) => {
     // Derive base price and dimensions from the first variant
     if (values.variants && values.variants.length > 0) {
       values.price = values.variants[0].sellingPrice;
@@ -209,14 +346,14 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Artwork" : "New Artwork"}</h2>
-          <p className="text-muted-foreground">Manage details, images, and variants.</p>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{isEditing ? "Edit Artwork" : "New Artwork"}</h2>
+          <p className="text-sm text-muted-foreground">Manage details, images, and variants.</p>
         </div>
-        <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={() => router.push("/admin/artworks")} disabled={isPending}>Cancel</Button>
-          <Button type="submit" disabled={isPending || isUploading}>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <Button type="button" variant="outline" onClick={() => router.push("/admin/artworks")} disabled={isPending} className="flex-1 sm:flex-initial">Cancel</Button>
+          <Button type="submit" disabled={isPending || isUploading} className="flex-1 sm:flex-initial">
             {isPending ? "Saving..." : isEditing ? "Save Changes" : "Create Artwork"}
           </Button>
         </div>
@@ -238,7 +375,30 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
 
               <div className="grid gap-2">
                 <Label htmlFor="slug">Slug <span className="text-destructive">*</span></Label>
-                <Input id="slug" {...form.register("slug")} />
+                <div className="flex gap-2">
+                  <Input 
+                    id="slug" 
+                    {...form.register("slug")} 
+                    placeholder="e.g. majestic-himalayan-valley"
+                    onChange={handleSlugChange}
+                    onBlur={handleSlugBlur}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={generateSlug}
+                    title="Auto-generate Slug from Title"
+                    aria-label="Auto-generate Slug from Title"
+                  >
+                    <Wand2 className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </div>
+                {isEditing && (
+                  <p className="text-xs text-muted-foreground">
+                    Public URL: <code className="font-mono text-foreground/90 bg-muted px-1.5 py-0.5 rounded text-[11px]">/artworks/{form.watch("slug") || "[slug]"}</code>. Click 🪄 to sync with title.
+                  </p>
+                )}
                 {form.formState.errors.slug && <p className="text-sm text-destructive">{form.formState.errors.slug.message}</p>}
               </div>
 
@@ -364,7 +524,35 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                         
                         <div className="grid gap-2 col-span-full md:col-span-1">
                           <Label>Variant Label</Label>
-                          <Input {...form.register(`variants.${index}.label`)} placeholder="e.g. Framed 16x20" />
+                          <div className="flex gap-2">
+                            <Input 
+                              {...form.register(`variants.${index}.label`)} 
+                              onBlur={(e) => handleVariantLabelBlur(index, e)}
+                              placeholder='e.g. 16" × 24" or Original' 
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => generateVariantLabel(index)}
+                              title="Auto-generate Variant Label from dimensions"
+                              aria-label="Auto-generate Variant Label"
+                            >
+                              <Wand2 className="h-4 w-4" aria-hidden="true" />
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 pt-0.5">
+                            {["Original", '12" × 16"', '16" × 20"', '18" × 24"', '24" × 36"', "Framed", "Unframed"].map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => applyVariantPreset(index, preset)}
+                                className="inline-flex min-h-[32px] sm:min-h-[28px] items-center px-2.5 py-1 rounded-md text-xs font-medium bg-muted hover:bg-primary/10 hover:text-primary transition-colors border border-border/50 text-muted-foreground cursor-pointer relative after:absolute after:-inset-1"
+                              >
+                                {preset}
+                              </button>
+                            ))}
+                          </div>
                           {form.formState.errors.variants?.[index]?.label && <p className="text-sm text-destructive">{form.formState.errors.variants[index]?.label?.message}</p>}
                         </div>
 
@@ -387,11 +575,21 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
                         
                         <div className="grid gap-2">
                           <Label>Width (inches)</Label>
-                          <Input type="number" step="0.1" {...form.register(`variants.${index}.widthInches`, { valueAsNumber: true })} />
+                          <Input 
+                            type="number" 
+                            step="0.1" 
+                            {...form.register(`variants.${index}.widthInches`, { valueAsNumber: true })} 
+                            onBlur={(e) => handleDimensionBlur(index, "widthInches", e)}
+                          />
                         </div>
                         <div className="grid gap-2">
                           <Label>Height (inches)</Label>
-                          <Input type="number" step="0.1" {...form.register(`variants.${index}.heightInches`, { valueAsNumber: true })} />
+                          <Input 
+                            type="number" 
+                            step="0.1" 
+                            {...form.register(`variants.${index}.heightInches`, { valueAsNumber: true })} 
+                            onBlur={(e) => handleDimensionBlur(index, "heightInches", e)}
+                          />
                         </div>
                         <div className="grid gap-2">
                           <Label>Stock Qty (-1 for unlimited)</Label>

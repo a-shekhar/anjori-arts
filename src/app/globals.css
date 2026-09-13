@@ -17,6 +17,8 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -43,6 +45,8 @@
   --secondary-foreground: #2b2926;
   --muted: #f1eee6;
   --muted-foreground: #69655d;
+  --accent: #f1eee6;
+  --accent-foreground: #2b2926;
   --border: #e4ded1;
   --input: #e4ded1;
   --ring: #5f9795;
@@ -76,6 +80,8 @@
   --secondary-foreground: #f8f5ee;
   --muted: #2c3532;
   --muted-foreground: #b9b8af;
+  --accent: #2c3532;
+  --accent-foreground: #f8f5ee;
   --border: #414c48;
   --input: #414c48;
   --ring: #8ec4c0;

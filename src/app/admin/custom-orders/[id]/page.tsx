@@ -191,7 +191,6 @@ export default async function AdminCustomOrderDetailPage({
             </CardHeader>
             <CardContent className="pt-4">
               <div className="p-4 rounded-lg bg-muted/40 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                {order.message}
                 {order.message ? (
                   order.message
                 ) : (

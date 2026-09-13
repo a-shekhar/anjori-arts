@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         if (order && order.payment_status !== "paid") {
-          const updateData: Record<string, any> = {
+          const updateData: Record<string, string | null> = {
             payment_status: "paid",
             paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -85,7 +85,6 @@ export async function POST(req: NextRequest) {
             updateData.order_status = "confirmed";
           }
 
-          await supabase.from("orders").update(updateData).eq("id", order.id);
           const { data: updatedOrder, error: updateError } = await supabase
             .from("orders")
             .update(updateData)
@@ -115,22 +114,50 @@ export async function POST(req: NextRequest) {
             .eq("order_id", order.id);
 
           // Atomically decrement ready stock for ordered variants (down to 0, never negative)
-          for (const item of (items || [])) {
-            if (item.variant_id) {
-              supabase
-                .rpc("decrement_variant_stock", {
+          await Promise.all(
+            (items || [])
+              .filter((item) => !!item.variant_id)
+              .map(async (item) => {
+                const { error } = await supabase.rpc("decrement_variant_stock", {
                   p_variant_id: item.variant_id,
                   p_quantity: item.quantity || 1,
-                })
-                .then(({ error }: { error: any }) => {
-                  if (error) {
-                    console.error("[Razorpay Webhook] Error decrementing stock for variant:", item.variant_id, error);
-                  }
                 });
+                if (error) {
+                  console.error("[Razorpay Webhook] Error decrementing stock for variant:", item.variant_id, error);
+                }
+              })
+          );
+
+          // Atomically mark direct artworks (without variants) as sold / unavailable
+          const directArtworkIds = Array.from(
+            new Set(
+              (items || [])
+                .filter((item) => !item.variant_id && !!item.artwork_id)
+                .map((item) => item.artwork_id as string)
+            )
+          );
+
+          if (directArtworkIds.length > 0) {
+            const { error: directArtError } = await supabase
+              .from("artworks")
+              .update({ is_available: false })
+              .in("id", directArtworkIds);
+
+            if (directArtError) {
+              console.error("[Razorpay Webhook] Error marking direct artworks as sold:", directArtError);
             }
           }
 
-          const orderItems = (items || []).map((i: any) => ({
+          interface WebhookOrderItem {
+            title?: string;
+            size?: string;
+            is_framed?: boolean;
+            quantity?: number;
+            unit_price?: number;
+            framing_price?: number;
+          }
+
+          const orderItems = (items || []).map((i: WebhookOrderItem) => ({
             title: i.title || "Artwork",
             size: i.size || "",
             is_framed: !!i.is_framed,
@@ -138,11 +165,14 @@ export async function POST(req: NextRequest) {
             unit_price: (i.unit_price || 0) + (i.framing_price || 0),
           }));
 
-          const shippingAddress = (order.shipping_address as any) || {
-            street: "",
-            city: "",
-            state: "",
-            pincode: "",
+          const rawAddress = (order.shipping_address as Record<string, unknown> | null) || {};
+          const shippingAddress = {
+            street: typeof rawAddress.street === "string" ? rawAddress.street : "",
+            landmark: typeof rawAddress.landmark === "string" ? rawAddress.landmark : "",
+            city: typeof rawAddress.city === "string" ? rawAddress.city : "",
+            state: typeof rawAddress.state === "string" ? rawAddress.state : "",
+            pincode: typeof rawAddress.pincode === "string" ? rawAddress.pincode : "",
+            country: typeof rawAddress.country === "string" ? rawAddress.country : "India",
           };
 
           // Dispatch confirmation and admin alert emails asynchronously

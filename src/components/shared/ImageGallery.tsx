@@ -103,7 +103,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
           <button 
             type="button"
             onClick={() => setIsLightboxOpen(false)}
-            className="absolute right-4 top-4 z-[100] rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute right-4 top-4 z-[100] flex size-11 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
             aria-label="Close enlarged image"
           >
             <X className="size-6" aria-hidden="true" />

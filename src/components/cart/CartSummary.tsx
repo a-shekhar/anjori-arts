@@ -5,7 +5,7 @@ import Link from "next/link";
 import { MessageCircle, ShieldCheck, Truck, Sparkles, ArrowRight, FileText, Lock } from "lucide-react";
 import { type CartItem } from "@/stores/cart-store";
 import { formatPrice } from "@/lib/helpers";
-import { STANDARD_DELIVERY_CHARGE } from "@/config/constants";
+import { STANDARD_DELIVERY_CHARGE, FREE_DELIVERY_THRESHOLD } from "@/config/constants";
 import { inquiryHref } from "@/config/site";
 import { cn } from "@/lib/utils";
 
@@ -109,12 +109,20 @@ export function CartSummary({
             </span>
           </dt>
           <dd className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground/60 line-through">
-              {formatPrice(standardShippingTotal)}
-            </span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              FREE
-            </span>
+            {deliveryCharge === 0 ? (
+              <>
+                <span className="text-xs text-muted-foreground/60 line-through">
+                  {formatPrice(standardShippingTotal)}
+                </span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                  FREE
+                </span>
+              </>
+            ) : (
+              <span className="font-medium text-foreground">
+                {formatPrice(deliveryCharge)}
+              </span>
+            )}
           </dd>
         </div>
 
@@ -131,7 +139,9 @@ export function CartSummary({
             </dd>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Complimentary door-to-door insured shipping across India.
+            {deliveryCharge === 0
+              ? "Complimentary door-to-door insured shipping across India."
+              : `Add ${formatPrice(Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal))} more to unlock Free Delivery!`}
           </p>
         </div>
       </dl>
@@ -200,8 +210,8 @@ export function CartSummary({
         )}
       </div>
 
-      {/* Primary Checkout CTA */}
-      <div className="mt-6 space-y-3">
+      {/* Primary Checkout CTA & Clean Actions */}
+      <div className="mt-6 space-y-2">
         <Link
           href="/checkout"
           className={cn(
@@ -217,18 +227,20 @@ export function CartSummary({
           href={generateWhatsAppHref()}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/30 bg-emerald-500/10 px-4 py-2.5 text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-300 transition-colors hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="flex min-h-[44px] items-center justify-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg text-center"
         >
-          <MessageCircle className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-          <span>Prefer to discuss on WhatsApp?</span>
+          <MessageCircle className="size-3.5 shrink-0" aria-hidden="true" />
+          <span>Prefer to discuss on WhatsApp? Chat with artist →</span>
         </a>
 
-        <Link
-          href="/shop"
-          className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          Continue Shopping
-        </Link>
+        <div className="text-center">
+          <Link
+            href="/shop"
+            className="inline-flex min-h-[44px] items-center justify-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-2 px-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            ← Continue Shopping
+          </Link>
+        </div>
       </div>
 
       {/* Trust Assurances */}

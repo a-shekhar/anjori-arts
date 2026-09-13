@@ -61,23 +61,26 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   const isOutOfStock = !artwork.isAvailable || selectedVariant.isActive === false;
   const isMadeToOrder = !isOutOfStock && selectedVariant.stockQuantity <= 0;
 
-  const canBeFramed = selectedVariant.canBeFramed;
+  const canBeFramed = Boolean(selectedVariant.canBeFramed);
   const framingPrice = selectedVariant.framingPrice || 0;
+  const effectiveIsFramed = canBeFramed && isFramed;
+  const effectiveFramingPrice = effectiveIsFramed ? framingPrice : 0;
+  const resolvedSize = selectedVariant.label || (selectedVariant.widthInches && selectedVariant.heightInches ? `${selectedVariant.widthInches}" × ${selectedVariant.heightInches}"` : "Original");
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     
     addItem({
-      id: `${selectedVariant.id}-${isFramed ? 'framed' : 'unframed'}`,
+      id: `${selectedVariant.id}-${effectiveIsFramed ? 'framed' : 'unframed'}`,
       artworkId: artwork.id,
       slug: artwork.slug,
       variantId: selectedVariant.id,
       quantity: 1,
-      isFramed,
-      framingPrice: isFramed ? framingPrice : 0,
+      isFramed: effectiveIsFramed,
+      framingPrice: effectiveFramingPrice,
       title: artwork.title,
       imageUrl: artwork.images[0]?.url || "",
-      size: selectedVariant.label,
+      size: resolvedSize,
       sellingPrice: selectedVariant.sellingPrice,
       mrp: selectedVariant.mrp
     });
@@ -96,7 +99,7 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   const handleBuyNow = () => {
     if (isOutOfStock) return;
 
-    const cartItemId = `${selectedVariant.id}-${isFramed ? "framed" : "unframed"}`;
+    const cartItemId = `${selectedVariant.id}-${effectiveIsFramed ? "framed" : "unframed"}`;
     const existing = useCartStore.getState().items.find((item) => item.id === cartItemId);
 
     if (!existing) {
@@ -106,11 +109,11 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
         slug: artwork.slug,
         variantId: selectedVariant.id,
         quantity: 1,
-        isFramed,
-        framingPrice: isFramed ? framingPrice : 0,
+        isFramed: effectiveIsFramed,
+        framingPrice: effectiveFramingPrice,
         title: artwork.title,
         imageUrl: artwork.images[0]?.url || "",
-        size: selectedVariant.label,
+        size: resolvedSize,
         sellingPrice: selectedVariant.sellingPrice,
         mrp: selectedVariant.mrp,
       });
@@ -120,8 +123,9 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
   };
 
   // Pre-fill WhatsApp general inquiry message
+  const variantDesc = `${resolvedSize}${canBeFramed ? (effectiveIsFramed ? ", Framed" : ", Unframed") : ""}`;
   const whatsappUrl = `${inquiryHref}?text=${encodeURIComponent(
-    `Hi! I'm interested in "${artwork.title}" (${selectedVariant.label}). Could you share more details?`
+    `Hi! I'm interested in "${artwork.title}" (${variantDesc}). Could you share more details?`
   )}`;
 
   return (
@@ -129,8 +133,8 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
       {/* Dynamic Price Display */}
       <div className="-mt-4 mb-2">
         <PriceDisplay 
-          mrp={selectedVariant.mrp + (isFramed ? framingPrice : 0)} 
-          sellingPrice={selectedVariant.sellingPrice + (isFramed ? framingPrice : 0)} 
+          mrp={selectedVariant.mrp + effectiveFramingPrice} 
+          sellingPrice={selectedVariant.sellingPrice + effectiveFramingPrice} 
           showTaxNote 
         />
         {selectedVariant.sku && (
@@ -140,54 +144,90 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
         )}
       </div>
 
-      {/* Size Selector */}
-      {variants.length > 1 && (
+      {/* Size Selector or Single Variant Sizing Card */}
+      {variants.length === 1 ? (
+        <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5 flex items-center justify-between">
+          <div className="space-y-0.5">
+            <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Size / Edition</span>
+            <span className="font-medium text-foreground text-sm">
+              {selectedVariant.label || "Original Edition"}
+            </span>
+          </div>
+          {selectedVariant.widthInches > 0 && selectedVariant.heightInches > 0 && (
+            <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary/20">
+              {selectedVariant.label && (selectedVariant.label.includes('"') || selectedVariant.label.includes('×'))
+                ? `${Math.round(selectedVariant.widthInches * 2.54)} × ${Math.round(selectedVariant.heightInches * 2.54)} cm`
+                : `${selectedVariant.widthInches}" × ${selectedVariant.heightInches}" (${Math.round(selectedVariant.widthInches * 2.54)} × ${Math.round(selectedVariant.heightInches * 2.54)} cm)`}
+            </span>
+          )}
+        </div>
+      ) : (
         <div className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">Select Size Category</span>
-              <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary/20">
-                {selectedVariant.widthInches} × {selectedVariant.heightInches} in
-              </span>
+              <span className="text-sm font-semibold text-foreground">Select Size / Edition</span>
+              {selectedVariant.widthInches > 0 && selectedVariant.heightInches > 0 && (
+                <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary/20">
+                  {selectedVariant.widthInches}" × {selectedVariant.heightInches}" ({Math.round(selectedVariant.widthInches * 2.54)} × {Math.round(selectedVariant.heightInches * 2.54)} cm)
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
-              {groupLabels.map((group) => (
-                <button
-                  key={group}
-                  onClick={() => handleGroupChange(group)}
-                  className={cn(
-                    "rounded-xl border px-4 py-2.5 text-sm font-medium transition-all",
-                    selectedGroup === group
-                      ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                  )}
-                >
-                  {group}
-                </button>
-              ))}
+              {groupLabels.map((group) => {
+                const groupVariant = groupedVariants[group]?.[0];
+                const isSelected = selectedGroup === group;
+                return (
+                  <button
+                    key={group}
+                    type="button"
+                    onClick={() => handleGroupChange(group)}
+                    className={cn(
+                      "rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all text-left flex items-center gap-2",
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                        : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                    )}
+                  >
+                    <span>{group}</span>
+                    {groupVariant?.sellingPrice && (
+                      <span className={cn(
+                        "text-xs font-semibold px-1.5 py-0.5 rounded-md",
+                        isSelected ? "bg-primary/20 text-primary" : "text-muted-foreground bg-muted/60"
+                      )}>
+                        ₹{(groupVariant.sellingPrice / 100).toLocaleString("en-IN")}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {groupedVariants[selectedGroup].length > 1 && (
+          {groupedVariants[selectedGroup]?.length > 1 && (
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-foreground">Select Dimensions</span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {groupedVariants[selectedGroup].map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={() => setSelectedVariantId(variant.id)}
-                    className={cn(
-                      "rounded-xl border px-4 py-2.5 text-sm font-medium transition-all",
-                      selectedVariantId === variant.id
-                        ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
-                        : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                    )}
-                  >
-                    {variant.widthInches} × {variant.heightInches} in
-                  </button>
-                ))}
+                {groupedVariants[selectedGroup].map((variant) => {
+                  const isSelected = selectedVariantId === variant.id;
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      onClick={() => setSelectedVariantId(variant.id)}
+                      className={cn(
+                        "rounded-xl border px-3.5 py-2 text-sm font-medium transition-all flex items-center gap-2",
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      )}
+                    >
+                      <span>{variant.widthInches}" × {variant.heightInches}"</span>
+                      <span className="text-xs text-muted-foreground">({Math.round(variant.widthInches * 2.54)} × {Math.round(variant.heightInches * 2.54)} cm)</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -266,55 +306,44 @@ export function ArtworkActions({ artwork, category }: ArtworkActionsProps) {
         )}
       </div>
 
-      {/* Primary Actions */}
-      <div className="flex flex-col gap-3 sm:flex-row">
+      {/* Purchase Actions Row: Wishlist Icon + Add to Cart + Buy Now */}
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <WishlistButton
+          artworkId={artwork.id}
+          artworkTitle={artwork.title}
+          variant="icon"
+          className="size-12 rounded-xl border border-border bg-card shrink-0 hover:bg-muted/60 transition-colors shadow-xs"
+        />
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={isOutOfStock}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary bg-transparent font-semibold text-primary transition-colors hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-primary bg-transparent text-sm font-semibold text-primary transition-all hover:bg-primary/5 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
         >
-          <ShoppingBag className="size-4" />
-          Add to Cart
+          <ShoppingBag className="size-4 shrink-0" />
+          <span>Add to Cart</span>
         </button>
         <button
           type="button"
           onClick={handleBuyNow}
           disabled={isOutOfStock}
-          className={cn(
-            "flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 shadow-md shadow-primary/10 disabled:pointer-events-none disabled:opacity-50"
-          )}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-md shadow-primary/10 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
         >
-          Buy Now
-          <ArrowRight className="size-4" />
+          <span>Buy Now</span>
+          <ArrowRight className="size-4 shrink-0" />
         </button>
       </div>
 
-      {/* WhatsApp Inquiry */}
-      <a
-        href={whatsappUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground transition-colors hover:bg-muted"
-      >
-        <MessageCircle className="size-4 text-whatsapp" />
-        Ask About This Artwork
-      </a>
-      {/* Secondary Actions: Wishlist & WhatsApp */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <WishlistButton
-          artworkId={artwork.id}
-          artworkTitle={artwork.title}
-          variant="full"
-          className="flex-1"
-        />
+      {/* Subtle WhatsApp Inquiry Helper */}
+      <div className="flex items-center justify-center -mt-1">
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-card font-medium text-foreground transition-colors hover:bg-muted"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1 px-2.5 rounded-lg hover:bg-muted/50"
         >
-          <MessageCircle className="size-4 text-whatsapp" />
-          <span>Ask About Artwork</span>
+          <MessageCircle className="size-3.5 sm:size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span>Questions about this piece? <strong className="font-semibold text-foreground underline decoration-border hover:decoration-foreground">Chat on WhatsApp</strong></span>
         </a>
       </div>
     </div>

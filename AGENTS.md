@@ -46,5 +46,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - ALWAYS choose consistency: match the style, format, and design conventions of existing pages (e.g. hero sections, search bars, component layouts) when building new features.
 - ALWAYS verify compilation after every change: run TypeScript checks (`tsc --noEmit`) and compilation checks. If it is not compiling, it is NOT done.
 - ALWAYS conduct a rigorous post-change audit: after each change, proactively identify bugs, identify what is not working or what won't work (edge cases, failure modes, regressions across devices/tabs), and identify if and how anything can be improved.
+- ALWAYS check for impacted components and outdated information: whenever making changes, check all impacted components, consumers, and references across the codebase; identify any outdated information or broken assumptions, and proactively suggest or apply the required edits.
 - "fatal: .git/index: index file smaller than expected this error should never appear" — ensure git operations preserve index integrity and never leave a corrupted .git/index file.
 

@@ -486,9 +486,10 @@ export function CommissionForm({
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black group-hover:opacity-100"
+                      aria-label={`Remove image ${index + 1}`}
+                      className="absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full bg-black/75 text-white transition-opacity hover:bg-black sm:opacity-0 sm:group-hover:opacity-100 relative after:absolute after:-inset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white shadow-xs cursor-pointer"
                     >
-                      <X className="size-3" />
+                      <X className="size-3.5" />
                       <span className="sr-only">Remove image</span>
                     </button>
                   </div>

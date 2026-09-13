@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DELIVERY_CHARGE, MAX_CART_QUANTITY } from "@/config/constants";
+import { DELIVERY_CHARGE, FREE_DELIVERY_THRESHOLD, MAX_CART_QUANTITY } from "@/config/constants";
 import {
   addToCloudCart,
   removeFromCloudCart,
@@ -178,7 +178,9 @@ export const useCartStore = create<CartState>()(
         ),
 
       getDeliveryCharge: () => {
-        return DELIVERY_CHARGE;
+        const subtotal = get().getSubtotal();
+        if (subtotal === 0) return 0;
+        return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_CHARGE;
       },
 
       getTotal: () => {

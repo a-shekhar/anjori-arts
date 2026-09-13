@@ -10,18 +10,17 @@ export const CGST_RATE = GST_RATE / 2;
 /** SGST = half of total GST */
 export const SGST_RATE = GST_RATE / 2;
 
-/**
- * Delivery charge in paise.
- * Set to 0 for promotional complimentary pan-India launch.
- * Easily swappable with backend dynamic pricing API.
- */
-export const DELIVERY_CHARGE = 0;
+/** Standard flat delivery charge in paise for orders below threshold (₹150 = 15000) */
+export const FLAT_DELIVERY_CHARGE = 15000;
+
+/** Delivery charge in paise (₹150 flat, waived on orders >= FREE_DELIVERY_THRESHOLD) */
+export const DELIVERY_CHARGE = FLAT_DELIVERY_CHARGE;
 
 /** Nominal delivery charge in paise for display comparison (₹150 = 15000) */
 export const STANDARD_DELIVERY_CHARGE = 15000;
 
-/** Free delivery threshold in paise (₹1500 = 150000) */
-export const FREE_DELIVERY_THRESHOLD = 150000;
+/** Free delivery threshold in paise (₹1,999 = 199900) */
+export const FREE_DELIVERY_THRESHOLD = 199900;
 
 // ---------- Pagination ----------
 export const SHOP_PAGE_SIZE = 12;
@@ -30,7 +29,7 @@ export const BLOG_PAGE_SIZE = 9;
 
 // ---------- Limits ----------
 export const MAX_CART_QUANTITY = 5;
-export const MAX_ADDRESSES = 3;
+export const MAX_ADDRESSES = 5;
 export const MAX_WISHLIST_ITEMS = 20;
 export const MAX_CUSTOM_ORDER_IMAGES = 10;
 export const MAX_REVIEW_IMAGES = 5;
@@ -129,16 +128,15 @@ export const CUSTOM_ORDER_STATUSES = [
 
 export const PAYMENT_METHODS = [
   "upi_qr",
-  "bank_transfer",
   "pay_on_dispatch",
   "razorpay",
 ] as const;
 
-export const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   upi_qr: "Instant UPI / Dynamic QR Code",
-  bank_transfer: "Direct Bank Transfer (NEFT/IMPS)",
-  pay_on_dispatch: "Pay on Dispatch (Advance Verification)",
+  pay_on_dispatch: "Framing Consultation & Advance Confirmation",
   razorpay: "Razorpay (Cards, NetBanking, UPI)",
+  bank_transfer: "Direct Bank Transfer (NEFT/IMPS)",
 };
 
 export const PAYMENT_STATUSES = [
@@ -164,6 +162,7 @@ export const COURIER_PARTNERS = [
   { name: "Delhivery", urlPrefix: "https://www.delhivery.com/track/package/" },
   { name: "India Post", urlPrefix: "https://www.indiapost.gov.in/_layouts/15/dpt.cept.tracking/tracking.aspx?trackingno=" },
   { name: "DTDC", urlPrefix: "https://www.dtdc.in/tracking/shipment-tracking.asp?strCnno=" },
+  { name: "Shiprocket", urlPrefix: "https://shiprocket.co/tracking/" },
   { name: "Other", urlPrefix: "" },
 ] as const;
 

@@ -9,6 +9,7 @@ import {
   userAddressSchema,
   updatePasswordSchema,
 } from "@/lib/validations/account";
+import { MAX_ADDRESSES } from "@/config/constants";
 import type { UserAddress } from "@/types";
 
 export interface AccountActionResult {
@@ -182,9 +183,9 @@ export async function saveAddress(
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
 
-      if (!countError && typeof count === "number" && count >= 5) {
+      if (!countError && typeof count === "number" && count >= MAX_ADDRESSES) {
         return {
-          error: "You can save a maximum of 5 delivery addresses. Please update or remove an existing address.",
+          error: `You can save a maximum of ${MAX_ADDRESSES} delivery addresses. Please update or remove an existing address.`,
         };
       }
     }

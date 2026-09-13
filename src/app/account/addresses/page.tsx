@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MapPin, Plus } from "lucide-react";
 import { getUserAddresses } from "@/actions/account";
+import { MAX_ADDRESSES } from "@/config/constants";
 import { AddressCard } from "@/components/account/AddressCard";
 import { AddressModal } from "@/components/account/AddressModal";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function AccountAddressesPage() {
   const addresses = await getUserAddresses();
-  const maxReached = addresses.length >= 5;
+  const maxReached = addresses.length >= MAX_ADDRESSES;
 
   return (
     <div className="space-y-6">
@@ -29,7 +30,7 @@ export default async function AccountAddressesPage() {
 
         <div className="flex items-center gap-3">
           <span className="text-xs font-medium text-muted-foreground">
-            <strong className="text-foreground">{addresses.length}</strong> / 5 used
+            <strong className="text-foreground">{addresses.length}</strong> / {MAX_ADDRESSES} used
           </span>
 
           <AddressModal
@@ -37,7 +38,7 @@ export default async function AccountAddressesPage() {
             trigger={
               <Button
                 disabled={maxReached}
-                className="rounded-xl gap-2 shadow-sm font-medium h-10 text-xs"
+                className="rounded-xl gap-2 shadow-sm font-medium min-h-[44px] h-11 text-xs sm:text-sm"
               >
                 <Plus className="size-3.5" />
                 <span>Add Address</span>
@@ -49,7 +50,7 @@ export default async function AccountAddressesPage() {
 
       {maxReached && (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3.5 text-xs text-amber-800 dark:text-amber-300">
-          You have reached the maximum of 5 saved addresses. To add a new one, please edit or delete an existing address.
+          You have reached the maximum of {MAX_ADDRESSES} saved addresses. To add a new one, please edit or delete an existing address.
         </div>
       )}
 

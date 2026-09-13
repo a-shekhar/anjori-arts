@@ -77,10 +77,11 @@ export default function TermsPage() {
         {/* Section 4: Pricing & Payments */}
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-3">
           <h2 className="font-serif text-xl font-semibold text-foreground">
-            4. Pricing, Taxes &amp; Payments via Razorpay
+            4. Pricing, Shipping &amp; Payments via Razorpay
           </h2>
           <p>
             • All prices are quoted in Indian Rupees (INR ₹) and are inclusive/exclusive of GST as indicated at checkout.<br />
+            • Delivery charges: Standard pan-India shipping is complimentary on all orders ₹1,999 and above. A flat ₹150 delivery fee applies to orders below ₹1,999. Worldwide shipping is available upon request for prepaid orders via WhatsApp or Email.<br />
             • Payments are processed securely through RBI-compliant gateway <strong className="text-foreground">Razorpay</strong>. We do not store or process debit/credit card numbers or banking passwords on our servers.<br />
             • We reserve the right to revise catalog prices or discontinue artwork offerings at any time without prior notice.
           </p>
@@ -92,7 +93,7 @@ export default function TermsPage() {
             5. Custom Orders &amp; Milestone Approvals
           </h2>
           <p>
-            For custom commissioned paintings, production begins upon mutual agreement on design sketch, dimensions, and upfront deposit. We provide milestone preview photographs for client verification. Custom commissions are non-returnable once final approval is granted and dispatch is completed.
+            For custom commissioned paintings, production begins upon mutual agreement on design sketch, dimensions, and receipt of a 50% upfront deposit. We share milestone preview photographs during creation for client approval prior to varnishing. The remaining 50% balance is payable upon approval before dispatch. Custom commissions are non-returnable and non-refundable once dispatched, except for transit damage substantiated with an uncut unboxing video within 24 hours of delivery.
           </p>
         </div>
 
@@ -102,7 +103,7 @@ export default function TermsPage() {
             6. Governing Law &amp; Dispute Resolution
           </h2>
           <p>
-            These Terms of Service and any separate agreements shall be governed by and construed in accordance with the laws of India, subject to the jurisdiction of competent courts in Bihar / New Delhi, India.
+            These Terms of Service and any separate agreements shall be governed by and construed in accordance with the laws of India, subject to the exclusive jurisdiction of competent courts in Puducherry, India.
           </p>
         </div>
 

@@ -92,21 +92,20 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-medium text-foreground">Working Hours</h3>
                   <p className="text-muted-foreground text-sm mt-1">
-                    Monday - Saturday: 10:00 AM - 6:00 PM (IST)<br />
-                    Sunday: Closed
+                    Monday - Sunday: 10:00 AM - 6:00 PM (IST)<br />
+                    Open all 7 days for consultations &amp; order support
                   </p>
                 </div>
               </div>
               
-              {/* Optional: Location if they have one, I will omit it for now since it is not in siteConfig, or maybe put a generic online store text */}
               <div className="flex gap-4 items-start">
                 <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
                   <MapPin className="size-5" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground">Location</h3>
+                  <h3 className="font-medium text-foreground">Studio Location</h3>
                   <p className="text-muted-foreground text-sm mt-1">
-                    We operate online and ship worldwide. Studio visits are by appointment only.
+                    Anjori Arts is an online studio based in Puducherry, India. We operate exclusively online to serve collectors across India and worldwide; walk-in studio visits are not available. For international orders outside India, please contact us on WhatsApp or Email.
                   </p>
                 </div>
               </div>

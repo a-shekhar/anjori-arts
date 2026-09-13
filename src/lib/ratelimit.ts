@@ -64,6 +64,100 @@ export const checkoutRateLimiter = redis
     })
   : null;
 
+/**
+ * Auth email cooldown rate limiters (1 request per 60 seconds per email):
+ * - Resend Signup Verification: 1 request per 60 seconds per email
+ * - Forgot Password Reset: 1 request per 60 seconds per email
+ */
+export const authResendRateLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(1, "60 s"),
+      analytics: true,
+      prefix: getPrefix("auth:resend"),
+    })
+  : null;
+
+export const authResetPasswordRateLimiter = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(1, "60 s"),
+      analytics: true,
+      prefix: getPrefix("auth:reset"),
+    })
+  : null;
+
+// In-memory fallback map for environments without Redis (local dev / offline)
+const inMemoryAuthCooldownMap = new Map<string, number>();
+const AUTH_COOLDOWN_SECONDS = 60;
+
+export interface AuthCooldownResult {
+  allowed: boolean;
+  remainingSeconds: number;
+}
+
+/**
+ * Enforces a 60-second cooldown for auth email actions.
+ * Prioritizes distributed Upstash Redis to persist across serverless cold starts.
+ * Falls back to in-memory map if Redis is not configured or fails.
+ */
+export async function checkAuthCooldown(
+  limiter: Ratelimit | null,
+  key: string
+): Promise<AuthCooldownResult> {
+  if (limiter) {
+    try {
+      const result = await limiter.limit(key);
+      if (!result.success) {
+        const remainingSeconds = Math.max(1, Math.ceil((result.reset - Date.now()) / 1000));
+        return { allowed: false, remainingSeconds };
+      }
+      return { allowed: true, remainingSeconds: 0 };
+    } catch (error) {
+      console.warn(`[RateLimit] Error checking auth cooldown for ${key}, falling back to local memory:`, error);
+    }
+  }
+
+  // Fallback to in-memory map
+  const now = Date.now();
+  const lastSent = inMemoryAuthCooldownMap.get(key);
+  if (lastSent) {
+    const elapsedSeconds = Math.floor((now - lastSent) / 1000);
+    if (elapsedSeconds < AUTH_COOLDOWN_SECONDS) {
+      return { allowed: false, remainingSeconds: AUTH_COOLDOWN_SECONDS - elapsedSeconds };
+    }
+  }
+  inMemoryAuthCooldownMap.set(key, now);
+
+  // Maintain lean memory
+  if (inMemoryAuthCooldownMap.size > 500) {
+    for (const [k, timestamp] of inMemoryAuthCooldownMap.entries()) {
+      if (now - timestamp > 600_000) {
+        inMemoryAuthCooldownMap.delete(k);
+      }
+    }
+  }
+
+  return { allowed: true, remainingSeconds: 0 };
+}
+
+/**
+ * Records an initial auth email dispatch in the cooldown tracker (e.g. at signup).
+ */
+export async function recordAuthCooldown(
+  limiter: Ratelimit | null,
+  key: string
+): Promise<void> {
+  if (limiter) {
+    try {
+      await limiter.limit(key);
+    } catch (error) {
+      console.warn(`[RateLimit] Error recording auth cooldown for ${key}:`, error);
+    }
+  }
+  inMemoryAuthCooldownMap.set(key, Date.now());
+}
+
 export interface RateLimitResult {
   success: boolean;
   limit: number;

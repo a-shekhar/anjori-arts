@@ -25,7 +25,7 @@ export default async function EditArtworkPage({ params }: PageProps) {
 
   return (
     <div className="w-full">
-      <ArtworkForm initialData={artwork} taxonomies={taxonomies} />
+      <ArtworkForm key={artwork.id} initialData={artwork} taxonomies={taxonomies} />
     </div>
   );
 }

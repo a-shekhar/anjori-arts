@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizePostgrestIdentifier, isUuid } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import type { CustomOrder, CustomOrderStatus, CustomOrderItem } from "@/types";
@@ -77,14 +78,22 @@ export const getAdminCustomOrders = withAdminAuth(async (): Promise<CustomOrder[
 
 export const getAdminCustomOrderById = withAdminAuth(async (id: string): Promise<CustomOrder | null> => {
   try {
+    const cleanId = sanitizePostgrestIdentifier(id);
+    if (!cleanId) {
+      return null;
+    }
+
     const supabase = createAdminClient();
+    let query = supabase.from("custom_orders").select("*");
 
     // Try matching by UUID id or order_reference
-    const { data, error } = await supabase
-      .from("custom_orders")
-      .select("*")
-      .or(`id.eq.${id},order_reference.eq.${id}`)
-      .maybeSingle();
+    if (isUuid(cleanId)) {
+      query = query.or(`id.eq.${cleanId},order_reference.eq.${cleanId}`);
+    } else {
+      query = query.eq("order_reference", cleanId);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) {
       console.error("[getAdminCustomOrderById] Error fetching custom order:", error);

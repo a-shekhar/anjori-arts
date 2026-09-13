@@ -7,18 +7,10 @@ import { Search, Loader2, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import { fetchBlogPosts } from "@/actions/blog";
 
-type BlogPost = {
+export type BlogPost = {
   id: string;
   slug: string;
   title: string;
@@ -95,20 +87,20 @@ export function BlogList({ initialPosts, initialCount }: BlogListProps) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Search */}
           <div className="relative flex-1 sm:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               placeholder="Search blogs..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="min-h-[44px] h-11 w-full rounded-xl border border-border bg-card pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
               aria-label="Search blogs"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors relative after:absolute after:-inset-1.5 cursor-pointer"
                 aria-label="Clear search"
               >
                 <X className="size-4" />
@@ -118,7 +110,7 @@ export function BlogList({ initialPosts, initialCount }: BlogListProps) {
           
           {/* Sort */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <label htmlFor="sort-select" className="hidden text-xs text-muted-foreground sm:block whitespace-nowrap">
                 Sort by
               </label>
@@ -126,7 +118,7 @@ export function BlogList({ initialPosts, initialCount }: BlogListProps) {
                 id="sort-select"
                 value={sort}
                 onChange={(e) => setSort(e.target.value as "newest" | "oldest")}
-                className="h-10 rounded-xl border border-border bg-card px-3 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                className="min-h-[44px] h-11 w-full sm:w-auto rounded-xl border border-border bg-card px-3.5 pr-8 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -165,7 +157,7 @@ export function BlogList({ initialPosts, initialCount }: BlogListProps) {
                 
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
                   <Image
-                    src={post.cover_image}
+                    src={post.cover_image || "/images/artwork-placeholder.jpg"}
                     alt={post.title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -174,13 +166,15 @@ export function BlogList({ initialPosts, initialCount }: BlogListProps) {
                 </div>
                 
                 <CardHeader className="flex-none pb-2 pt-6">
-                  <div className="flex flex-wrap gap-2 mb-3 relative z-20 pointer-events-none">
-                    {post.tags.map((tag: string) => (
-                      <Badge variant="secondary" key={tag} className="font-normal text-xs pointer-events-auto">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3 relative z-20 pointer-events-none">
+                      {post.tags.map((tag: string) => (
+                        <Badge variant="secondary" key={tag} className="font-normal text-xs pointer-events-auto">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <CardTitle className="font-serif text-xl line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                     {post.title}
                   </CardTitle>

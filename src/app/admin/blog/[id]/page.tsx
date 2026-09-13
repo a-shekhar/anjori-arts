@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { BlogForm } from "@/components/forms/blog-form";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminBlogPostById } from "@/actions/blog";
 import { notFound } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -13,12 +13,7 @@ type PageProps = {
 
 export default async function EditBlogPage({ params }: PageProps) {
   const resolvedParams = await params;
-  const supabase = await createClient();
-  const { data: post } = await supabase
-    .from("blog_posts")
-    .select("*")
-    .eq("id", resolvedParams.id)
-    .single();
+  const post = await getAdminBlogPostById(resolvedParams.id);
 
   if (!post) {
     notFound();

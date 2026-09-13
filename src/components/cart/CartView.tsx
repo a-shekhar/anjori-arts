@@ -72,10 +72,10 @@ export function CartView() {
           Looks like you haven&apos;t added any artworks to your bag yet. Discover original paintings, cyanotypes, and unique handmade crafts.
         </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:w-auto sm:flex-row sm:items-center sm:justify-center">
           <Link
             href="/shop"
-            className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.99]"
           >
             <span>Explore All Artworks</span>
             <ArrowRight className="size-4" aria-hidden="true" />
@@ -83,7 +83,7 @@ export function CartView() {
 
           <Link
             href="/custom-order"
-            className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium text-foreground transition-all hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.99]"
           >
             <Paintbrush className="size-4 text-primary" aria-hidden="true" />
             <span>Commission Custom Art</span>
@@ -126,12 +126,12 @@ export function CartView() {
 
   return (
     <div className="space-y-8">
-      {/* Promotional Free Delivery Announcement Banner */}
+      {/* Free Delivery Announcement Banner */}
       <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3.5 text-xs sm:text-sm font-medium text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
         <Truck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
         <div className="flex-1">
-          <strong className="font-semibold">Complimentary Pan-India Shipping: </strong>
-          All original artworks and custom pieces currently ship free with full transit insurance.
+          <strong className="font-semibold">Free Insured Delivery on Orders ₹1,999+: </strong>
+          All orders ₹1,999 and above enjoy complimentary pan-India shipping. Orders below ₹1,999 ship at a flat ₹150.
         </div>
       </div>
 

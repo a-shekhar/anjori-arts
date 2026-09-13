@@ -301,10 +301,10 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
 
                   <Link
                     href={`/order-success/${order.order_number}`}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline ml-auto"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/5 hover:underline transition-colors ml-auto relative after:absolute after:-inset-1"
                   >
                     <span>View receipt & tracking</span>
-                    <ExternalLink className="size-3" />
+                    <ExternalLink className="size-3.5" />
                   </Link>
                 </div>
               </div>
@@ -453,16 +453,16 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                 )}
 
                 {/* Footer Action */}
-                <div className="flex items-center justify-between border-t border-border pt-3 text-xs">
-                  <span className="text-muted-foreground text-[11px]">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-t border-border pt-3 text-xs">
+                  <span className="text-muted-foreground text-[11px] leading-relaxed">
                     Questions regarding this piece? Contact us via support with ref: <strong className="font-mono text-foreground">{custom.order_reference}</strong>
                   </span>
                   <Link
                     href="/custom-order"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline ml-auto"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/5 hover:underline transition-colors shrink-0 self-start sm:self-auto relative after:absolute after:-inset-1"
                   >
                     <span>Request new piece</span>
-                    <ArrowRight className="size-3" />
+                    <ArrowRight className="size-3.5" />
                   </Link>
                 </div>
               </div>

@@ -22,14 +22,9 @@ export const ADMIN_NAV_LINKS = [
 ] as const;
 
 export const USER_NAV_LINKS = [
-  { label: "Profile", href: "/user/profile" },
-  { label: "Addresses", href: "/user/addresses" },
-  { label: "Orders", href: "/user/orders" },
-  { label: "Wishlist", href: "/user/wishlist" },
   { label: "Profile", href: "/account" },
   { label: "Orders", href: "/account/orders" },
   { label: "Addresses", href: "/account/addresses" },
-  { label: "Orders", href: "/account/orders" },
   { label: "Wishlist", href: "/account/wishlist" },
   { label: "Security", href: "/account/security" },
 ] as const;

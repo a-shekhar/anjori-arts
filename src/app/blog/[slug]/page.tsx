@@ -123,13 +123,15 @@ export default async function BlogPostPage({ params }: PageProps) {
 
       <article className="mx-auto">
         <header className="mb-8 text-center">
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {post.tags.map((tag: string) => (
-              <Badge variant="outline" key={tag}>
-                {tag}
-              </Badge>
-            ))}
-          </div>
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {post.tags.map((tag: string) => (
+                <Badge variant="outline" key={tag}>
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
           
           <h1 className="text-4xl md:text-5xl font-serif text-foreground mb-6 leading-tight">
             {post.title}

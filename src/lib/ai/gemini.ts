@@ -26,24 +26,66 @@ export interface ArtworkAISuggestions {
   title: string;
   shortDescription: string;
   description: string;
+  artistNote: string;
   altText: string;
   tags: string;
 }
 
+export interface AnalyzeArtworkParams {
+  imageUrl: string;
+  title?: string;
+  category?: string;
+  surface?: string;
+  mediums?: string[];
+  artistNote?: string;
+}
+
 /**
- * Analyzes an artwork image and generates title, descriptions, alt text, and tags.
+ * Analyzes an artwork image with contextual hints (title, category, surface, mediums, artist's note)
+ * and generates title, descriptions, artist note, alt text, and SEO tags.
  */
-export async function analyzeArtworkImage(imageUrl: string): Promise<ArtworkAISuggestions> {
+export async function analyzeArtworkImage(input: string | AnalyzeArtworkParams): Promise<ArtworkAISuggestions> {
+  const params: AnalyzeArtworkParams = typeof input === "string" ? { imageUrl: input } : input;
+  const { imageUrl, title, category, surface, mediums, artistNote } = params;
+
   const { base64Image, mimeType } = await fetchImageAsBase64(imageUrl);
 
-  const prompt = `You are an expert SEO and art copywriter for Anjori Arts, an authentic Indian handmade art gallery.
-Analyze the provided artwork image and generate SEO-optimized metadata.
-Follow these guidelines:
-- title: A short, catchy, SEO-friendly title for this artwork (max 60 characters). Do not include quotes.
-- shortDescription: A 1-2 sentence description summarizing the artwork.
-- description: A detailed, engaging description of the artwork formatted in Markdown. Include imagined details about style, mood, colors, and possible inspiration. Aim for 2-3 paragraphs.
-- altText: A highly descriptive, accessible alt text for the image, focusing on visual details for screen readers and Google Image search.
-- tags: A comma-separated list of 5-10 relevant keywords (e.g. madhubani, handmade, folk art, natural pigments, indian heritage).`;
+  // Build contextual hints block
+  const contextHints: string[] = [];
+  if (title?.trim()) {
+    contextHints.push(`- Working Title / Subject Draft: "${title.trim()}"`);
+  }
+  if (category?.trim()) {
+    contextHints.push(`- Art Category / Tradition: "${category.trim()}"`);
+  }
+  if (surface?.trim()) {
+    contextHints.push(`- Canvas / Surface Material: "${surface.trim()}"`);
+  }
+  if (mediums && mediums.length > 0) {
+    contextHints.push(`- Mediums / Colors Used: "${mediums.join(", ")}"`);
+  }
+  if (artistNote?.trim()) {
+    contextHints.push(`- Artist's Draft Note / Sentiment: "${artistNote.trim()}"`);
+  }
+
+  const contextSection = contextHints.length > 0
+    ? `\n\nKnown Artwork Details (use to guide and ground your response):\n${contextHints.join("\n")}`
+    : "";
+
+  const prompt = `You are an expert SEO art curator and copywriter for Anjori Arts, an authentic Indian handmade art gallery.
+Analyze the provided artwork image alongside any known details to generate rich, culturally authentic, and SEO-optimized metadata.${contextSection}
+
+Follow these strict guidelines:
+- title: A compelling, collector-grade fine art title (max 60 characters). Do not include quotes.
+  * If a working title was provided: If it is brief, generic, or a working draft (e.g. "Dogs", "Fish", "Flower"), elevate and expand it into an evocative fine art title that honors the subject and art tradition (e.g., "Loyal Spirits: Contemporary Indian Folk Dogs Painting"). If it is already poetic and specific, polish and optimize it for search while keeping the artist's exact concept.
+  * If no working title was provided: Create a brand new evocative title based on the visual subject, category, and materials.
+- shortDescription: A 1-2 sentence compelling summary of the artwork, touching upon the subject, mood, and art tradition.
+- description: A detailed, captivating story of the artwork formatted in Markdown (2-3 paragraphs). Accurately incorporate the specified surface (e.g., handmade paper, canvas) and mediums (e.g., natural pigments, acrylic, gold foil) to describe the textural feel, traditional techniques, mood, and cultural significance.
+- artistNote: An intimate, personal reflection in the artist's first-person voice (1-3 sentences).
+  * If an artist's draft note was provided, refine and elevate its language into a poetic, authentic artist reflection while preserving the genuine emotion.
+  * If none was provided, craft a heartfelt reflection connecting the artist's personal inspiration, meditative process, and connection to the materials.
+- altText: Highly descriptive, accessible visual alt text (under 125 characters) detailing visual subjects, colors, and surface texture for screen readers and Google Image search.
+- tags: A comma-separated list of 6-10 high-value keywords covering the subject, tradition (e.g. madhubani, mandala, pichwai), exact surface and mediums, and heritage terms (e.g. handmade, indian folk art, traditional art).`;
 
   const response = await ai.models.generateContent({
     model: DEFAULT_AI_MODEL,
@@ -59,10 +101,11 @@ Follow these guidelines:
           title: { type: Type.STRING },
           shortDescription: { type: Type.STRING },
           description: { type: Type.STRING },
+          artistNote: { type: Type.STRING },
           altText: { type: Type.STRING },
           tags: { type: Type.STRING },
         },
-        required: ["title", "shortDescription", "description", "altText", "tags"],
+        required: ["title", "shortDescription", "description", "artistNote", "altText", "tags"],
       },
     },
   });

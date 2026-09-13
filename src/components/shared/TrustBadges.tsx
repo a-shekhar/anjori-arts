@@ -15,8 +15,8 @@ export interface TrustBadgesProps {
 const DEFAULT_BADGES: TrustBadgeItem[] = [
   {
     icon: Truck,
-    title: "Free Shipping ≥ ₹1,500",
-    description: "Insured all-India delivery",
+    title: "Free Shipping ≥ ₹1,999",
+    description: "Insured pan-India & global",
   },
   {
     icon: ShieldCheck,
@@ -31,7 +31,7 @@ const DEFAULT_BADGES: TrustBadgeItem[] = [
   {
     icon: RefreshCcw,
     title: "Easy Returns",
-    description: "Hassle-free 7-day replacement",
+    description: "7-day return / replacement",
   },
 ];
 

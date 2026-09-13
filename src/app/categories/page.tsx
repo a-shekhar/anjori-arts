@@ -113,16 +113,16 @@ export default async function CategoriesPage() {
             Explore our comprehensive shop gallery featuring all available original paintings, or commission a
             bespoke artwork tailored specifically to your space.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-xs sm:max-w-none mx-auto">
             <Link
               href="/shop"
-              className={cn(buttonVariants({ variant: "default", size: "lg" }), "rounded-full px-8 py-6 text-base")}
+              className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full sm:w-auto rounded-full px-8 py-6 text-base")}
             >
               Browse All Artworks
             </Link>
             <Link
               href="/custom-order"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8 py-6 text-base")}
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto rounded-full px-8 py-6 text-base")}
             >
               Discuss a Commission
             </Link>

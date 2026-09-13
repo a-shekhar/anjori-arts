@@ -163,7 +163,7 @@ export function AdminOrdersTable({ initialOrders, stats }: AdminOrdersTableProps
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-medium transition-colors ${
+              className={`inline-flex min-h-[36px] sm:min-h-[32px] items-center rounded-xl px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer relative after:absolute after:-inset-1 ${
                 activeTab === tab.key
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -182,7 +182,7 @@ export function AdminOrdersTable({ initialOrders, stats }: AdminOrdersTableProps
             placeholder="Search Order #, collector, phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="min-h-[40px] w-full rounded-xl border border-input bg-background pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="min-h-[44px] h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
         </div>
       </div>
@@ -294,7 +294,7 @@ export function AdminOrdersTable({ initialOrders, stats }: AdminOrdersTableProps
                       <td className="px-4 py-3.5 text-right">
                         <Link
                           href={`/admin/orders/${order.id}`}
-                          className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary relative after:absolute after:-inset-1"
                         >
                           <Eye className="size-3.5 text-primary" />
                           <span>Manage</span>

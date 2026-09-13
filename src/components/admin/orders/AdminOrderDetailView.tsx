@@ -283,7 +283,7 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
                 type="button"
                 disabled={isPending || isCurrent}
                 onClick={() => handleStatusChange(statusKey)}
-                className={`flex min-h-[38px] items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+                className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all cursor-pointer relative after:absolute after:-inset-1 ${
                   isCurrent
                     ? "bg-primary text-primary-foreground shadow-xs ring-2 ring-primary ring-offset-2 ring-offset-card cursor-default"
                     : "border border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -458,7 +458,7 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
                 type="button"
                 disabled={isPending}
                 onClick={() => handleStatusChange(order.order_status)}
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted cursor-pointer relative after:absolute after:-inset-1"
               >
                 <Save className="size-3.5 text-primary" />
                 <span>Save Notes</span>
@@ -668,7 +668,7 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
                 type="button"
                 disabled={isPending}
                 onClick={handleVerifyPayment}
-                className="flex min-h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -763,7 +763,7 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
                 type="button"
                 disabled={isPending}
                 onClick={handleSaveTracking}
-                className="flex min-h-[40px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60 cursor-pointer"
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -792,7 +792,8 @@ export function AdminOrderDetailView({ initialOrder }: AdminOrderDetailViewProps
               <button
                 type="button"
                 onClick={() => setShowReceiptModal(false)}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+                className="inline-flex size-11 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+                aria-label="Close screenshot modal"
               >
                 ✕
               </button>

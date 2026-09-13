@@ -83,7 +83,7 @@ export function WishlistButton({
       aria-label={active ? `Remove ${artworkTitle || "artwork"} from wishlist` : `Add ${artworkTitle || "artwork"} to wishlist`}
       aria-pressed={active}
       className={cn(
-        "group/wishlist relative flex size-10 items-center justify-center rounded-full bg-background/80 backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-background shadow-xs active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "group/wishlist relative flex size-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-background/85 backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-background shadow-xs active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer",
         active
           ? "text-rose-500 hover:text-rose-600 shadow-rose-500/10"
           : "text-muted-foreground hover:text-rose-500",

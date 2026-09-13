@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Star, Quote, PlusCircle, ArrowRight, MessageCircle } from "lucide-react";
@@ -103,16 +103,16 @@ export default async function StoriesPage() {
               Every painting leaves our studio with care and intention. Here is how these pieces find harmony in modern living rooms, quiet sanctuaries, and family homes.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-xs sm:max-w-none mx-auto">
               <Link
                 href="/share-story"
-                className={cn(buttonVariants({ size: "lg" }), "h-11 rounded-full px-6 text-sm")}
+                className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto h-11 rounded-full px-6 text-sm")}
               >
                 <PlusCircle className="mr-2 size-4" /> Share your story
               </Link>
               <Link
                 href="/shop"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11 rounded-full px-6 text-sm")}
+                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto h-11 rounded-full px-6 text-sm")}
               >
                 Explore artworks <ArrowRight className="ml-2 size-4" />
               </Link>
@@ -224,10 +224,10 @@ export default async function StoriesPage() {
               <p className="mt-4 text-sm sm:text-base leading-relaxed text-muted-foreground">
                 Every custom commission begins with a conversation. Share your preferred tradition, wall dimensions, or theme, and our artists will guide the journey.
               </p>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-xs sm:max-w-none mx-auto">
                 <Link
                   href="/custom-order"
-                  className={cn(buttonVariants({ size: "lg" }), "h-11 rounded-full px-7 text-sm")}
+                  className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto h-11 rounded-full px-7 text-sm")}
                 >
                   Request a Custom Order
                 </Link>
@@ -235,7 +235,7 @@ export default async function StoriesPage() {
                   href={inquiryHref}
                   target={hasWhatsApp ? "_blank" : undefined}
                   rel={hasWhatsApp ? "noopener noreferrer" : undefined}
-                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-11 rounded-full px-6 text-sm")}
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto h-11 rounded-full px-6 text-sm")}
                 >
                   <MessageCircle className="mr-2 size-4" /> Chat with Artist
                 </a>

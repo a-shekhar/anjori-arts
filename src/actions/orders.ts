@@ -11,7 +11,7 @@ import {
   sendOrderFailureAlertEmail,
 } from "@/lib/email";
 import { checkoutRateLimiter, checkRateLimit, getClientIp } from "@/lib/ratelimit";
-import { DELIVERY_CHARGE } from "@/config/constants";
+import { calculateAuthoritativeOrder } from "@/lib/order-pricing";
 import type { Order, OrderItem, CartItem, CustomOrder } from "@/types";
 
 import { generateReferenceCode } from "@/lib/reference";
@@ -59,240 +59,39 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
     }
 
     const validData = parsed.data;
+
+    // Reject Razorpay orders: they must be initiated via createRazorpayOrder and cryptographically verified
+    if (validData.paymentMethod === "razorpay") {
+      return {
+        success: false,
+        error: "Razorpay orders must be processed through the secure payment gateway.",
+      };
+    }
+
+    // Require proof of payment for UPI orders to prevent malicious stock blocking
+    if (validData.paymentMethod === "upi_qr") {
+      const ref = validData.paymentReference?.trim();
+      const hasReceipt = Boolean(validData.receiptUrl?.trim());
+      if (!ref && !hasReceipt) {
+        return {
+          success: false,
+          error: "Please provide a valid UPI Reference / UTR number or upload your payment screenshot to place your order.",
+        };
+      }
+    }
+
+    // 1. Authoritative DB calculation & stock verification
+    const calc = await calculateAuthoritativeOrder(items);
+    if (!calc.success) {
+      return { success: false, error: calc.error || "Unable to calculate order total." };
+    }
+
+    const { subtotal, deliveryCharge, discountAmount, totalAmount, orderItemsToInsert } = calc;
     const supabase = createAdminClient();
 
-    // 1. Collect candidate variant IDs for authoritative DB price lookup
-    const isUuid = (val?: string | null): val is string =>
-      typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
-
-    const candidateVariantIds = Array.from(
-      new Set(items.map((i) => i.variantId).filter(isUuid))
-    );
-
-    // 2. Fetch authoritative variants from Supabase
-    interface DbVariantRecord {
-      id: string;
-      artwork_id: string;
-      label: string;
-      selling_price: number;
-      mrp: number;
-      stock_quantity: number;
-      is_active: boolean;
-      can_be_framed: boolean;
-      framing_price: number;
-      sku: string | null;
-      artwork: {
-        id: string;
-        title: string;
-        price: number;
-        is_available: boolean;
-        images: Array<{ url: string; alt?: string }> | null;
-      } | Array<{
-        id: string;
-        title: string;
-        price: number;
-        is_available: boolean;
-        images: Array<{ url: string; alt?: string }> | null;
-      }> | null;
-    }
-
-    const variantMap = new Map<string, DbVariantRecord>();
-    if (candidateVariantIds.length > 0) {
-      const { data: dbVariants, error: variantsError } = await supabase
-        .from("artwork_variants")
-        .select(`
-          id,
-          artwork_id,
-          label,
-          selling_price,
-          mrp,
-          stock_quantity,
-          is_active,
-          can_be_framed,
-          framing_price,
-          sku,
-          artwork:artworks(id, title, price, is_available, images)
-        `)
-        .in("id", candidateVariantIds);
-
-      if (variantsError) {
-        console.error("[createOrder] Error fetching artwork variants:", variantsError);
-        return { success: false, error: "Unable to verify artwork pricing. Please try again." };
-      }
-
-      if (dbVariants) {
-        for (const v of dbVariants) {
-          variantMap.set(v.id, v as unknown as DbVariantRecord);
-        }
-      }
-    }
-
-    // 3. Fallback: Fetch direct artworks for any items where variantId was not in artwork_variants
-    interface DbArtworkRecord {
-      id: string;
-      title: string;
-      price: number;
-      is_available: boolean;
-      images: Array<{ url: string; alt?: string }> | null;
-    }
-
-    const missingArtworkIds = Array.from(
-      new Set(
-        items
-          .filter((i) => !variantMap.has(i.variantId))
-          .map((i) => i.artworkId || i.variantId)
-          .filter((id): id is string => typeof id === "string" && id.trim().length > 0)
-      )
-    );
-
-    const artworkMap = new Map<string, DbArtworkRecord>();
-    if (missingArtworkIds.length > 0) {
-      const { data: dbArtworks, error: artworksError } = await supabase
-        .from("artworks")
-        .select("id, title, price, is_available, images")
-        .in("id", missingArtworkIds);
-
-      if (artworksError) {
-        console.error("[createOrder] Error fetching artworks:", artworksError);
-        return { success: false, error: "Unable to verify artwork pricing. Please try again." };
-      }
-
-      if (dbArtworks) {
-        for (const a of dbArtworks) {
-          artworkMap.set(a.id, a as unknown as DbArtworkRecord);
-        }
-      }
-    }
-
-    // 4. Calculate totals authoritatively from database prices
-    let subtotal = 0;
-    const orderItemsToInsert: Array<{
-      artwork_id: string | null;
-      variant_id: string | null;
-      title: string;
-      image_url: string | null;
-      size: string;
-      is_framed: boolean;
-      framing_price: number;
-      unit_price: number;
-      quantity: number;
-      line_total: number;
-    }> = [];
-
-    for (const item of items) {
-      const quantity = Math.max(1, Math.min(5, Math.floor(Number(item.quantity) || 1)));
-
-      let unitPrice: number;
-      let framingPrice = 0;
-      let isFramed = false;
-      let title = item.title;
-      let imageUrl: string | null = item.imageUrl || null;
-      let size = item.size || "Standard";
-      let artworkId: string | null = null;
-      let variantId: string | null = null;
-
-      const variant = variantMap.get(item.variantId);
-
-      if (variant) {
-        const art = Array.isArray(variant.artwork) ? variant.artwork[0] : variant.artwork;
-
-        if (variant.is_active === false || art?.is_available === false) {
-          return {
-            success: false,
-            error: `"${art?.title || item.title}" (${variant.label}) is currently unavailable.`,
-          };
-        }
-
-        unitPrice = Number(variant.selling_price);
-        if (item.isFramed && variant.can_be_framed) {
-          isFramed = true;
-          framingPrice = Number(variant.framing_price) || 0;
-        } else {
-          isFramed = false;
-          framingPrice = 0;
-        }
-
-        artworkId = variant.artwork_id || art?.id || item.artworkId || null;
-        variantId = variant.id;
-        size = variant.label;
-        title = art?.title || item.title;
-
-        const artworkImages = art?.images;
-        if (Array.isArray(artworkImages) && artworkImages.length > 0 && artworkImages[0]?.url) {
-          imageUrl = artworkImages[0].url;
-        }
-      } else {
-        // Fallback: Direct artwork lookup
-        const artwork = artworkMap.get(item.artworkId) || artworkMap.get(item.variantId);
-        if (!artwork) {
-          return {
-            success: false,
-            error: `Artwork "${item.title}" could not be verified in the catalog.`,
-          };
-        }
-
-        if (!artwork.is_available) {
-          return {
-            success: false,
-            error: `"${artwork.title}" is currently unavailable.`,
-          };
-        }
-
-        unitPrice = Number(artwork.price);
-        isFramed = false;
-        framingPrice = 0;
-        artworkId = artwork.id;
-        variantId = null;
-        title = artwork.title || item.title;
-
-        if (Array.isArray(artwork.images) && artwork.images.length > 0 && artwork.images[0]?.url) {
-          imageUrl = artwork.images[0].url;
-        }
-      }
-
-      // Security check: Guard against client-side price tampering in localStorage
-      if (typeof item.sellingPrice === "number" && item.sellingPrice !== unitPrice) {
-        console.warn(`[createOrder] Security: Price discrepancy for "${title}": client=${item.sellingPrice}, db=${unitPrice}`);
-        return {
-          success: false,
-          error: `Price discrepancy detected for "${title}". Please refresh your bag before placing your order.`,
-        };
-      }
-
-      if (item.isFramed && typeof item.framingPrice === "number" && item.framingPrice !== framingPrice) {
-        console.warn(`[createOrder] Security: Framing price discrepancy for "${title}": client=${item.framingPrice}, db=${framingPrice}`);
-        return {
-          success: false,
-          error: `Framing price discrepancy detected for "${title}". Please refresh your bag before placing your order.`,
-        };
-      }
-
-      const lineTotal = (unitPrice + framingPrice) * quantity;
-      subtotal += lineTotal;
-
-      orderItemsToInsert.push({
-        artwork_id: artworkId,
-        variant_id: variantId,
-        title,
-        image_url: imageUrl,
-        size,
-        is_framed: isFramed,
-        framing_price: framingPrice,
-        unit_price: unitPrice,
-        quantity,
-        line_total: lineTotal,
-      });
-    }
-
-    const deliveryCharge = DELIVERY_CHARGE;
-    const discountAmount = 0;
-    const totalAmount = subtotal + deliveryCharge - discountAmount;
-
-    // Determine initial payment status
+    // Determine initial payment status for manual/offline orders
     let paymentStatus = "pending";
-    if (validData.paymentMethod === "razorpay" && validData.paymentReference) {
-      paymentStatus = "paid";
-    } else if (validData.receiptUrl || validData.paymentReference) {
+    if (validData.receiptUrl || validData.paymentReference) {
       paymentStatus = "receipt_uploaded";
     }
 
@@ -404,18 +203,22 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
     }
 
     // Atomically decrement ready stock for ordered variants (down to 0, never negative)
-    for (const item of orderItemsToInsert) {
-      if (item.variant_id) {
-        supabase
-          .rpc("decrement_variant_stock", {
-            p_variant_id: item.variant_id,
-            p_quantity: item.quantity,
-          })
-          .then(({ error }: { error: unknown }) => {
-            if (error) {
-              console.error("[createOrder] Error decrementing stock for variant:", item.variant_id, error);
-            }
-          });
+    // Only decrement immediately for prepaid orders (Razorpay, UPI QR).
+    // For pay_on_dispatch (Framing Consultation requests), stock is not decremented until the gallery manager confirms the order and collects the 50% advance.
+    if (validData.paymentMethod !== "pay_on_dispatch") {
+      for (const item of orderItemsToInsert) {
+        if (item.variant_id) {
+          supabase
+            .rpc("decrement_variant_stock", {
+              p_variant_id: item.variant_id,
+              p_quantity: item.quantity,
+            })
+            .then(({ error }: { error: unknown }) => {
+              if (error) {
+                console.error("[createOrder] Error decrementing stock for variant:", item.variant_id, error);
+              }
+            });
+        }
       }
     }
 
@@ -584,6 +387,20 @@ export async function getUserOrders(): Promise<Order[]> {
       return [];
     }
 
+    // Auto-claim historical guest orders matching the authenticated user's email
+    if (user.email) {
+      try {
+        const adminDb = createAdminClient();
+        await adminDb
+          .from("orders")
+          .update({ user_id: user.id })
+          .is("user_id", null)
+          .ilike("customer_email", user.email);
+      } catch (claimErr) {
+        console.warn("[getUserOrders] Notice auto-claiming guest orders:", claimErr);
+      }
+    }
+
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
@@ -638,10 +455,25 @@ export async function getUserCustomOrders(): Promise<CustomOrder[]> {
       return [];
     }
 
+    // Auto-claim historical guest custom orders matching the authenticated user's email
+    if (user.email) {
+      try {
+        const adminDb = createAdminClient();
+        await adminDb
+          .from("custom_orders")
+          .update({ user_id: user.id })
+          .is("user_id", null)
+          .ilike("email", user.email);
+      } catch (claimErr) {
+        console.warn("[getUserCustomOrders] Notice auto-claiming guest custom orders:", claimErr);
+      }
+    }
+
+    // Query under standard RLS: auth.uid() = user_id
     const { data: customOrders, error: customOrdersError } = await supabase
       .from("custom_orders")
       .select("*")
-      .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (customOrdersError || !customOrders) {

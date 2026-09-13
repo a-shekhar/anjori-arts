@@ -11,6 +11,7 @@ import {
   X, 
   AlertTriangle,
   Sparkles,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,14 +119,31 @@ export function MediumTable({ initialMediums }: MediumTableProps) {
     );
   });
 
+  const generateSlug = () => {
+    const generated = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+    setSlug(generated);
+    setIsSlugManuallyEdited(false);
+  };
+
   const handleNameChange = (val: string) => {
     setName(val);
-    if (!isEditing && !isSlugManuallyEdited) {
+    if (!slug || (!isEditing && !isSlugManuallyEdited)) {
       const generated = val
         .toLowerCase()
+        .trim()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
       setSlug(generated);
+    }
+  };
+
+  const handleSlugBlur = () => {
+    if (!slug.trim() && name.trim()) {
+      generateSlug();
     }
   };
 
@@ -273,7 +291,7 @@ export function MediumTable({ initialMediums }: MediumTableProps) {
               type="button"
               onClick={() => setSearch("")}
               aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors relative after:absolute after:-inset-1.5 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -449,19 +467,33 @@ export function MediumTable({ initialMediums }: MediumTableProps) {
               <Label htmlFor="medium-slug">
                 URL Slug <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="medium-slug"
-                placeholder="e.g. natural-dyes"
-                value={slug}
-                onChange={(e) => {
-                  setSlug(e.target.value);
-                  setIsSlugManuallyEdited(true);
-                }}
-                required
-                className="h-10 font-mono text-sm"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="medium-slug"
+                  placeholder="e.g. natural-dyes"
+                  value={slug}
+                  onChange={(e) => {
+                    setSlug(e.target.value);
+                    setIsSlugManuallyEdited(true);
+                  }}
+                  onBlur={handleSlugBlur}
+                  required
+                  className="h-10 font-mono text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={generateSlug}
+                  title="Auto-generate Slug from Name"
+                  aria-label="Auto-generate Slug from Name"
+                  className="h-10 w-10 shrink-0"
+                >
+                  <Wand2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                Unique identifier used in database relationships and URLs.
+                Storefront filter identifier: <code className="font-mono text-foreground/90 bg-muted px-1.5 py-0.5 rounded text-[10px]">{slug || "..."}</code>. Click 🪄 to sync with name.
               </p>
             </div>
 

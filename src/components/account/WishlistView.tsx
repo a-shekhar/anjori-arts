@@ -393,7 +393,7 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
                     onClick={(e) => handleRemove(e, artwork.id, artwork.title)}
                     aria-label={`Remove ${artwork.title} from wishlist`}
                     title="Remove from wishlist"
-                    className="absolute top-2.5 right-2.5 z-10 flex size-9 items-center justify-center rounded-full bg-background/80 backdrop-blur-md text-muted-foreground transition-all duration-200 hover:bg-destructive hover:text-white shadow-xs"
+                    className="absolute top-2.5 right-2.5 z-10 flex size-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-background/85 backdrop-blur-md text-muted-foreground transition-all duration-200 hover:bg-destructive hover:text-white shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive cursor-pointer active:scale-95"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -427,9 +427,9 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
                     {artwork.isAvailable ? (
                       <Button
                         onClick={() => handleMoveToBag(artwork)}
-                        className="w-full rounded-xl font-medium gap-2 h-10 shadow-xs text-xs"
+                        className="w-full min-h-[44px] h-11 rounded-xl font-medium gap-2 shadow-xs text-xs sm:text-sm"
                       >
-                        <ShoppingBag className="size-3.5" />
+                        <ShoppingBag className="size-4" />
                         <span>Move to Bag</span>
                       </Button>
                     ) : (
@@ -439,7 +439,7 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
                       >
                         <Button
                           variant="outline"
-                          className="w-full rounded-xl font-medium gap-1.5 h-10 text-xs border-dashed"
+                          className="w-full min-h-[44px] h-11 rounded-xl font-medium gap-1.5 text-xs sm:text-sm border-dashed"
                         >
                           <Sparkles className="size-3.5 text-primary" />
                           <span>Commission Similar</span>

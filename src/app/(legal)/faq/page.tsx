@@ -40,20 +40,75 @@ const FAQ_ITEMS = [
         answer:
           "For authentic traditional feel, we work with both natural mineral & plant-extracted dyes as well as artist-grade acrylic inks on acid-free handmade paper and pure tussar silk. Fine line work is executed using fine bamboo nibs and fine-tip brushes.",
       },
+      {
+        question: "Can I visit your studio in person?",
+        answer:
+          "Anjori Arts operates as an online studio based in Puducherry, India. Because our artists work on delicate pigment preparation, natural dyes, and fragile gold leaf in a focused workshop setting, we do not host walk-in visits. However, we provide high-resolution photos, videos, and personalized WhatsApp consultations to help you select your artwork.",
+      },
     ],
   },
   {
-    category: "Custom Commissions",
+    category: "Framing Options",
     items: [
       {
-        question: "How do custom artwork commissions work?",
+        question: "Are artworks sold framed or unframed?",
         answer:
-          "You can share your desired theme, reference image, color palette, and wall dimensions via our Custom Order form or directly on WhatsApp. We provide an exact quote and preview sketch before commencing. During creation, we share milestone progress photos for your feedback and approval before final varnish and dispatch.",
+          "Framing is completely optional! Depending on the artwork, you can choose to receive it Unframed (safely rolled in rigid PVC mailing tubes or flat-packed) or select framing (Basic or Premium framing fitted with protective acrylic glass). The framing availability and price are dynamically configured on each artwork's product page.",
       },
       {
-        question: "How long does a custom painting take to complete?",
+        question: "Why do you use acrylic glass instead of standard glass for framed shipments?",
         answer:
-          "Depending on size and complexity: Small & Medium Madhubani/Warli works take 7–10 days; intricate 22K gold Tanjore or large canvas Pichwai works require 14–21 days. If you have an urgent deadline (anniversary, housewarming, corporate gifting), reach out to us and we will accommodate where possible.",
+          "Standard glass is heavy and prone to shattering during courier transit, which can severely tear or scratch the underlying painting. We use premium museum-grade shatter-resistant acrylic glass that provides superior optical clarity, UV protection, and safe transit.",
+      },
+    ],
+  },
+  {
+    category: "Shipping & Worldwide Delivery",
+    items: [
+      {
+        question: "What are your dispatch and delivery timelines?",
+        answer:
+          "In-stock artworks are prepared, inspected, and dispatched within 4–5 business days. Transit delivery takes 4–7 business days post-dispatch depending on your delivery location. If you have an urgent date (such as a birthday, anniversary, or housewarming), please contact us beforehand and we will do our best to accommodate express processing.",
+      },
+      {
+        question: "How long does a custom commissioned painting take?",
+        answer:
+          "Custom-dimension and personalized paintings require 7–21 days of handcrafted preparation depending on the complexity, detail, and surface drying times (such as Tanjore gesso or multi-layer natural pigments). Delivery takes an additional 4–7 business days after dispatch.",
+      },
+      {
+        question: "What are the shipping charges?",
+        answer:
+          "All pan-India orders of ₹1,999 and above enjoy complimentary free insured delivery. For orders below ₹1,999, a flat shipping fee of ₹150 is applied at checkout.",
+      },
+      {
+        question: "Which courier partners do you use?",
+        answer:
+          "We partner with reputable express couriers including Blue Dart, Delhivery, DTDC, Shiprocket, and India Post (Speed Post) to ensure reliable, insured, door-to-door delivery across India.",
+      },
+      {
+        question: "Do you ship worldwide / internationally?",
+        answer:
+          "Yes! We ship worldwide to international art collectors across the USA, UK, UAE, Europe, Australia, Singapore, and beyond. International orders are handled on prepaid terms via WhatsApp (+91 80519 60916) or Email (support@anjoriarts.com). Shipping mode, customs documentation, and carrier rates depend on the destination country and dimensions.",
+      },
+    ],
+  },
+  {
+    category: "Returns & Damage Protection",
+    items: [
+      {
+        question: "What happens if a parcel arrives damaged in transit?",
+        answer:
+          "All our shipments are 100% transit-insured. In the rare event of damage, you must record a continuous uncut unboxing video while opening the parcel and share it with us within 24 hours of delivery on WhatsApp (+91 80519 60916) or email. A video recording is mandatory to substantiate courier damage claims. Upon verification, we immediately arrange a complimentary priority re-creation or a 100% refund.",
+      },
+      {
+        question: "What is your return policy for ready-to-ship artworks?",
+        answer:
+          "Generic, catalog ready-to-ship paintings and handcrafted earrings can be returned or replaced within 7 days of delivery, provided the artwork is unused, in original condition, and packed securely in its original packaging. For non-damaged returns or exchanges, the return courier shipping charge is borne by the customer.",
+      },
+      {
+        question: "Can I return a custom commissioned artwork?",
+        answer:
+          "Custom-dimension paintings and personalized creations are made specifically to your specifications. We provide milestone preview photos for your review and approval before final varnishing. Once approved and dispatched, custom orders are non-returnable and non-refundable, except for transit damage substantiated with a 24-hour unboxing video.",
       },
     ],
   },
@@ -69,26 +124,6 @@ const FAQ_ITEMS = [
         question: "Do you offer Cash on Delivery (COD)?",
         answer:
           "Because authentic handmade artwork and custom commissions involve custom dimensions, delicate packaging, and high transit value, we do not support COD. Full transit insurance and 100% money-back guarantee against transit damage are included with all prepaid orders.",
-      },
-    ],
-  },
-  {
-    category: "Shipping & Transit Safety",
-    items: [
-      {
-        question: "How do you package delicate paintings for long-distance transit?",
-        answer:
-          "We follow museum unboxing standards: acid-free glassine sheets cover the paint surface, followed by waterproof thermal wrapping, corner guard cushions, shock-absorbing bubble foam, and a heavy-gauge rigid corrugated crate or high-density mailing tube.",
-      },
-      {
-        question: "What happens if a parcel arrives damaged in transit?",
-        answer:
-          "All our shipments are 100% transit-insured. In the rare event of transit damage, simply send us an unboxing photo/video within 24 hours of delivery. We will immediately arrange a complimentary priority re-creation or initiate a full 100% refund.",
-      },
-      {
-        question: "Do you ship paintings with frames?",
-        answer:
-          "Standard artworks are shipped securely rolled in rigid PVC/cylinder tubes or flat-crated to prevent glass shatter risk during courier transit. Selected Tanjore paintings come with traditional South Indian Chettinad teakwood frames fitted with acrylic safety glass.",
       },
     ],
   },

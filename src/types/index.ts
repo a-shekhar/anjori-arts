@@ -154,7 +154,6 @@ export type OrderStatus =
 
 export type PaymentMethod =
   | "upi_qr"
-  | "bank_transfer"
   | "pay_on_dispatch"
   | "razorpay";
 

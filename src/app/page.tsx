@@ -100,18 +100,18 @@ export default async function HomePage() {
                 Bespoke Indian paintings and keepsakes, made with the patience of tradition and a place in your home in mind.
               </p>
 
-              <div className="mt-9 flex flex-wrap items-center gap-4">
+              <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
                 <a
                   href={inquiryHref}
                   target={hasWhatsApp ? "_blank" : undefined}
                   rel={hasWhatsApp ? "noopener noreferrer" : undefined}
-                  className={cn(buttonVariants({ size: "lg" }), "h-12 rounded-full px-6 text-sm shadow-none")}
+                  className={cn(buttonVariants({ size: "lg" }), "h-12 w-full justify-center rounded-full px-6 text-sm shadow-none sm:w-auto active:scale-98")}
                 >
                   Begin a commission <ArrowRight className="size-4" />
                 </a>
                 <a
                   href="#traditions"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-foreground underline decoration-border underline-offset-8 transition-colors hover:text-primary hover:decoration-primary"
+                  className="inline-flex min-h-[44px] items-center gap-2 text-sm font-medium text-foreground underline decoration-border underline-offset-8 transition-colors hover:text-primary hover:decoration-primary"
                 >
                   Explore the collection <ArrowDownRight className="size-4" />
                 </a>

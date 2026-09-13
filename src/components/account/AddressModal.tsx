@@ -93,7 +93,7 @@ function AddressFormContent({
           <button
             type="button"
             onClick={() => setAddressType("home")}
-            className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
               addressType === "home"
                 ? "border-primary bg-primary/10 text-primary font-semibold"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
@@ -105,7 +105,7 @@ function AddressFormContent({
           <button
             type="button"
             onClick={() => setAddressType("work")}
-            className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
               addressType === "work"
                 ? "border-primary bg-primary/10 text-primary font-semibold"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
@@ -117,7 +117,7 @@ function AddressFormContent({
           <button
             type="button"
             onClick={() => setAddressType("other")}
-            className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-medium transition-colors cursor-pointer ${
               addressType === "other"
                 ? "border-primary bg-primary/10 text-primary font-semibold"
                 : "border-border bg-card text-muted-foreground hover:bg-muted"
@@ -142,7 +142,7 @@ function AddressFormContent({
             value={recipientName}
             onChange={(e) => setRecipientName(e.target.value)}
             placeholder="e.g. Aditi Sharma"
-            className="rounded-xl h-10 text-sm"
+            className="rounded-xl min-h-[44px] h-11 text-sm"
           />
         </div>
 
@@ -158,7 +158,7 @@ function AddressFormContent({
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
             placeholder="10-digit mobile"
-            className="rounded-xl h-10 text-sm"
+            className="rounded-xl min-h-[44px] h-11 text-sm"
           />
         </div>
       </div>
@@ -175,7 +175,7 @@ function AddressFormContent({
           value={street}
           onChange={(e) => setStreet(e.target.value)}
           placeholder="e.g. Flat 402, Lotus Tower, 14th Main"
-          className="rounded-xl h-10 text-sm"
+          className="rounded-xl min-h-[44px] h-11 text-sm"
         />
       </div>
 
@@ -190,7 +190,7 @@ function AddressFormContent({
           value={landmark}
           onChange={(e) => setLandmark(e.target.value)}
           placeholder="e.g. Near St. Mary Church"
-          className="rounded-xl h-10 text-sm"
+          className="rounded-xl min-h-[44px] h-11 text-sm"
         />
       </div>
 
@@ -207,7 +207,7 @@ function AddressFormContent({
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="e.g. Patna"
-            className="rounded-xl h-10 text-sm"
+            className="rounded-xl min-h-[44px] h-11 text-sm"
           />
         </div>
 
@@ -223,7 +223,7 @@ function AddressFormContent({
             value={state}
             onChange={(e) => setState(e.target.value)}
             placeholder="e.g. Bihar"
-            className="rounded-xl h-10 text-sm"
+            className="rounded-xl min-h-[44px] h-11 text-sm"
           />
         </div>
 
@@ -239,7 +239,7 @@ function AddressFormContent({
             value={pincode}
             onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
             placeholder="6 digits"
-            className="rounded-xl h-10 text-sm"
+            className="rounded-xl min-h-[44px] h-11 text-sm"
           />
         </div>
       </div>
@@ -263,14 +263,14 @@ function AddressFormContent({
           variant="outline"
           onClick={onCancel}
           disabled={loading}
-          className="rounded-xl text-xs h-10"
+          className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-4"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={loading}
-          className="rounded-xl text-xs h-10 min-w-[120px] font-medium shadow-sm"
+          className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-5 min-w-[120px] font-medium shadow-sm"
         >
           {loading ? (
             <>

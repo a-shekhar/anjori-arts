@@ -74,7 +74,7 @@ export default async function CategoryPage({ params }: PageProps) {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/shop"
-            className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+            className="inline-flex min-h-[44px] items-center rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
           >
             All Artworks
           </Link>
@@ -84,7 +84,7 @@ export default async function CategoryPage({ params }: PageProps) {
               <Link
                 key={cat.id}
                 href={`/categories/${cat.slug}`}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                className={`inline-flex min-h-[44px] items-center rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm pointer-events-none"
                     : "border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"

@@ -137,7 +137,6 @@ export async function sendNotificationEmail({ type, data }: SendInquiryEmailProp
           : ""
       }
       <h3>Project Details:</h3>
-      <p style="white-space: pre-wrap;">${safeMessage}</p>
       <p style="white-space: pre-wrap;">${safeMessage || "<em>None provided (refer to attached photos/link or discuss during consultation)</em>"}</p>
     `;
   }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   CheckCircle2,
   Clock,
+  Globe,
   HelpCircle,
   MapPin,
   PackageCheck,
@@ -140,7 +141,7 @@ export default function ShippingPage() {
                   <span className="text-xs text-muted-foreground">Pre-made paintings &amp; earrings</span>
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Dispatched within <strong className="text-foreground">24 to 48 hours</strong>. Delivery takes 3–5 business days depending on destination city.
+                  Dispatched within <strong className="text-foreground">4 to 5 business days</strong> (carefully crated &amp; moisture-sealed). Delivery takes 4–7 business days depending on destination location. Urgent requests can be accommodated via WhatsApp.
                 </p>
               </div>
 
@@ -150,7 +151,7 @@ export default function ShippingPage() {
                   <span className="text-xs text-muted-foreground">Bespoke paintings &amp; custom sizes</span>
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Creation time spans <strong className="text-foreground">7 to 18 days</strong> depending on intricacy (22K gold foil curation or fine line Mithila detail). Dispatched via express courier upon client approval.
+                  Creation time spans <strong className="text-foreground">7 to 21 days</strong> depending on intricacy (22K gold foil relief or fine line Mithila detail). Dispatched via express courier upon client photo/video approval. Delivery takes 4–7 business days post dispatch.
                 </p>
               </div>
 
@@ -196,17 +197,43 @@ export default function ShippingPage() {
                 </thead>
                 <tbody className="divide-y divide-border text-foreground">
                   <tr>
-                    <td className="p-4 sm:px-6 font-medium">Orders ₹1,500 &amp; Above</td>
+                    <td className="p-4 sm:px-6 font-medium">Orders ₹1,999 &amp; Above</td>
                     <td className="p-4 sm:px-6 text-primary font-semibold">FREE</td>
                     <td className="p-4 sm:px-6 text-muted-foreground">Included Free</td>
                   </tr>
                   <tr>
-                    <td className="p-4 sm:px-6 font-medium">Orders Below ₹1,500</td>
+                    <td className="p-4 sm:px-6 font-medium">Orders Below ₹1,999</td>
                     <td className="p-4 sm:px-6">{standardDeliveryDisplay} flat</td>
                     <td className="p-4 sm:px-6 text-muted-foreground">Included Free</td>
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Worldwide Shipping Section */}
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-3 text-primary">
+              <Globe className="size-5" />
+              <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+                Worldwide Shipping &amp; International Orders
+              </h2>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              We ship authentic handmade Indian art to private collectors, corporate galleries, and Indian diaspora homes globally (USA, UK, Canada, UAE, Singapore, Australia, and Europe).
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground pt-1">
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <strong className="text-foreground block mb-1">Prepaid Orders Only</strong>
+                <span>International shipments are processed on 100% prepaid terms via international wire transfer or secure digital payment invoice.</span>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <strong className="text-foreground block mb-1">Express Carrier Transit</strong>
+                <span>Dispatched via DHL Express, FedEx, or India Post SpeedPost International with full tracking and export clearances.</span>
+              </div>
+            </div>
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs sm:text-sm text-muted-foreground">
+              <strong className="text-foreground font-semibold">How to place an international order:</strong> International orders are coordinated directly with our studio manager to ensure customized crating and exact courier freight quotes. Contact us on WhatsApp (<strong>+91 80519 60916</strong>) or Email (<strong>orders@anjoriarts.com</strong>).
             </div>
           </div>
 

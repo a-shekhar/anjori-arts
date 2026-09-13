@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { headers, cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  authResendRateLimiter,
+  authResetPasswordRateLimiter,
+  checkAuthCooldown,
+  recordAuthCooldown,
+} from "@/lib/ratelimit";
 
 async function getSiteUrl(): Promise<string> {
   try {
@@ -39,33 +45,6 @@ export interface AuthActionResult {
   requiresVerification?: boolean;
   email?: string;
   alreadyVerified?: boolean;
-}
-
-// In-memory sliding cooldown manager to stop rapid abuse across server actions
-const cooldownMap = new Map<string, number>();
-const COOLDOWN_SECONDS = 60;
-
-function checkAndSetCooldown(key: string): { allowed: boolean; remainingSeconds: number } {
-  const now = Date.now();
-  const lastSent = cooldownMap.get(key);
-  if (lastSent) {
-    const elapsedSeconds = Math.floor((now - lastSent) / 1000);
-    if (elapsedSeconds < COOLDOWN_SECONDS) {
-      return { allowed: false, remainingSeconds: COOLDOWN_SECONDS - elapsedSeconds };
-    }
-  }
-  cooldownMap.set(key, now);
-
-  // Evict entries older than 10 minutes to maintain lean memory
-  if (cooldownMap.size > 500) {
-    for (const [k, timestamp] of cooldownMap.entries()) {
-      if (now - timestamp > 600_000) {
-        cooldownMap.delete(k);
-      }
-    }
-  }
-
-  return { allowed: true, remainingSeconds: 0 };
 }
 
 export async function login(formData: FormData): Promise<AuthActionResult> {
@@ -203,7 +182,7 @@ export async function signup(formData: FormData): Promise<AuthActionResult> {
     revalidatePath("/", "layout");
     const requiresVerification = !data.session;
     if (requiresVerification) {
-      cooldownMap.set(`signup:${email.trim().toLowerCase()}`, Date.now());
+      await recordAuthCooldown(authResendRateLimiter, `signup:${email.trim().toLowerCase()}`);
     }
     return { success: true, requiresVerification, role: "USER" };
   } catch (err: unknown) {
@@ -221,7 +200,7 @@ export async function resendVerificationEmail(email: string): Promise<AuthAction
     const cleanEmail = email.trim().toLowerCase();
 
     // Enforce 60-second cooldown rate limit for signup resend
-    const cooldownCheck = checkAndSetCooldown(`signup:${cleanEmail}`);
+    const cooldownCheck = await checkAuthCooldown(authResendRateLimiter, `signup:${cleanEmail}`);
     if (!cooldownCheck.allowed) {
       return {
         error: `Please wait ${cooldownCheck.remainingSeconds}s before requesting another verification email.`,
@@ -375,7 +354,7 @@ export async function forgotPassword(input: FormData | string): Promise<AuthActi
     const cleanEmail = email.trim().toLowerCase();
 
     // Enforce 60-second cooldown rate limit for password reset
-    const cooldownCheck = checkAndSetCooldown(`reset_password:${cleanEmail}`);
+    const cooldownCheck = await checkAuthCooldown(authResetPasswordRateLimiter, `reset_password:${cleanEmail}`);
     if (!cooldownCheck.allowed) {
       return {
         error: `Please wait ${cooldownCheck.remainingSeconds}s before requesting another password reset email.`,

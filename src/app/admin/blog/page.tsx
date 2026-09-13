@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { deleteBlogPost } from "@/actions/blog";
+import { deleteBlogPost, getAdminBlogPosts } from "@/actions/blog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Table,
@@ -20,13 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminBlogsPage() {
-  const supabase = await createClient();
-  const { data: posts } = await supabase
-    .from("blog_posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const blogPosts = posts || [];
+  const blogPosts = await getAdminBlogPosts();
 
   return (
     <div className="space-y-6">

@@ -1,23 +1,30 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 
+const DISALLOWED_ROUTES = [
+  "/admin",
+  "/admin/*",
+  "/account",
+  "/account/*",
+  "/checkout",
+  "/order-success/*",
+  "/cart",
+  "/wishlist",
+  "/api/*",
+  "/auth/*",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/admin",
-          "/admin/*",
-          "/account",
-          "/account/*",
-          "/checkout",
-          "/order-success/*",
-          "/cart",
-          "/api/*",
-          "/auth/*",
-        ],
+        disallow: DISALLOWED_ROUTES,
       },
       {
         userAgent: [
@@ -32,14 +39,7 @@ export default function robots(): MetadataRoute.Robots {
           "Applebot",
         ],
         allow: "/",
-        disallow: [
-          "/admin/*",
-          "/account/*",
-          "/checkout",
-          "/order-success/*",
-          "/cart",
-          "/api/*",
-        ],
+        disallow: DISALLOWED_ROUTES,
       },
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,

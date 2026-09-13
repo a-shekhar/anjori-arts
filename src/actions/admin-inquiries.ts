@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizePostgrestIdentifier, isUuid } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import type { Inquiry, InquiryStatus } from "@/types";
@@ -118,13 +119,21 @@ export const getAdminInquiryStats = withAdminAuth(async (): Promise<AdminInquiry
 
 export const getAdminInquiryById = withAdminAuth(async (id: string): Promise<Inquiry | null> => {
   try {
-    const supabase = createAdminClient();
+    const cleanId = sanitizePostgrestIdentifier(id);
+    if (!cleanId) {
+      return null;
+    }
 
-    const { data, error } = await supabase
-      .from("inquiries")
-      .select("*")
-      .or(`id.eq.${id},inquiry_reference.eq.${id}`)
-      .maybeSingle();
+    const supabase = createAdminClient();
+    let query = supabase.from("inquiries").select("*");
+
+    if (isUuid(cleanId)) {
+      query = query.or(`id.eq.${cleanId},inquiry_reference.eq.${cleanId}`);
+    } else {
+      query = query.eq("inquiry_reference", cleanId);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) {
       console.error("[getAdminInquiryById] Error fetching inquiry:", error);

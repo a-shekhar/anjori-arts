@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizePostgrestFilterTerm, sanitizePostgrestIdentifier, isUuid } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
 import { COURIER_PARTNERS } from "@/config/constants";
@@ -95,10 +96,10 @@ export const getAdminOrders = withAdminAuth(
         query = query.eq("payment_status", paymentStatus);
       }
 
-      if (search.trim()) {
-        const term = search.trim();
+      const cleanTerm = sanitizePostgrestFilterTerm(search);
+      if (cleanTerm) {
         query = query.or(
-          `order_number.ilike.%${term}%,customer_name.ilike.%${term}%,customer_email.ilike.%${term}%,customer_phone.ilike.%${term}%`
+          `order_number.ilike.%${cleanTerm}%,customer_name.ilike.%${cleanTerm}%,customer_email.ilike.%${cleanTerm}%,customer_phone.ilike.%${cleanTerm}%`
         );
       }
 
@@ -133,13 +134,21 @@ export const getAdminOrders = withAdminAuth(
 export const getAdminOrderById = withAdminAuth(
   async (id: string): Promise<Order | null> => {
     try {
-      const supabase = createAdminClient();
+      const cleanId = sanitizePostgrestIdentifier(id);
+      if (!cleanId) {
+        return null;
+      }
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .select("*")
-        .or(`id.eq.${id},order_number.eq.${id}`)
-        .maybeSingle();
+      const supabase = createAdminClient();
+      let query = supabase.from("orders").select("*");
+
+      if (isUuid(cleanId)) {
+        query = query.or(`id.eq.${cleanId},order_number.eq.${cleanId}`);
+      } else {
+        query = query.eq("order_number", cleanId);
+      }
+
+      const { data: order, error: orderError } = await query.maybeSingle();
 
       if (orderError || !order) {
         console.error("[getAdminOrderById] Error finding order:", orderError);
@@ -185,6 +194,30 @@ export const updateAdminOrderStatus = withAdminAuth(
 
       if (cancellationReason !== undefined) {
         updatePayload.cancellation_reason = cancellationReason;
+      }
+
+      if (status === "confirmed" || status === "framing_packing") {
+        const { data: currentOrder } = await supabase
+          .from("orders")
+          .select("order_status, payment_method, order_items(variant_id, quantity)")
+          .eq("id", orderId)
+          .maybeSingle();
+
+        if (
+          currentOrder &&
+          currentOrder.payment_method === "pay_on_dispatch" &&
+          currentOrder.order_status === "received" &&
+          currentOrder.order_items
+        ) {
+          for (const it of currentOrder.order_items as any[]) {
+            if (it.variant_id) {
+              await supabase.rpc("decrement_variant_stock", {
+                p_variant_id: it.variant_id,
+                p_quantity: it.quantity,
+              });
+            }
+          }
+        }
       }
 
       const { error } = await supabase
@@ -295,12 +328,24 @@ export const verifyAdminPayment = withAdminAuth(
         // Advance received order to confirmed
         const { data: currentOrder } = await supabase
           .from("orders")
-          .select("order_status")
+          .select("order_status, payment_method, order_items(variant_id, quantity)")
           .eq("id", orderId)
           .maybeSingle();
 
         if (currentOrder && currentOrder.order_status === "received") {
           updateData.order_status = "confirmed";
+
+          // If this was pay_on_dispatch, stock wasn't decremented at checkout; decrement now upon payment verification
+          if (currentOrder.payment_method === "pay_on_dispatch" && currentOrder.order_items) {
+            for (const it of currentOrder.order_items as any[]) {
+              if (it.variant_id) {
+                await supabase.rpc("decrement_variant_stock", {
+                  p_variant_id: it.variant_id,
+                  p_quantity: it.quantity,
+                });
+              }
+            }
+          }
         }
       }
 

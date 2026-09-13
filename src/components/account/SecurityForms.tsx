@@ -160,7 +160,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter your existing password"
-                className="h-10 rounded-xl"
+                className="min-h-[44px] h-11 rounded-xl text-sm"
               />
             </div>
 
@@ -175,7 +175,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 8 characters (letters and numbers)"
-                className="h-10 rounded-xl"
+                className="min-h-[44px] h-11 rounded-xl text-sm"
               />
             </div>
 
@@ -190,14 +190,14 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter new password"
-                className="h-10 rounded-xl"
+                className="min-h-[44px] h-11 rounded-xl text-sm"
               />
             </div>
 
             <Button
               type="submit"
               disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
-              className="h-10 rounded-xl text-xs font-medium gap-2 shadow-sm"
+              className="min-h-[44px] h-11 rounded-xl text-xs sm:text-sm font-medium gap-2 shadow-sm w-full sm:w-auto px-5"
             >
               {passwordLoading ? (
                 <>
@@ -242,7 +242,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
             variant="outline"
             onClick={handleLogoutAll}
             disabled={logoutLoading}
-            className="h-10 rounded-xl text-xs font-medium gap-2 shrink-0"
+            className="min-h-[44px] h-11 rounded-xl text-xs sm:text-sm font-medium gap-2 shrink-0 w-full sm:w-auto px-4"
           >
             {logoutLoading ? (
               <>
@@ -290,7 +290,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
             type="button"
             variant="destructive"
             onClick={() => setDeleteModalOpen(true)}
-            className="h-10 rounded-xl text-xs font-medium gap-2 shrink-0"
+            className="min-h-[44px] h-11 rounded-xl text-xs sm:text-sm font-medium gap-2 shrink-0 w-full sm:w-auto px-4"
           >
             <ShieldAlert className="size-3.5" />
             <span>Delete Account</span>
@@ -323,7 +323,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                 value={deleteConfirmation}
                 onChange={(e) => setDeleteConfirmation(e.target.value)}
                 placeholder="DELETE"
-                className="h-10 rounded-xl font-mono text-sm uppercase"
+                className="min-h-[44px] h-11 rounded-xl font-mono text-sm uppercase"
               />
             </div>
 
@@ -336,7 +336,7 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                   setDeleteConfirmation("");
                 }}
                 disabled={deleteLoading}
-                className="rounded-xl text-xs h-9"
+                className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 px-4"
               >
                 Cancel
               </Button>
@@ -345,11 +345,11 @@ export function SecurityForms({ isOAuthUser = false }: SecurityFormsProps) {
                 variant="destructive"
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading || deleteConfirmation.trim() !== "DELETE"}
-                className="rounded-xl text-xs h-9 font-medium gap-1.5"
+                className="rounded-xl text-xs sm:text-sm min-h-[44px] h-11 font-medium gap-1.5 px-4"
               >
                 {deleteLoading ? (
                   <>
-                    <Loader2 className="size-3 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin mr-1" />
                     <span>Deleting Account...</span>
                   </>
                 ) : (

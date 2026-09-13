@@ -417,18 +417,37 @@ export async function verifyAndCompleteRazorpayOrder(
     }
 
     // 6. Atomically decrement ready stock for ordered variants (down to 0, never negative)
-    for (const item of calc.orderItemsToInsert) {
-      if (item.variant_id) {
-        supabase
-          .rpc("decrement_variant_stock", {
+    await Promise.all(
+      calc.orderItemsToInsert
+        .filter((item) => !!item.variant_id)
+        .map(async (item) => {
+          const { error } = await supabase.rpc("decrement_variant_stock", {
             p_variant_id: item.variant_id,
             p_quantity: item.quantity,
-          })
-          .then(({ error }: { error: any }) => {
-            if (error) {
-              console.error("[verifyAndCompleteRazorpayOrder] Error decrementing stock for variant:", item.variant_id, error);
-            }
           });
+          if (error) {
+            console.error("[verifyAndCompleteRazorpayOrder] Error decrementing stock for variant:", item.variant_id, error);
+          }
+        })
+    );
+
+    // Atomically mark direct artworks (without variants) as sold / unavailable
+    const directArtworkIds = Array.from(
+      new Set(
+        calc.orderItemsToInsert
+          .filter((item) => !item.variant_id && !!item.artwork_id)
+          .map((item) => item.artwork_id as string)
+      )
+    );
+
+    if (directArtworkIds.length > 0) {
+      const { error: directArtError } = await supabase
+        .from("artworks")
+        .update({ is_available: false })
+        .in("id", directArtworkIds);
+
+      if (directArtError) {
+        console.error("[verifyAndCompleteRazorpayOrder] Error marking direct artworks as sold:", directArtError);
       }
     }
 

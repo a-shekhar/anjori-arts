@@ -913,7 +913,6 @@ export function CustomOrdersTable({ orders }: CustomOrdersTableProps) {
                     Project Details / Message
                   </h4>
                   <div className="p-4 rounded-lg bg-card border text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
-                    {selectedOrder.message}
                     {selectedOrder.message ? (
                       selectedOrder.message
                     ) : (

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Quote } from "lucide-react";
 import { getArtworkBySlug, getCategoryById, getAllArtworkSlugs } from "@/actions/shop";
 import { siteConfig } from "@/config/site";
 import { ImageGallery } from "@/components/shared/ImageGallery";
@@ -59,8 +60,31 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
   // Use first variant for initial display or default
   const defaultVariant = artwork.variants?.[0] || {
     mrp: artwork.price * 1.2,
-    sellingPrice: artwork.price
+    sellingPrice: artwork.price,
+    widthInches: 0,
+    heightInches: 0,
+    sku: undefined as string | undefined,
   };
+
+  // Smart multi-variant dimensions summary
+  const variants = artwork.variants || [];
+  let dimensionsSummary = artwork.dimensions || "Original / Standard";
+
+  if (variants.length === 1 && variants[0].widthInches > 0 && variants[0].heightInches > 0) {
+    const w = variants[0].widthInches;
+    const h = variants[0].heightInches;
+    dimensionsSummary = `${w}" × ${h}" (${Math.round(w * 2.54)} × ${Math.round(h * 2.54)} cm)`;
+  } else if (variants.length > 1) {
+    const validVariants = [...variants].filter((v) => v.widthInches > 0 && v.heightInches > 0);
+    if (validVariants.length > 1) {
+      const sortedByArea = validVariants.sort((a, b) => a.widthInches * a.heightInches - b.widthInches * b.heightInches);
+      const smallest = sortedByArea[0];
+      const largest = sortedByArea[sortedByArea.length - 1];
+      dimensionsSummary = `${validVariants.length} Sizes (${smallest.widthInches}" × ${smallest.heightInches}" to ${largest.widthInches}" × ${largest.heightInches}")`;
+    } else {
+      dimensionsSummary = `${variants.length} Sizes Available`;
+    }
+  }
 
   const breadcrumbCrumbs = [
     { label: "Home", href: "/" },
@@ -73,12 +97,14 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: artwork.title,
-    description: artwork.description,
+    description: artwork.shortDescription || artwork.description,
     image: artwork.images.map(img => img.url),
     brand: {
       "@type": "Brand",
       name: siteConfig.name
     },
+    category: category?.name,
+    sku: defaultVariant.sku || artwork.id,
     offers: {
       "@type": "Offer",
       url: `${siteConfig.url}/artworks/${artwork.slug}`,
@@ -110,10 +136,10 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Right Column: Product Info */}
-          <div className="flex flex-col lg:col-span-5 xl:col-span-6">
+          {/* Right Column: Product Info & Commerce */}
+          <div className="flex flex-col lg:col-span-5 xl:col-span-6 space-y-8">
             {/* Header Info */}
-            <div className="mb-6 border-b border-border pb-6">
+            <div className="border-b border-border pb-6">
               {category && (
                 <div className="mb-3 flex items-center gap-2">
                   <Link href={`/categories/${category.slug}`} className="aa-eyebrow text-muted-foreground hover:text-primary transition-colors">
@@ -124,28 +150,65 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
               <h1 className="font-serif text-3xl font-semibold leading-tight text-foreground sm:text-4xl lg:text-5xl">
                 {artwork.title}
               </h1>
+              {artwork.shortDescription && (
+                <p className="mt-3 text-base sm:text-lg text-muted-foreground font-light leading-relaxed">
+                  {artwork.shortDescription}
+                </p>
+              )}
             </div>
 
+            {/* Actions (Price, Sizing, Framing, Buy Now, Add to Cart) */}
+            <div className="border-b border-border/80 pb-8">
+              <ArtworkActions artwork={artwork} category={category} />
+            </div>
+
+            {/* Artist Note */}
+            {artwork.artistNote && (
+              <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center gap-2 mb-2.5 text-primary">
+                  <Quote className="size-4 shrink-0 fill-primary/20" aria-hidden="true" />
+                  <span className="font-serif text-xs font-semibold uppercase tracking-wider">Artist&apos;s Note</span>
+                </div>
+                <p className="font-serif text-sm sm:text-base italic leading-relaxed text-foreground/90 pl-3 border-l-2 border-primary/40">
+                  &ldquo;{artwork.artistNote}&rdquo;
+                </p>
+              </div>
+            )}
+
             {/* Description */}
-            <div className="mb-6">
+            <div>
               <h3 className="font-serif text-lg font-semibold text-foreground mb-2">About this piece</h3>
-              <p className="text-base leading-relaxed text-muted-foreground">
+              <p className="text-base leading-relaxed text-muted-foreground whitespace-pre-line">
                 {artwork.description}
               </p>
             </div>
 
             {/* Details Grid */}
-            <div className="mb-8 grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border border-border bg-muted/10 p-5 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-xl border border-border bg-muted/10 p-5 text-sm">
               <div>
-                <span className="block text-xs font-medium text-muted-foreground mb-1">Surface</span>
-                <span className="font-medium text-foreground">{artwork.surface}</span>
+                <span className="block text-xs font-medium text-muted-foreground mb-1">Category</span>
+                {category ? (
+                  <Link href={`/categories/${category.slug}`} className="font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1">
+                    {category.name}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-foreground">Artworks</span>
+                )}
+              </div>
+              <div>
+                <span className="block text-xs font-medium text-muted-foreground mb-1">Dimensions</span>
+                <span className="font-medium text-foreground">{dimensionsSummary}</span>
               </div>
               <div>
                 <span className="block text-xs font-medium text-muted-foreground mb-1">Medium</span>
                 <span className="font-medium text-foreground">{artwork.medium}</span>
               </div>
-              {artwork.tags.length > 0 && (
-                <div className="col-span-2 pt-2 mt-2 border-t border-border/50">
+              <div>
+                <span className="block text-xs font-medium text-muted-foreground mb-1">Surface</span>
+                <span className="font-medium text-foreground">{artwork.surface}</span>
+              </div>
+              {artwork.tags && artwork.tags.length > 0 && (
+                <div className="col-span-full pt-3 mt-1 border-t border-border/50">
                   <span className="block text-xs font-medium text-muted-foreground mb-2">Tags</span>
                   <div className="flex flex-wrap gap-2">
                     {artwork.tags.map(tag => (
@@ -158,26 +221,8 @@ export default async function ArtworkDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Actions (Size, Add to Cart, WhatsApp) */}
-            <div className="mb-10">
-              <ArtworkActions artwork={artwork} category={category} />
-            </div>
-
-            {/* Artist Note */}
-            {artwork.artistNote && (
-              <div className="mb-10 relative rounded-xl border border-primary/20 bg-primary/5 p-6 shadow-inner">
-                <div className="absolute -left-3 -top-3 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
-                  <span className="font-serif text-xl leading-none">&quot;</span>
-                </div>
-                <h4 className="mb-2 text-sm font-semibold text-primary">Artist&apos;s Note</h4>
-                <p className="font-serif text-sm italic leading-relaxed text-muted-foreground sm:text-base">
-                  {artwork.artistNote}
-                </p>
-              </div>
-            )}
-
             {/* Trust Badges */}
-            <div className="mb-10 rounded-2xl bg-muted/30 p-6">
+            <div className="rounded-2xl bg-muted/30 p-6">
               <TrustBadges />
             </div>
           </div>

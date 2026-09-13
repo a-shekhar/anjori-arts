@@ -35,7 +35,7 @@ export const checkoutSchema = z.object({
     .optional()
     .or(z.literal("")),
   paymentMethod: z.enum(
-    ["upi_qr", "bank_transfer", "pay_on_dispatch", "razorpay"],
+    ["upi_qr", "pay_on_dispatch", "razorpay"],
     {
       message: "Please select a valid payment method",
     }

@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizePostgrestIdentifier } from "@/lib/supabase/sanitize";
 import { artworkSchema } from "@/lib/validations/artwork";
 import { revalidatePath } from "next/cache";
 import { deleteArtworkFolder, deleteAsset } from "@/lib/cloudinary-server";
@@ -58,16 +59,29 @@ export const getArtworkFormTaxonomies = withAdminAuth(async () => {
 
 export const getAdminArtworkById = withAdminAuth(async (id: string) => {
   try {
+    const cleanId = sanitizePostgrestIdentifier(id);
+    if (!cleanId) {
+      return null;
+    }
+
     const supabase = createAdminClient();
-    const { data, error } = await supabase
+    const isArtId = cleanId.startsWith("art-");
+
+    let query = supabase
       .from("artworks")
       .select(`
         *,
         artwork_mediums(medium_id),
         variants:artwork_variants(*)
-      `)
-      .eq("id", id)
-      .single();
+      `);
+
+    if (isArtId) {
+      query = query.eq("id", cleanId);
+    } else {
+      query = query.or(`id.eq.${cleanId},slug.eq.${cleanId}`);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
       return null;
@@ -76,6 +90,7 @@ export const getAdminArtworkById = withAdminAuth(async (id: string) => {
     // Transform data for the form
     return {
       ...data,
+      slug: data.slug ?? "",
       categoryId: data.category_id,
       surfaceId: data.surface_id,
       shortDescription: data.short_description ?? "",
@@ -95,7 +110,7 @@ export const getAdminArtworkById = withAdminAuth(async (id: string) => {
         stockQuantity: v.stock_quantity,
         isActive: v.is_active,
         canBeFramed: v.can_be_framed || false,
-        framingPrice: v.framingPrice ? v.framingPrice / 100 : 0,
+        framingPrice: v.framing_price ? v.framing_price / 100 : 0,
       }))
     };
   } catch (err) {
