@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site";
 import { CommissionForm } from "@/components/forms/commission-form";
 import { Paintbrush, Clock, CheckCircle2, HeartHandshake } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { DEFAULT_CATEGORIES } from "@/config/categories";
 
 export const metadata: Metadata = {
   title: "Custom Orders & Commissions",
@@ -49,7 +50,10 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
     categoriesRes = await supabase.from("categories").select("name").order("name");
   }
 
-  const categoryOptions = categoriesRes.data?.map((c) => c.name) || [];
+  const categoryOptions =
+    categoriesRes.data && categoriesRes.data.length > 0
+      ? categoriesRes.data.map((c) => c.name)
+      : DEFAULT_CATEGORIES.map((c) => c.name);
   const surfaceOptions = surfacesRes.data?.map((s) => s.name) || [];
   const mediumOptions =
     mediumsRes.data && mediumsRes.data.length > 0
@@ -80,7 +84,7 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
             Bring your vision to life.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg leading-relaxed">
-            Looking for something unique? We offer custom commissions tailored to your specific style, size, and budget requirements. Let&apos;s create something beautiful together.
+            Looking for something unique? We offer custom orders tailored to your specific style, size, and room requirements. Let&apos;s create something beautiful together.
           </p>
         </div>
       </section>
@@ -88,14 +92,14 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
       {/* Main Content */}
       <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-24 lg:px-10">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-20">
-          {/* Commission Details */}
+          {/* Custom Order Details */}
           <div className="space-y-10">
             <div>
               <h2 className="font-serif text-3xl font-medium tracking-[-0.02em] text-foreground mb-6">
                 How it works
               </h2>
               <p className="text-muted-foreground leading-relaxed text-base">
-                Commissioning an artwork is a collaborative and exciting process. Here&apos;s what you can expect when you order a custom piece.
+                Ordering a custom artwork is a collaborative and exciting process. Here&apos;s what you can expect when you order a custom piece.
               </p>
             </div>
 
@@ -153,7 +157,7 @@ export default async function CustomOrderPage({ searchParams }: CustomOrderPageP
           {/* Form */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-10 h-fit sticky top-24">
             <h2 className="font-serif text-2xl font-medium tracking-[-0.02em] text-foreground mb-8">
-              Start your commission
+              Start your custom order
             </h2>
             <CommissionForm 
               categories={categoryOptions} 

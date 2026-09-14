@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { formatPrice } from "@/lib/helpers";
 import { WishlistButton } from "@/components/shared/WishlistButton";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import type { Artwork, Category } from "@/types";
 
 interface ArtworkCardProps {
@@ -23,11 +23,12 @@ export function ArtworkCard({ artwork, category, priority = false }: ArtworkCard
           aria-label={`View ${artwork.title}`}
         >
           {primaryImage && (
-            <Image
+            <ArtworkImage
               src={primaryImage.url}
               alt={primaryImage.alt}
               fill
               priority={priority}
+              context="card"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
             />

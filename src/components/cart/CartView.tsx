@@ -86,7 +86,7 @@ export function CartView() {
             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium text-foreground transition-all hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.99]"
           >
             <Paintbrush className="size-4 text-primary" aria-hidden="true" />
-            <span>Commission Custom Art</span>
+            <span>Order Custom Art</span>
           </Link>
         </div>
 

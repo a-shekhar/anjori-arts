@@ -1,7 +1,7 @@
 export const NAV_LINKS = [
   { label: "Shop", href: "/shop" },
   { label: "Traditions", href: "/categories" },
-  { label: "Commissions", href: "/custom-order" },
+  { label: "Custom Order", href: "/custom-order" },
   { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },

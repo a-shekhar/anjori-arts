@@ -32,7 +32,7 @@ export async function uploadStream(buffer: Buffer, folder: string): Promise<{ pu
 /**
  * Deletes a single asset from Cloudinary by publicId.
  */
-export async function deleteAsset(publicId: string): Promise<any> {
+export async function deleteAsset(publicId: string): Promise<unknown> {
   if (!publicId) return null;
   try {
     return await cloudinary.uploader.destroy(publicId);
@@ -59,10 +59,35 @@ export async function deleteArtworkFolder(slug: string): Promise<void> {
       await cloudinary.api.delete_resources_by_prefix(folderPath);
       // 2. Delete the folder itself
       await cloudinary.api.delete_folder(folderPath);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { error?: { http_code?: number }; http_code?: number; message?: string };
       // If folder or resources do not exist (404), ignore silently
-      if (error?.error?.http_code !== 404 && error?.http_code !== 404) {
-        console.warn(`Note on deleting Cloudinary folder ${folderPath}:`, error?.message || error);
+      if (err?.error?.http_code !== 404 && err?.http_code !== 404) {
+        console.warn(`Note on deleting Cloudinary folder ${folderPath}:`, err?.message || error);
+      }
+    }
+  }
+}
+
+/**
+ * Deletes all customer reference images and removes the order's folder from Cloudinary.
+ */
+export async function deleteCustomOrderFolder(orderId: string): Promise<void> {
+  if (!orderId) return;
+  const envFolder = process.env.NODE_ENV === "production" ? "prod" : "dev";
+  const foldersToClean = [
+    `anjori-arts/${envFolder}/custom-orders/${orderId}`,
+    `anjori-arts/custom-orders/${orderId}`,
+  ];
+
+  for (const folderPath of foldersToClean) {
+    try {
+      await cloudinary.api.delete_resources_by_prefix(folderPath);
+      await cloudinary.api.delete_folder(folderPath);
+    } catch (error: unknown) {
+      const err = error as { error?: { http_code?: number }; http_code?: number; message?: string };
+      if (err?.error?.http_code !== 404 && err?.http_code !== 404) {
+        console.warn(`Note on deleting custom order folder ${folderPath}:`, err?.message || error);
       }
     }
   }

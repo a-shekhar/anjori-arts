@@ -299,19 +299,16 @@ export function CommissionForm({
       
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
           <Label htmlFor="category">Category (Optional)</Label>
           <div className="relative">
             <select
               id="category"
               name="categorySelect"
-              required
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="min-h-[44px] h-11 w-full min-w-0 appearance-none rounded-lg border border-input bg-transparent px-3 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80"
             >
-              <option className="bg-background text-foreground" value="" disabled>Select category</option>
-              <option className="bg-background text-foreground" value="">Select category (optional)</option>
+              <option className="bg-background text-foreground" value="">Select category</option>
               <option className="bg-background text-foreground" value="Not sure / Open to suggestions">Not sure / Open to suggestions</option>
               {categories.map((category) => (
                 <option className="bg-background text-foreground" key={category} value={category}>{category}</option>
@@ -348,27 +345,25 @@ export function CommissionForm({
       </div>
       
       <div className="space-y-2">
-        <div className="space-y-2">
-          <Label htmlFor="surface">Preferred Surface (Optional)</Label>
-          <div className="relative">
-            <select
-              id="surface"
-              name="surfaceSelect"
-              value={selectedSurface}
-              onChange={(e) => setSelectedSurface(e.target.value)}
-              className="min-h-[44px] h-11 w-full min-w-0 appearance-none rounded-lg border border-input bg-transparent px-3 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80"
-            >
-              <option className="bg-background text-foreground" value="" disabled>Select surface</option>
-              {surfaces.map((surface) => (
-                <option className="bg-background text-foreground" key={surface} value={surface}>{surface}</option>
-              ))}
-              {!surfaces.includes("Other") && (
-                <option className="bg-background text-foreground" value="Other">Other</option>
-              )}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
+        <Label htmlFor="surface">Preferred Surface (Optional)</Label>
+        <div className="relative">
+          <select
+            id="surface"
+            name="surfaceSelect"
+            value={selectedSurface}
+            onChange={(e) => setSelectedSurface(e.target.value)}
+            className="min-h-[44px] h-11 w-full min-w-0 appearance-none rounded-lg border border-input bg-transparent px-3 py-2 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80"
+          >
+            <option className="bg-background text-foreground" value="" disabled>Select surface</option>
+            {surfaces.map((surface) => (
+              <option className="bg-background text-foreground" key={surface} value={surface}>{surface}</option>
+            ))}
+            {!surfaces.includes("Other") && (
+              <option className="bg-background text-foreground" value="Other">Other</option>
+            )}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
       </div>
@@ -511,7 +506,7 @@ export function CommissionForm({
           id="message"
           name="message"
           defaultValue={defaultDetails}
-          placeholder="Please describe what you have in mind for the commission (colors, subject, dimensions, or wall placement). Optional if reference photos or link are provided..."
+          placeholder="Please describe what you have in mind for your custom artwork (colors, subject, dimensions, or wall placement). Optional if reference photos or link are provided..."
           className="min-h-[150px] resize-none"
         />
       </div>

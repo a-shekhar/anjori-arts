@@ -7,6 +7,7 @@ import { getShopData } from "@/actions/shop";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { getCategoryCoverImage, getCategoryAltText } from "@/config/category-images";
+import { DEFAULT_CATEGORIES } from "@/config/categories";
 
 export const metadata: Metadata = {
   title: "Art Traditions & Categories",
@@ -27,7 +28,8 @@ export const metadata: Metadata = {
 };
 
 export default async function CategoriesPage() {
-  const { categories, artworks } = await getShopData();
+  const { categories: fetchedCategories, artworks } = await getShopData();
+  const categories = fetchedCategories && fetchedCategories.length > 0 ? fetchedCategories : DEFAULT_CATEGORIES;
 
   return (
     <div className="min-h-screen bg-background">

@@ -108,8 +108,8 @@ export function AdminLayoutClient({ children }: { children: React.ReactNode }) {
               <SidebarContent pathname={pathname} onNavigate={() => setMobileMenuOpen(false)} />
             </SheetContent>
           </Sheet>
-          <div className="w-full flex-1">
-            <h1 className="font-semibold text-lg hidden sm:block">
+          <div className="w-full flex-1 min-w-0">
+            <h1 className="font-semibold text-base sm:text-lg truncate text-foreground">
               {ADMIN_NAV_LINKS.find((l) =>
                 l.href === "/admin"
                   ? pathname === "/admin"

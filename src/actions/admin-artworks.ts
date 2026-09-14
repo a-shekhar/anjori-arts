@@ -101,19 +101,19 @@ export const getAdminArtworkById = withAdminAuth(async (id: string) => {
       isFeatured: data.is_featured,
       price: data.price / 100, // convert paise to rupees
       tags: (data.tags || []).join(", "),
-      mediumIds: (data.artwork_mediums || []).map((am: any) => am.medium_id),
-      variants: (data.variants || []).map((v: any) => ({
+      mediumIds: (data.artwork_mediums || []).map((am: { medium_id: string }) => am.medium_id),
+      variants: (data.variants || []).map((v: Record<string, unknown>) => ({
         ...v,
-        sku: v.sku ?? "",
-        mrp: v.mrp / 100,
-        sellingPrice: v.selling_price / 100,
-        widthInches: v.width_inches,
-        heightInches: v.height_inches,
-        stockQuantity: v.stock_quantity,
-        isActive: v.is_active,
-        canBeFramed: v.can_be_framed || false,
-        framingPrice: v.framing_price ? v.framing_price / 100 : 0,
-      }))
+        sku: (v.sku as string) ?? "",
+        mrp: (v.mrp as number) / 100,
+        sellingPrice: (v.selling_price as number) / 100,
+        widthInches: v.width_inches as number,
+        heightInches: v.height_inches as number,
+        stockQuantity: v.stock_quantity as number,
+        isActive: v.is_active as boolean,
+        canBeFramed: (v.can_be_framed as boolean) || false,
+        framingPrice: v.framing_price ? (v.framing_price as number) / 100 : 0,
+      })),
     };
   } catch (err) {
     console.error("[getAdminArtworkById] Unexpected error:", err);
@@ -143,7 +143,7 @@ export const createArtwork = withAdminAuth(async (prevState: unknown, formData: 
     const { mediumIds, variants, tags, ...baseData } = validatedFields.data;
     
     const tagsArray = tags ? tags.split(",").map(t => t.trim()).filter(Boolean) : [];
-    const artworkId = `art-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const artworkId = validatedFields.data.id || `art-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const firstVariant = variants[0];
     const authoritativePrice = firstVariant ? Math.round(firstVariant.sellingPrice * 100) : Math.round(baseData.price * 100);
     const authoritativeDimensions = firstVariant && firstVariant.widthInches > 0 && firstVariant.heightInches > 0
@@ -207,9 +207,9 @@ export const createArtwork = withAdminAuth(async (prevState: unknown, formData: 
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true, artworkId };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[createArtwork] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while creating the artwork." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while creating the artwork." };
   }
 });
 
@@ -323,9 +323,9 @@ export const updateArtwork = withAdminAuth(async (id: string, prevState: unknown
     revalidatePath(`/artworks/${baseData.slug}`);
     revalidatePath("/admin/artworks");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[updateArtwork] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while updating the artwork." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while updating the artwork." };
   }
 });
 
@@ -333,10 +333,10 @@ export const deleteArtwork = withAdminAuth(async (id: string) => {
   try {
     const supabase = createAdminClient();
 
-    // 1. Fetch artwork slug and images before deletion
+    // 1. Fetch artwork id, slug, and images before deletion
     const { data: artwork } = await supabase
       .from("artworks")
-      .select("slug, images")
+      .select("id, slug, images")
       .eq("id", id)
       .single();
 
@@ -348,16 +348,24 @@ export const deleteArtwork = withAdminAuth(async (id: string) => {
     }
 
     // 3. Clean up Cloudinary assets and folder
-    if (artwork?.slug) {
+    if (artwork) {
       try {
         if (Array.isArray(artwork.images)) {
-          for (const img of artwork.images as any[]) {
+          const imagesList = artwork.images as Array<{ publicId?: string; url?: string }>;
+          for (const img of imagesList) {
             if (img?.publicId) {
               await deleteAsset(img.publicId);
             }
           }
         }
-        await deleteArtworkFolder(artwork.slug);
+        // Primary: Clean up folder by immutable artwork ID
+        if (artwork.id) {
+          await deleteArtworkFolder(artwork.id);
+        }
+        // Backward compatibility: Clean up folder by slug if older artwork used slug
+        if (artwork.slug && artwork.slug !== artwork.id) {
+          await deleteArtworkFolder(artwork.slug);
+        }
       } catch (cleanupErr) {
         console.error("Cloudinary cleanup error during artwork delete:", cleanupErr);
       }
@@ -367,9 +375,9 @@ export const deleteArtwork = withAdminAuth(async (id: string) => {
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[deleteArtwork] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while deleting the artwork." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while deleting the artwork." };
   }
 });
 
@@ -382,9 +390,9 @@ export const toggleArtworkStatus = withAdminAuth(async (id: string, isAvailable:
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[toggleArtworkStatus] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while updating artwork status." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while updating artwork status." };
   }
 });
 
@@ -397,8 +405,8 @@ export const toggleArtworkFeatured = withAdminAuth(async (id: string, isFeatured
     revalidatePath("/shop");
     revalidatePath("/admin/artworks");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[toggleArtworkFeatured] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while updating artwork featured status." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while updating artwork featured status." };
   }
 });

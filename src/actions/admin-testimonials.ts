@@ -3,7 +3,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
-import { uploadStream } from "@/lib/cloudinary-server";
+import { uploadStream, deleteAsset } from "@/lib/cloudinary-server";
+import { extractCloudinaryPublicId } from "@/lib/cloudinary";
 import {
   testimonialSchema,
   TESTIMONIAL_IMAGE_LIMITS,
@@ -63,9 +64,9 @@ export const toggleTestimonialApproval = withAdminAuth(
       revalidatePath("/stories");
       revalidatePath("/admin/testimonials");
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[toggleTestimonialApproval] Error:", err);
-      return { success: false, error: err?.message || "Unexpected error." };
+      return { success: false, error: err instanceof Error ? err.message : "Unexpected error." };
     }
   }
 );
@@ -91,9 +92,9 @@ export const toggleTestimonialFeatured = withAdminAuth(
       revalidatePath("/stories");
       revalidatePath("/admin/testimonials");
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[toggleTestimonialFeatured] Error:", err);
-      return { success: false, error: err?.message || "Unexpected error." };
+      return { success: false, error: err instanceof Error ? err.message : "Unexpected error." };
     }
   }
 );
@@ -132,7 +133,7 @@ export const createAdminTestimonial = withAdminAuth(
         if (imageFile.size > TESTIMONIAL_IMAGE_LIMITS.maxFileSizeBytes) {
           return { success: false, error: "Uploaded image exceeds 5MB limit." };
         }
-        if (!TESTIMONIAL_IMAGE_LIMITS.allowedTypes.includes(imageFile.type as any)) {
+        if (!TESTIMONIAL_IMAGE_LIMITS.allowedTypes.includes(imageFile.type as (typeof TESTIMONIAL_IMAGE_LIMITS.allowedTypes)[number])) {
           return { success: false, error: "Image must be JPG, PNG, or WebP." };
         }
 
@@ -171,9 +172,9 @@ export const createAdminTestimonial = withAdminAuth(
       revalidatePath("/stories");
       revalidatePath("/admin/testimonials");
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[createAdminTestimonial] Error:", err);
-      return { success: false, error: err?.message || "Unexpected error." };
+      return { success: false, error: err instanceof Error ? err.message : "Unexpected error." };
     }
   }
 );
@@ -212,7 +213,7 @@ export const updateAdminTestimonial = withAdminAuth(
         if (imageFile.size > TESTIMONIAL_IMAGE_LIMITS.maxFileSizeBytes) {
           return { success: false, error: "Uploaded image exceeds 5MB limit." };
         }
-        if (!TESTIMONIAL_IMAGE_LIMITS.allowedTypes.includes(imageFile.type as any)) {
+        if (!TESTIMONIAL_IMAGE_LIMITS.allowedTypes.includes(imageFile.type as (typeof TESTIMONIAL_IMAGE_LIMITS.allowedTypes)[number])) {
           return { success: false, error: "Image must be JPG, PNG, or WebP." };
         }
 
@@ -254,9 +255,9 @@ export const updateAdminTestimonial = withAdminAuth(
       revalidatePath("/stories");
       revalidatePath("/admin/testimonials");
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[updateAdminTestimonial] Error:", err);
-      return { success: false, error: err?.message || "Unexpected error." };
+      return { success: false, error: err instanceof Error ? err.message : "Unexpected error." };
     }
   }
 );
@@ -268,6 +269,15 @@ export const deleteAdminTestimonial = withAdminAuth(
   async (id: string) => {
     try {
       const supabase = createAdminClient();
+
+      // 1. Fetch testimonial to get image_url before deletion
+      const { data: testimonial } = await supabase
+        .from("testimonials")
+        .select("id, image_url")
+        .eq("id", id)
+        .single();
+
+      // 2. Delete from Supabase
       const { error } = await supabase
         .from("testimonials")
         .delete()
@@ -278,13 +288,25 @@ export const deleteAdminTestimonial = withAdminAuth(
         return { success: false, error: "Failed to delete testimonial." };
       }
 
+      // 3. Purge photo from Cloudinary if present
+      if (testimonial?.image_url) {
+        const publicId = extractCloudinaryPublicId(testimonial.image_url);
+        if (publicId) {
+          try {
+            await deleteAsset(publicId);
+          } catch (cloudErr) {
+            console.error("[deleteAdminTestimonial] Error deleting Cloudinary asset:", cloudErr);
+          }
+        }
+      }
+
       revalidatePath("/");
       revalidatePath("/stories");
       revalidatePath("/admin/testimonials");
       return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[deleteAdminTestimonial] Error:", err);
-      return { success: false, error: err?.message || "Unexpected error." };
+      return { success: false, error: err instanceof Error ? err.message : "Unexpected error." };
     }
   }
 );

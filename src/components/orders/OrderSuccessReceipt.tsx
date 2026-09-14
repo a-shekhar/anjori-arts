@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import {
   CheckCircle2,
   Printer,
@@ -338,10 +339,11 @@ export function OrderSuccessReceipt({ order }: OrderSuccessReceiptProps) {
                     <div className="flex items-center gap-3">
                       {item.image_url && (
                         <div className="relative size-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted/20 print:size-10">
-                          <Image
+                          <ArtworkImage
                             src={item.image_url}
                             alt={item.title}
                             fill
+                            context="thumbnail"
                             className="object-cover"
                             sizes="48px"
                           />

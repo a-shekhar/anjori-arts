@@ -40,6 +40,7 @@ export const artworkImageSchema = z.object({
 });
 
 export const artworkSchema = z.object({
+  id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required"),
   categoryId: z.string().min(1, "Category is required"),

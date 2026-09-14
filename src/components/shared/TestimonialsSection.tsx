@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Star, ArrowRight, Quote, PlusCircle } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getCloudinaryUrl } from "@/lib/cloudinary";
 import type { Testimonial } from "@/types";
 
 interface TestimonialsSectionProps {
@@ -70,11 +71,12 @@ export function TestimonialsSection({
                 {item.image_url && (
                   <div className="relative mb-5 aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border bg-secondary">
                     <Image
-                      src={item.image_url}
+                      src={getCloudinaryUrl(item.image_url, { width: 800, quality: "auto" })}
                       alt={item.image_alt || `Artwork in ${item.author_name}'s home`}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      unoptimized={item.image_url.includes("res.cloudinary.com")}
                     />
                   </div>
                 )}

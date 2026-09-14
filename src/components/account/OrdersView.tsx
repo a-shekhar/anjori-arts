@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import {
   Package,
   ShoppingBag,
@@ -70,7 +71,7 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
     <div className="space-y-6">
       <AccountSubpageHeader
         title="Orders & Acquisitions"
-        description="Track courier delivery for catalog paintings and review bespoke commission inquiries."
+        description="Track courier delivery for catalog paintings and review your custom order requests."
         action={
           <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as string)} className="w-full sm:w-auto">
             <TabsList className="grid grid-cols-2 w-full sm:w-auto h-11 rounded-xl bg-muted/60 p-1">
@@ -91,7 +92,7 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                 <Paintbrush className="size-3.5 shrink-0" />
                 <span>
                   <span className="sm:hidden">Custom ({customOrders.length})</span>
-                  <span className="hidden sm:inline">Bespoke Commissions ({customOrders.length})</span>
+                  <span className="hidden sm:inline">Custom Orders ({customOrders.length})</span>
                 </span>
               </TabsTrigger>
             </TabsList>
@@ -166,10 +167,11 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted border border-border">
                             {item.image_url ? (
-                              <Image
+                              <ArtworkImage
                                 src={item.image_url}
                                 alt={item.title}
                                 fill
+                                context="thumbnail"
                                 className="object-cover"
                                 sizes="48px"
                               />
@@ -232,7 +234,7 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                 <Paintbrush className="size-7" />
               </div>
               <h3 className="font-serif text-lg sm:text-xl font-medium text-foreground">
-                No custom commissions requested yet
+                No custom orders requested yet
               </h3>
               <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
                 Have a specific vision, deity theme, or custom dimensions in mind? Collaborate
@@ -242,7 +244,7 @@ export function OrdersView({ orders, customOrders }: OrdersViewProps) {
                 <Link href="/custom-order">
                   <Button className="rounded-xl font-medium gap-2 min-h-[44px] text-xs sm:text-sm">
                     <Sparkles className="size-4" />
-                    <span>Start Custom Commission</span>
+                    <span>Start Custom Order</span>
                   </Button>
                 </Link>
               </div>

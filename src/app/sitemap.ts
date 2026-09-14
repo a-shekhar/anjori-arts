@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/server";
+import { DEFAULT_CATEGORIES } from "@/config/categories";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
@@ -52,7 +53,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Error fetching sitemap categories:", categoriesError);
   }
 
-  const categoryRoutes: MetadataRoute.Sitemap = (categories || []).map((category) => ({
+  const categoryItems = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+
+  const categoryRoutes: MetadataRoute.Sitemap = categoryItems.map((category) => ({
     url: `${baseUrl}/categories/${category.slug}`,
     lastModified: currentDate,
     changeFrequency: "weekly",

@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 import {
   Heart,
   ShoppingBag,
@@ -349,7 +349,7 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
 
             <Link href="/custom-order">
               <Button variant="outline" className="rounded-xl font-medium h-11 px-6">
-                <span>Commission Custom Artwork</span>
+                <span>Order Custom Artwork</span>
               </Button>
             </Link>
           </div>
@@ -371,10 +371,11 @@ export function WishlistView({ initialArtworks = [] }: WishlistViewProps) {
                 <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted/30">
                   <Link href={`/artworks/${artwork.slug}`} className="block size-full">
                     {primaryImage && (
-                      <Image
+                      <ArtworkImage
                         src={primaryImage.url}
                         alt={primaryImage.alt || artwork.title}
                         fill
+                        context="card"
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
                       />

@@ -100,21 +100,21 @@ export function AccountNav({ className }: { className?: string }) {
         })}
       </nav>
 
-      {/* Bespoke Art Commissions Card */}
+      {/* Bespoke Custom Orders Card */}
       <div className="rounded-2xl border border-border bg-muted/40 p-5 space-y-3">
         <div className="flex items-center gap-2 text-primary">
           <Sparkles className="size-4" />
           <span className="text-xs font-semibold uppercase tracking-wider">Bespoke Artworks</span>
         </div>
         <h3 className="font-serif text-sm font-medium text-foreground">
-          Commission a Custom Piece
+          Order a Custom Artwork
         </h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
           Looking for a specific theme or custom size in Madhubani or Tanjore? Collaborate with our master artisans.
         </p>
         <Link href="/custom-order" className="inline-block pt-1">
           <span className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1">
-            <span>Start custom inquiry</span>
+            <span>Start custom order</span>
             <ArrowRight className="size-3" />
           </span>
         </Link>

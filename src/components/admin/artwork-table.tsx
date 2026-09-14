@@ -77,20 +77,20 @@ export function ArtworkTable({ artworks }: { artworks: any[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input 
             placeholder="Search artworks..." 
-            className="pl-8" 
+            className="pl-9 min-h-[44px] h-11 rounded-xl text-sm" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
           <Select value={statusFilter} onValueChange={(val: any) => setStatusFilter(val || "all")}>
-            <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectTrigger className="w-full sm:w-[160px] min-h-[44px] h-11 rounded-xl text-sm">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2, Heart } from "lucide-react";
@@ -9,6 +8,7 @@ import { type CartItem, useCartStore } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { formatPrice } from "@/lib/helpers";
 import { MAX_CART_QUANTITY } from "@/config/constants";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 
 interface CartItemRowProps {
   item: CartItem;
@@ -66,10 +66,11 @@ export function CartItemRow({ item }: CartItemRowProps) {
         aria-label={`View ${item.title}`}
       >
         {item.imageUrl ? (
-          <Image
+          <ArtworkImage
             src={item.imageUrl}
             alt={item.title}
             fill
+            context="thumbnail"
             sizes="(max-width: 640px) 96px, 112px"
             className="object-cover transition-transform duration-300 hover:scale-105"
           />

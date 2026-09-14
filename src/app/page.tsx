@@ -13,6 +13,7 @@ import { TestimonialsSection } from "@/components/shared/TestimonialsSection";
 import { formatDate } from "@/lib/helpers";
 import { getCategoryCoverImage, getCategoryAltText } from "@/config/category-images";
 import { HOMEPAGE_FEATURED_LIMIT } from "@/config/constants";
+import { DEFAULT_CATEGORIES } from "@/config/categories";
 
 export const revalidate = 3600;
 
@@ -48,8 +49,10 @@ export default async function HomePage() {
     getPublicTestimonials({ featuredOnly: true, limit: 3 }),
   ]);
   
+  // Ensure categories always fall back to canonical traditions if database is cold or unreachable
+  const categoriesList = allCategories && allCategories.length > 0 ? allCategories : DEFAULT_CATEGORIES;
   // For the homepage, we only want to feature the top 3 to maintain a premium feel.
-  const categories = allCategories.slice(0, 3);
+  const categories = categoriesList.slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -234,6 +237,7 @@ export default async function HomePage() {
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8")}
             >
               Explore all {allCategories.length} art traditions
+              Explore all {categoriesList.length} art traditions
             </Link>
           </div>
         </section>
@@ -244,7 +248,7 @@ export default async function HomePage() {
         <section id="commission" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-28 lg:px-10">
           <div className="aa-commission-panel grid overflow-hidden rounded-[2rem] border border-border lg:grid-cols-[1fr_0.9fr]">
             <div className="p-8 sm:p-12 lg:p-16">
-              <p className="aa-eyebrow">Custom commissions</p>
+              <p className="aa-eyebrow">Custom orders</p>
               <h2 className="mt-4 max-w-lg font-serif text-3xl leading-tight tracking-[-0.025em] sm:text-5xl">
                 A piece that feels made for your space.
               </h2>
@@ -270,7 +274,7 @@ export default async function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent lg:bg-gradient-to-r lg:from-black/20 lg:to-transparent pointer-events-none" />
               <div className="absolute bottom-4 right-4 rounded-xl border border-border/60 bg-background/90 px-3.5 py-1.5 backdrop-blur-sm text-xs font-medium text-foreground shadow-sm">
-                Bespoke commissioned work
+                Handcrafted custom artwork
               </div>
             </div>
           </div>

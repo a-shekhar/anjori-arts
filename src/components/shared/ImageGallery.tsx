@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import { X, ZoomIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMounted } from "@/hooks/use-mounted";
+import { ArtworkImage } from "@/components/shared/ArtworkImage";
 
 interface ImageGalleryProps {
   images: { url: string; alt: string }[];
@@ -46,11 +46,12 @@ export function ImageGallery({ images }: ImageGalleryProps) {
         onClick={() => setIsLightboxOpen(true)}
         aria-label={`Enlarge image: ${selectedImage.alt}`}
       >
-        <Image
+        <ArtworkImage
           src={selectedImage.url}
           alt={selectedImage.alt}
           fill
           priority
+          context="detail"
           className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
           sizes="(max-width: 768px) 100vw, 55vw"
         />
@@ -76,11 +77,12 @@ export function ImageGallery({ images }: ImageGalleryProps) {
                   : "border-transparent opacity-70 hover:opacity-100"
               )}
             >
-              <Image
+              <ArtworkImage
                 src={img.url}
                 alt=""
                 aria-hidden="true"
                 fill
+                context="thumbnail"
                 className="object-cover"
                 sizes="80px"
               />
@@ -107,10 +109,11 @@ export function ImageGallery({ images }: ImageGalleryProps) {
           </button>
           
           <div className="relative h-full w-full max-w-5xl">
-            <Image
+            <ArtworkImage
               src={selectedImage.url}
               alt={selectedImage.alt}
               fill
+              context="lightbox"
               className="object-contain"
               sizes="100vw"
               quality={100}

@@ -14,14 +14,19 @@ export default async function AdminArtworksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Artworks</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Artworks</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Manage your store&apos;s artwork catalog.
           </p>
         </div>
-        <Link href="/admin/artworks/new" className={buttonVariants()}>
+        <Link
+          href="/admin/artworks/new"
+          className={buttonVariants({
+            className: "w-full sm:w-auto min-h-[44px] h-11 rounded-xl justify-center font-medium shadow-xs shrink-0",
+          })}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add Artwork
         </Link>

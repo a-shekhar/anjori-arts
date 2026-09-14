@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, UploadCloud, X, Image as ImageIcon, Wand2, Loader2, AlertCircle } from "lucide-react";
 import { createArtwork, updateArtwork } from "@/actions/admin-artworks";
 import { artworkSchema, ArtworkFormValues, ArtworkVariantValues } from "@/lib/validations/artwork";
+import { compressImage } from "@/lib/image-compression";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
@@ -93,6 +94,9 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const isEditing = !!initialData;
   const [isUploading, setIsUploading] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [artworkId] = useState<string>(
+    () => initialData?.id || `art-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+  );
 
   const { variants: initialResolvedVariants, hasNoVariantsInDb } = useMemo(
     () => resolveInitialVariants(initialData),
@@ -102,6 +106,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const form = useForm<ArtworkFormValues>({
     resolver: zodResolver(artworkSchema) as Resolver<ArtworkFormValues>,
     defaultValues: {
+      id: artworkId,
       title: initialData?.title || "",
       slug: initialData?.slug || "",
       categoryId: initialData?.categoryId || "",
@@ -124,6 +129,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     if (initialData) {
       const { variants: currentVariants } = resolveInitialVariants(initialData);
       form.reset({
+        id: initialData.id || artworkId,
         title: initialData.title || "",
         slug: initialData.slug || "",
         categoryId: initialData.categoryId || "",
@@ -141,7 +147,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
         variants: currentVariants,
       });
     }
-  }, [initialData, form]);
+  }, [initialData, form, artworkId]);
 
   const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
     control: form.control,
@@ -269,12 +275,26 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
     if (!e.target.files || e.target.files.length === 0) return;
     
     setIsUploading(true);
-    const toastId = toast.loading("Uploading image...");
+    const toastId = toast.loading("Optimizing & uploading artwork photo...");
 
     try {
+      const rawFile = e.target.files[0];
+      
+      // Preserve full fine-art master fidelity (up to 3200px / 10 Megapixels, 92% quality)
+      // Captures every minute brushstroke, 22k gold leaf, and relief texture without choking upload
+      let fileToUpload = rawFile;
+      try {
+        fileToUpload = await compressImage(rawFile, {
+          maxDimension: 3200,
+          quality: 0.92,
+        });
+      } catch (compressionErr) {
+        console.warn("Client image compression fallback to raw file:", compressionErr);
+      }
+
       const formData = new FormData();
-      formData.append("file", e.target.files[0]);
-      formData.append("folder", `anjori-arts/artworks/${form.getValues("slug") || "new"}`);
+      formData.append("file", fileToUpload);
+      formData.append("folder", `anjori-arts/artworks/${artworkId}`);
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
@@ -385,6 +405,7 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
 
   const onSubmit = (values: ArtworkFormValues) => {
     // Derive base price and dimensions from the first variant
+    values.id = artworkId;
     if (values.variants && values.variants.length > 0) {
       const firstVariant = values.variants[0];
       values.price = firstVariant.sellingPrice;
@@ -418,15 +439,15 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
   const watchedVariants = form.watch("variants");
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{isEditing ? "Edit Artwork" : "New Artwork"}</h2>
           <p className="text-sm text-muted-foreground">Manage details, images, and variants.</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button type="button" variant="outline" onClick={() => router.push("/admin/artworks")} disabled={isPending} className="flex-1 sm:flex-initial">Cancel</Button>
-          <Button type="submit" disabled={isPending || isUploading} className="flex-1 sm:flex-initial">
+          <Button type="button" variant="outline" onClick={() => router.push("/admin/artworks")} disabled={isPending} className="flex-1 sm:flex-initial min-h-[44px]">Cancel</Button>
+          <Button type="submit" disabled={isPending || isUploading} className="flex-1 sm:flex-initial min-h-[44px]">
             {isPending ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -575,12 +596,12 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
 
           {/* Variants */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <CardTitle>Variants & Pricing <span className="text-destructive">*</span></CardTitle>
                 <CardDescription>Add base sizes and framing options. The first variant serves as the base price.</CardDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendVariant({ ...DEFAULT_NEW_VARIANT, label: "" })}>
+              <Button type="button" variant="outline" size="sm" onClick={() => appendVariant({ ...DEFAULT_NEW_VARIANT, label: "" })} className="w-full sm:w-auto min-h-[40px] shrink-0">
                 <Plus className="mr-2 h-4 w-4" /> Add Variant
               </Button>
             </CardHeader>
@@ -777,12 +798,12 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
 
           {/* Image Gallery */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <CardTitle>Images <span className="text-destructive">*</span></CardTitle>
                 <CardDescription>First image is used as the cover thumbnail.</CardDescription>
               </div>
-              <Button type="button" variant="secondary" size="sm" onClick={handleGenerateGlobalAI} disabled={isGeneratingAI || imageFields.length === 0}>
+              <Button type="button" variant="secondary" size="sm" onClick={handleGenerateGlobalAI} disabled={isGeneratingAI || imageFields.length === 0} className="w-full sm:w-auto min-h-[40px] shrink-0">
                 <Wand2 className="mr-2 h-4 w-4" /> Auto-fill SEO (AI)
               </Button>
             </CardHeader>
@@ -832,6 +853,35 @@ export function ArtworkForm({ initialData, taxonomies }: Props) {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Mobile Sticky Bottom Action Bar (< md) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border p-3 flex gap-2.5 shadow-lg">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/admin/artworks")}
+          disabled={isPending}
+          className="flex-1 min-h-[44px] text-xs font-medium"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={isPending || isUploading}
+          className="flex-1 min-h-[44px] text-xs font-medium"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Saving...
+            </>
+          ) : isEditing ? (
+            "Save Changes"
+          ) : (
+            "Create Artwork"
+          )}
+        </Button>
       </div>
     </form>
   );

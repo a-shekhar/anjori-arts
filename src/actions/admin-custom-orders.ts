@@ -4,8 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sanitizePostgrestIdentifier, isUuid } from "@/lib/supabase/sanitize";
 import { withAdminAuth } from "@/lib/auth-admin";
 import { revalidatePath } from "next/cache";
-import type { CustomOrder, CustomOrderStatus, CustomOrderItem } from "@/types";
+import type { CustomOrder, CustomOrderItem } from "@/types";
 import { mapCustomOrder } from "@/lib/mappers";
+import { deleteCustomOrderFolder } from "@/lib/cloudinary-server";
+import { DEFAULT_CATEGORIES } from "@/config/categories";
 
 export interface QuotationUpdatePayload {
   items: CustomOrderItem[];
@@ -108,9 +110,9 @@ export const updateCustomOrderAgreedSpecs = withAdminAuth(async (
     revalidatePath(`/admin/custom-orders/${id}`);
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[updateCustomOrderAgreedSpecs] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while updating order specifications." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while updating order specifications." };
   }
 });
 
@@ -153,9 +155,9 @@ export const updateCustomOrderQuotation = withAdminAuth(async (
     revalidatePath("/admin");
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[updateCustomOrderQuotation] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while updating the quotation." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while updating the quotation." };
   }
 });
 
@@ -172,16 +174,20 @@ export const getAdminCustomOrderTaxonomies = withAdminAuth(async (): Promise<{
       supabase.from("mediums").select("name").order("name"),
     ]);
 
+    const categoryNames = (categories && categories.length > 0)
+      ? categories.map((c) => c.name)
+      : DEFAULT_CATEGORIES.map((c) => c.name);
+
     return {
-      categories: (categories || []).map((c) => c.name),
+      categories: categoryNames,
       surfaces: (surfaces || []).map((s) => s.name),
       mediums: (mediums || []).map((m) => m.name),
     };
   } catch (err) {
     console.error("[getAdminCustomOrderTaxonomies] Unexpected error:", err);
-    return { categories: [], surfaces: [], mediums: [] };
+    return { categories: DEFAULT_CATEGORIES.map((c) => c.name), surfaces: [], mediums: [] };
   }
-}, { fallback: { categories: [], surfaces: [], mediums: [] } });
+}, { fallback: { categories: DEFAULT_CATEGORIES.map((c) => c.name), surfaces: [], mediums: [] } });
 
 export const updateCustomOrderStatus = withAdminAuth(async (
   id: string,
@@ -209,9 +215,9 @@ export const updateCustomOrderStatus = withAdminAuth(async (
     revalidatePath("/admin");
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[updateCustomOrderStatus] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while updating order status." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while updating order status." };
   }
 });
 
@@ -225,6 +231,14 @@ export const deleteCustomOrder = withAdminAuth(async (
 
     const supabase = createAdminClient();
 
+    // 1. Fetch order id before deletion to clean up Cloudinary assets
+    const { data: order } = await supabase
+      .from("custom_orders")
+      .select("id")
+      .eq("id", id)
+      .single();
+
+    // 2. Delete from Supabase
     const { error } = await supabase
       .from("custom_orders")
       .delete()
@@ -235,12 +249,21 @@ export const deleteCustomOrder = withAdminAuth(async (
       return { success: false, message: error.message };
     }
 
+    // 3. Purge Cloudinary customer reference images folder
+    if (order?.id) {
+      try {
+        await deleteCustomOrderFolder(order.id);
+      } catch (cloudErr) {
+        console.error("[deleteCustomOrder] Cloudinary cleanup error:", cloudErr);
+      }
+    }
+
     revalidatePath("/admin/custom-orders");
     revalidatePath("/admin");
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[deleteCustomOrder] Unexpected error:", err);
-    return { success: false, message: err?.message || "An unexpected error occurred while deleting the custom order." };
+    return { success: false, message: err instanceof Error ? err.message : "An unexpected error occurred while deleting the custom order." };
   }
 });

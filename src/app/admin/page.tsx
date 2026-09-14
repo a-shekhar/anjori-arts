@@ -40,70 +40,70 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6">
         <Link href="/admin/orders" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Orders</CardTitle>
-              <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3.5 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Orders</CardTitle>
+              <ShoppingBag className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.orders}</div>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{metrics.orders}</div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/admin/customers" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Collectors</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3.5 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Collectors</CardTitle>
+              <Users className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.collectors}</div>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{metrics.collectors}</div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/admin/artworks" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Artworks</CardTitle>
-              <Palette className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3.5 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Artworks</CardTitle>
+              <Palette className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.artworks}</div>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{metrics.artworks}</div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/admin/custom-orders" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Custom Orders</CardTitle>
-              <Paintbrush className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3.5 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Custom Art</CardTitle>
+              <Paintbrush className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.customOrders}</div>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{metrics.customOrders}</div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/admin/inquiries" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inquiries</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3.5 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Inquiries</CardTitle>
+              <MessageSquare className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.inquiries}</div>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{metrics.inquiries}</div>
             </CardContent>
           </Card>
         </Link>
         <Link href="/admin/blog" className="block transition hover:opacity-90">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-              <PenTool className="h-4 w-4 text-muted-foreground" />
+          <Card className="h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3.5 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium">Blog Posts</CardTitle>
+              <PenTool className="size-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.blogs}</div>
+            <CardContent className="p-3.5 sm:p-6 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{metrics.blogs}</div>
             </CardContent>
           </Card>
         </Link>
@@ -115,25 +115,27 @@ export default async function AdminDashboard() {
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>Common administrative tasks.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-4">
-            <Link href="/admin/artworks/new" className={buttonVariants({ variant: "default" })}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Artwork
-            </Link>
-            <Link href="/admin/blog/new" className={buttonVariants({ variant: "outline" })}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Write Blog Post
-            </Link>
-            <Link href="/admin/customers" className={buttonVariants({ variant: "secondary" })}>
-              <Users className="mr-2 h-4 w-4" /> View Collectors
-            </Link>
-            <Link href="/admin/orders" className={buttonVariants({ variant: "secondary" })}>
-              <ShoppingBag className="mr-2 h-4 w-4" /> Manage Orders
-            </Link>
-            <Link href="/admin/custom-orders" className={buttonVariants({ variant: "secondary" })}>
-              View Custom Orders <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-            <Link href="/admin/inquiries" className={buttonVariants({ variant: "secondary" })}>
-              Manage Inquiries <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <Link href="/admin/artworks/new" className={buttonVariants({ variant: "default", className: "w-full min-h-[44px] h-11 rounded-xl justify-start" })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Artwork
+              </Link>
+              <Link href="/admin/blog/new" className={buttonVariants({ variant: "outline", className: "w-full min-h-[44px] h-11 rounded-xl justify-start" })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Write Blog Post
+              </Link>
+              <Link href="/admin/customers" className={buttonVariants({ variant: "secondary", className: "w-full min-h-[44px] h-11 rounded-xl justify-start" })}>
+                <Users className="mr-2 h-4 w-4" /> View Collectors
+              </Link>
+              <Link href="/admin/orders" className={buttonVariants({ variant: "secondary", className: "w-full min-h-[44px] h-11 rounded-xl justify-start" })}>
+                <ShoppingBag className="mr-2 h-4 w-4" /> Manage Orders
+              </Link>
+              <Link href="/admin/custom-orders" className={buttonVariants({ variant: "secondary", className: "w-full min-h-[44px] h-11 rounded-xl justify-start" })}>
+                <Paintbrush className="mr-2 h-4 w-4" /> View Custom Orders
+              </Link>
+              <Link href="/admin/inquiries" className={buttonVariants({ variant: "secondary", className: "w-full min-h-[44px] h-11 rounded-xl justify-start" })}>
+                <MessageSquare className="mr-2 h-4 w-4" /> Manage Inquiries
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
